@@ -1,0 +1,412 @@
+# 11 — Roadmap & Implementation Tasks (M0–M10)
+
+## Development workflow
+
+UniFlow is built **one small task at a time**.
+
+1. **One task per request.** Claude implements exactly one task from this roadmap and changes only the files listed for it. Anything outside the task, such as a refactor or a "while I'm here" fix, is proposed, not done.
+2. **Stop after the task.** Claude reports:
+   - the files that changed,
+   - the verification steps,
+   - the suggested commit message,
+   - the exact Git commands to stage, verify (`git diff --cached`) and commit,
+   - anything that needs a decision.
+
+   Claude then **stops**.
+3. **The developer reviews and commits on `main`.** The developer reads the diff, runs the checks, stages the files and commits. **Claude never stages, commits, pushes or creates branches** unless asked to explicitly.
+4. **The developer says "proceed"** before the next task starts.
+5. **No surprise dependencies.** A task installs only the libraries listed on its card. If a library is not yet approved, Claude asks before installing it.
+6. **Tests ship with the code** in the same task. If a task cannot be tested automatically, its card says how to verify it by hand.
+7. **Docs change with the contract.** If a task changes an API shape or model, the relevant doc is updated in the same task.
+8. **Split big tasks.** If a task grows beyond about 10 files, or needs both backend and frontend work that could be verified separately, it is split before it starts.
+
+**Commit format:** [Conventional Commits](https://www.conventionalcommits.org/), `type(scope): summary`. For example: `chore(repo): add repository conventions`, `feat(auth): add custom user model` or `feat(frontend): initialize react application`.
+
+**Branching:** all work is committed directly on **`main`**, one small commit per task. No feature or task branches are used unless the developer explicitly asks for one.
+
+**Task cards.** Every task in M0 has a full card below. Tasks in M1–M10 are listed in tables. Each milestone's tables are expanded into full cards (objective, prerequisites, files, implementation, verification, integration, commit) when that milestone begins, because the details depend on decisions made in earlier milestones.
+
+## Milestones
+
+| Milestone | Name | Outcome |
+|---|---|---|
+| **M0** | Foundations | An empty Django API and an empty React app, both running locally and in CI |
+| **M1** | Identity | Register, activate, log in, onboard and edit the profile |
+| **M2** | Permissions, publishing core and staff dashboard shell | Capabilities, audience visibility, the shared content base, the `/staff` layout and user and reference-data management |
+| **M3** | Announcements | The first full feature: student feed plus staff management |
+| **M4** | Documents | Document library, downloads and announcement attachments |
+| **M5** | Events | Event list, calendar and staff management |
+| **M6** | Communities | Directory, WhatsApp and Telegram links, follow and staff management |
+| **M7** | Timetable | Staff-maintained timetable data, the import service, section selection, and today and week views |
+| **M8** | Applications and forms | Listings with a derived status, plus staff management |
+| **M9** | Notifications | In-app notifications when content is published |
+| **M10** | Dashboard, search and release | The student dashboard, global search, staff home, production settings and deployment |
+| — | **MVP release** | |
+| Later | Post-MVP | See [Later backlog](#later-backlog) |
+
+---
+
+## M0 — Foundations
+
+#### M0.1 — Repository conventions
+- **Purpose:** Set rules that apply to the whole repository, and nothing else.
+- **Prerequisites:** None.
+- **Files:**
+  - `.gitattributes`: `* text=auto eol=lf`, plus binary rules for images and PDFs.
+  - `.editorconfig`: UTF-8, LF, final newline; 4 spaces for `*.py`, 2 spaces for `*.{ts,tsx,js,json,css,md,yml}`.
+  - `.gitignore` at the root: **operating system and editor files only** (`.DS_Store`, `Thumbs.db`, `.idea/`, `*.swp`, `.vscode/*` except shared settings).
+  - `README.md`: a "Getting started" section with links to the setup docs that later tasks add.
+- **Not included:** backend or frontend ignores, which belong to M0.3 and M0.9, and no Docker files.
+- **Verification:** `git status` shows only these files. `git check-attr eol -- README.md` reports `lf`.
+- **Integration:** Every later task follows these conventions.
+- **Commit:** `chore(repo): add repository conventions`
+
+#### M0.2 — Local MySQL setup
+- **Purpose:** Create a reproducible local MySQL 8.4 database, installed natively without Docker.
+- **Prerequisites:** M0.1. MySQL 8.4 installed with the MySQL Installer.
+- **Files:**
+  - `backend/scripts/mysql/create_database.sql`: creates the `uniflow` database (utf8mb4, `utf8mb4_0900_ai_ci`) and the `uniflow`@`localhost` user, and grants it `ALL` on `uniflow.*` and `test_uniflow.*`. The password is a placeholder to replace.
+  - `docs/development-setup.md`: install MySQL, run the script, and set up the prerequisites (Python 3.12 or newer, Node LTS).
+- **Verification:**
+  1. `mysql -u root -p < backend/scripts/mysql/create_database.sql`
+  2. `mysql -u uniflow -p -e "SELECT @@character_set_server; SHOW DATABASES;"` lists `uniflow`.
+  3. `SHOW CREATE DATABASE uniflow;` shows utf8mb4.
+- **Integration:** M0.4 connects to this database, and M0.5 creates `test_uniflow`.
+- **Commit:** `chore(db): add local mysql setup script and guide`
+
+#### M0.3 — Django project initialization
+- **Purpose:** Create a bare Django 5.2 project inside `backend/`.
+- **Prerequisites:** M0.1.
+- **Files:**
+  - `backend/requirements.txt` (`Django>=5.2,<5.3`)
+  - `backend/.gitignore` (`.venv/`, `__pycache__/`, `*.pyc`, `.env`, `media/`, `staticfiles/`, `.pytest_cache/`, `.ruff_cache/`, `.coverage`)
+  - `backend/manage.py` and `backend/config/{__init__,settings,urls,wsgi,asgi}.py`, created by `django-admin startproject config .`
+  - `docs/development-setup.md` (add the steps to create a venv and install the requirements)
+- **Implementation:** Use the default settings. **Do not run `migrate`**, because the custom user model must come first (M0.6).
+- **Verification:** `python -m venv .venv`, activate it, `pip install -r requirements.txt`, then `python manage.py check` reports "System check identified no issues".
+- **Integration:** M0.4 restructures the settings.
+- **Commit:** `feat(backend): initialize django project`
+
+#### M0.4 — Backend configuration
+- **Purpose:** Split the settings by environment, read configuration from `.env`, and connect to MySQL.
+- **Prerequisites:** M0.2, M0.3.
+- **Libraries:** `mysqlclient` only. **No `django-environ`:** configuration comes from a small `config/env.py` helper that uses only the standard library.
+- **Files:**
+  - `backend/config/settings/{__init__,base,dev,test,prod}.py`, replacing `settings.py`
+  - `backend/config/env.py`: reads `backend/.env` if it exists (`KEY=VALUE` lines, `#` comments), never overrides real environment variables, and provides `env_str`, `env_bool` and `env_list`
+  - `backend/.env.example`
+  - `backend/requirements.txt`
+  - `backend/apps/__init__.py` and `backend/core/__init__.py`, as empty packages
+  - `manage.py`, `wsgi.py` and `asgi.py`, changed to use `config.settings.dev` by default
+- **Implementation:**
+  - `DATABASES` is built from `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` and `DB_PORT`, with utf8mb4 and strict-mode `OPTIONS`.
+  - `TIME_ZONE` comes from the environment, with `USE_TZ=True`.
+  - `MEDIA_ROOT` and `MEDIA_URL` are set.
+  - The admin URL moves to `/django-admin/`.
+  - `prod.py` requires `DJANGO_SECRET_KEY` and `DJANGO_ALLOWED_HOSTS`.
+- **Verification:**
+  1. Copy `.env.example` to `.env`.
+  2. `python manage.py check` passes.
+  3. `python manage.py showmigrations` connects to MySQL without errors.
+  4. Do **not** migrate yet.
+- **Integration:** Every backend task after this uses these settings.
+- **Commit:** `chore(backend): configure settings, environment and mysql`
+
+#### M0.5 — Backend test and lint tooling
+- **Purpose:** Make `pytest` and `ruff` available before any real code is written.
+- **Prerequisites:** M0.4.
+- **Libraries:** `pytest`, `pytest-django` and `ruff`, all approved. `factory_boy` is deferred; tests use plain helper functions until factories are clearly needed.
+- **Files:**
+  - `backend/requirements-dev.txt`
+  - `backend/pyproject.toml` (the `[tool.ruff]` and `[tool.pytest.ini_options]` sections, with `DJANGO_SETTINGS_MODULE=config.settings.test`)
+  - `backend/conftest.py`
+  - `backend/tests/test_smoke.py`, which checks that the settings load and a database query works
+- **Verification:** `pytest` passes and creates and drops `test_uniflow`. `ruff check .` and `ruff format --check .` are clean.
+- **Integration:** Every backend task adds tests.
+- **Commit:** `chore(backend): add pytest and ruff tooling`
+
+#### M0.6 — Custom user model
+- **Purpose:** Create the email-based user with a role, before the first migration.
+- **Prerequisites:** M0.5.
+- **Files:**
+  - `backend/apps/accounts/{__init__,apps,models,managers,admin}.py`
+  - `backend/apps/accounts/migrations/0001_initial.py`
+  - `backend/apps/accounts/tests/test_models.py`
+  - `config/settings/base.py`: `AUTH_USER_MODEL` and `INSTALLED_APPS`
+- **Implementation:**
+  - `User(AbstractUser)` with `username=None`, a unique `email` as `USERNAME_FIELD`, `full_name`, `role` (TextChoices) and `is_suspended`.
+  - A `CheckConstraint` on `role`.
+  - `UserManager`: `create_user` lowercases the email. `create_superuser` sets `role=super_admin`, `is_staff`, `is_superuser` and `is_active`.
+  - A back-office admin, built on `UserAdmin` and adapted for email.
+  - Then the **first `migrate`**.
+- **Verification:**
+  1. `pytest apps/accounts` covers: creating a user, lowercasing, a duplicate email failing, and creating a superuser.
+  2. `python manage.py migrate` succeeds.
+  3. `createsuperuser` succeeds.
+  4. Logging in at `/django-admin/` works.
+- **Integration:** Profiles (M1.4), Djoser (M1.5) and capabilities (M2.1).
+- **Commit:** `feat(auth): add custom user model`
+
+#### M0.7 — API base configuration
+- **Purpose:** Set up the `/api/v1/` mount, the error format, pagination, throttling, CORS, OpenAPI and the health check.
+- **Prerequisites:** M0.6.
+- **Libraries:** `djangorestframework`, `django-cors-headers` and `drf-spectacular`, all approved.
+- **Files:**
+  - `backend/config/api_v1.py`
+  - `backend/config/urls.py`
+  - `backend/core/{exceptions,pagination,views}.py`
+  - `backend/core/tests/test_api_base.py`
+  - `config/settings/base.py`: the `REST_FRAMEWORK`, `CORS_*` and `SPECTACULAR_SETTINGS` settings
+- **Implementation:**
+  - Default permission `IsAuthenticated`, with no authentication class yet (JWT arrives in M1.6).
+  - `StandardPagination`.
+  - Throttle rates, including an `auth` scope.
+  - An exception handler that produces `{"error": {code, message, fields}}`.
+  - `GET /api/v1/health/` (public).
+  - The schema and docs routes, in dev only.
+- **Verification:**
+  1. `pytest core`: health returns 200 with `db: ok`, an unknown route returns 404 in the error format, and a validation error returns `fields`.
+  2. Open `/api/v1/docs/` in a browser.
+- **Integration:** Every app registers its routers in `api_v1.py`.
+- **Commit:** `feat(api): add api v1 base configuration and health check`
+
+#### M0.8 — Backend CI
+- **Purpose:** Run the backend checks on every push and pull request.
+- **Prerequisites:** M0.7.
+- **Files:** `.github/workflows/backend.yml`
+- **Implementation:** Ubuntu with Python 3.12 and a MySQL 8.4 *service*. Steps: install `requirements-dev.txt`, `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check --dry-run` and `pytest`. (`pip-audit` would be an extra tool, so it is added only if approved.) The workflow runs only when `backend/**` or the workflow file changes.
+- **Verification:** After you push `main`, the workflow is green on GitHub.
+- **Integration:** Guards `main`.
+- **Commit:** `ci(backend): add backend workflow`
+
+#### M0.9 — Frontend initialization
+- **Purpose:** Create a Vite + React + TypeScript app inside `frontend/`.
+- **Prerequisites:** M0.1.
+- **Files:**
+  - `frontend/`, generated by `npm create vite@latest frontend -- --template react-ts`. It includes `package.json`, `vite.config.ts`, `tsconfig*.json`, `eslint.config.js`, `index.html`, `src/` and `frontend/.gitignore`.
+  - `frontend/.env.example` (`VITE_API_URL=http://localhost:8000/api/v1`)
+- **Implementation:**
+  - Remove the demo content.
+  - Set `strict: true`.
+  - Add the `@/` path alias in both the TypeScript config and Vite.
+  - Add a `typecheck` script.
+- **Verification:** `npm run dev` shows a placeholder page. `npm run build`, `npm run lint` and `npm run typecheck` pass.
+- **Integration:** M0.10 through M0.13 build on it.
+- **Commit:** `feat(frontend): initialize react application`
+
+#### M0.10 — Tailwind CSS setup
+- **Purpose:** Set up the approved styling foundation.
+- **Prerequisites:** M0.9.
+- **Libraries:** Tailwind CSS (approved).
+- **Files:** `frontend/package.json`, `frontend/vite.config.ts` (Tailwind's Vite plugin), `frontend/src/styles/index.css` (Tailwind import and base theme tokens), `frontend/src/main.tsx`
+- **Verification:** The placeholder page renders with Tailwind classes. `npm run build` passes.
+- **Integration:** Every UI task after this.
+- **Commit:** `chore(frontend): add tailwind css`
+
+#### M0.11 — Frontend test tooling
+- **Purpose:** Set up Vitest and React Testing Library.
+- **Prerequisites:** M0.9.
+- **Libraries:** Vitest and React Testing Library (`@testing-library/react`), both approved. `jsdom` is also required, because it gives Vitest a browser-like DOM to render into. `@testing-library/jest-dom` is not added unless it becomes clearly useful.
+- **Files:** `frontend/package.json` (`test` script), `frontend/vite.config.ts` (the `test` block), `frontend/src/test/setup.ts`, `frontend/src/app/App.test.tsx`
+- **Verification:** `npm test` passes a smoke test that renders `App`.
+- **Integration:** Every frontend task adds tests.
+- **Commit:** `chore(frontend): add vitest and testing library`
+
+#### M0.12 — Routing and layout foundation
+- **Purpose:** Build the route tree and the three layouts, with placeholder pages.
+- **Prerequisites:** M0.10, M0.11.
+- **Libraries:** React Router (approved).
+- **Files:**
+  - `frontend/src/app/{App,router}.tsx`
+  - `frontend/src/app/layouts/{AuthLayout,AppLayout,StaffLayout}.tsx`
+  - `frontend/src/shared/ui/{Skeleton,EmptyState,ErrorState}.tsx`
+  - `frontend/src/app/pages/{NotFoundPage,RouteErrorPage}.tsx`
+  - A few placeholder pages
+- **Implementation:**
+  - `createBrowserRouter` with lazy routes for `/`, `/login` and `/staff`.
+  - `AppLayout` shows a bottom nav below `md` and a sidebar at `md` and above.
+  - `StaffLayout` has an empty side nav for now.
+  - Add a 404 page and an `errorElement`.
+- **Verification:** RTL tests: an unknown route renders the 404 page, and the navigation renders. By hand: at 375 px width there is no horizontal scroll.
+- **Integration:** Every feature adds routes. `StaffLayout` gets capability-driven navigation in M2.
+- **Commit:** `feat(frontend): add routing and layout foundation`
+
+#### M0.13 — API client and query setup
+- **Purpose:** Set up a typed Axios client, the error format, and a React Query provider.
+- **Prerequisites:** M0.7, M0.12.
+- **Libraries:** Axios and TanStack Query (approved).
+- **Files:**
+  - `frontend/src/shared/api/{client,errors,tokenStore}.ts`
+  - `frontend/src/app/providers.tsx`
+  - `frontend/src/shared/api/errors.test.ts`
+  - A dev-only `HealthBadge` component that calls `/health/`
+- **Implementation:**
+  - The client uses `baseURL` from `VITE_API_URL`, `withCredentials`, and the `X-Client: web` header.
+  - `ApiError` parses the error format.
+  - `tokenStore` is an in-memory holder. Its refresh logic arrives in M1.9.
+  - `QueryClient` defaults: `staleTime` 30 s, `retry` 1, no retry on 4xx.
+- **Verification:**
+  - Unit tests parse a validation error, a network error and a 500 into `ApiError`.
+  - With `runserver` and `npm run dev` both running, the health badge shows "ok". This proves CORS works.
+- **Integration:** Every feature's `api.ts`.
+- **Commit:** `feat(frontend): add api client and query provider`
+
+#### M0.14 — Frontend CI
+- **Purpose:** Run the frontend checks on every push and pull request.
+- **Prerequisites:** M0.11.
+- **Files:** `.github/workflows/frontend.yml`
+- **Implementation:** Node LTS. Steps: `npm ci`, lint, typecheck, test, build and `npm audit --audit-level=high`. The workflow runs only when `frontend/**` changes.
+- **Verification:** The workflow is green on GitHub.
+- **Commit:** `ci(frontend): add frontend workflow`
+
+#### M0.15 — OpenAPI type generation (**deferred**; reconsider once the frontend foundation works)
+- **Purpose:** Generate TypeScript types from the backend's OpenAPI schema.
+- **Files:** `frontend/package.json` (a `gen:api` script), `frontend/src/shared/api/schema.d.ts` (generated and committed)
+- **Verification:** `npm run gen:api` produces the file, and `typecheck` passes.
+- **Commit:** `chore(frontend): generate api types from openapi schema`
+
+---
+
+## M1 — Identity
+
+Unless a task says otherwise, each one depends on the task before it.
+
+| # | Task | Main files | Verify | Commit |
+|---|---|---|---|---|
+| M1.1 | Department, Programme and Intake models, plus back-office admin | `apps/academics/{models,admin}.py`, migration, tests | Uniqueness tests, and the Programme → Department relationship | `feat(academics): add department, programme and intake models` |
+| M1.2 | Reference data read API | `apps/academics/{serializers,views,urls}.py` | Requires login, and the `?department=` filter works | `feat(academics): add reference data read endpoints` |
+| M1.3 | Development seed command | `apps/academics/management/commands/seed_academics.py`, `fixtures/academics_dev.json` | The command is idempotent (running it twice creates no duplicates) | `chore(academics): add development seed command` |
+| M1.4 | Student and staff profiles, the `create_user` service and `profile_complete` | `apps/accounts/{models,services,admin}.py` | The profile is created with the user, and `profile_complete` is correct for each combination | `feat(accounts): add student and staff profiles` |
+| M1.5 | Djoser registration with the domain rule and activation email | `apps/accounts/{serializers,views,urls,emails}.py`, email templates, `DJOSER` settings | Wrong domain → 400; one activation email sent; activation works; a reused token fails; `set_email` and `DELETE me` return 403 for non-admins | `feat(auth): add registration with email activation` |
+| M1.6 | JWT create, refresh, verify and logout with cookie transport and suspension checks | `apps/accounts/{jwt_views,jwt_serializers,authentication}.py` | Web and mobile get different response shapes; `email_not_verified` only with the right password; suspended users are rejected; refresh rotation works; a bad Origin is rejected | `feat(auth): add jwt login, refresh and logout` |
+| M1.7 | Password reset and change, with refresh-token revocation | `apps/accounts/{views,services}.py`, template | No enumeration of registered emails; old refresh tokens rejected after a change | `feat(auth): add password reset and change` |
+| M1.8 | The "me" serializer (profile, `profile_complete`, empty `capabilities`) | `apps/accounts/serializers.py` | Role and email are read-only; a programme outside the chosen department is rejected | `feat(accounts): add current user profile endpoint` |
+| M1.9 | Frontend session: `AuthProvider`, refresh on startup, 401 refresh interceptor, `RequireAuth` | `shared/api/client.ts`, `features/auth/{AuthProvider,RequireAuth}.tsx` | Mocked Axios: a 401 triggers one refresh and a retry; a failed refresh logs the user out | `feat(auth): add frontend session handling` |
+| M1.10 | Login and registration pages | `features/auth/pages/{Login,Register}Page.tsx`, `schemas.ts` | Zod validation; server field errors are shown; the `email_not_verified` state appears | `feat(auth): add login and registration pages` |
+| M1.11 | Activation, forgot-password and reset-password pages | `features/auth/pages/*` | Route parameters are posted; success and error states | `feat(auth): add activation and password reset pages` |
+| M1.12 | Onboarding and profile pages, including the change-password form | `features/profile/*` | The programme list depends on the department; incomplete profiles are redirected to onboarding | `feat(profile): add onboarding and profile pages` |
+
+## M2 — Permissions, publishing core and staff dashboard shell
+
+| # | Task | Main files | Verify | Commit |
+|---|---|---|---|---|
+| M2.1 | `capabilities_for`, `me.capabilities` and `me.publishers`, and the `HasCapability` permission class | `apps/accounts/capabilities.py`, `core/permissions.py` | A role × capability matrix test; a department staff member without a department gets no capabilities | `feat(accounts): add role-based capabilities` |
+| M2.2 | Staff user management API: list, role and department, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
+| M2.3 | Reference data management API | `apps/academics/manage_views.py` | Only admins; deactivating hides the item from the read API | `feat(academics): add reference data management endpoints` |
+| M2.4 | `Audience` model with 3 fields, its serializer and its summary text | `apps/audiences/*` | Summary text for each combination | `feat(audiences): add audience model` |
+| M2.5 | Visibility selectors `visible_audience_q` and `students_matching` | `apps/audiences/selectors.py` | A matrix of 15 or more cases; the two functions agree; no duplicate rows | `feat(audiences): add audience visibility selectors` |
+| M2.6 | `PublishableModel` and `TargetedModel`, `published_q`, and the publish and archive services | `apps/publishing/{models,selectors,services}.py` | Constraint violations; expiry boundaries; publishing sets `published_at` | `feat(publishing): add publishable content base` |
+| M2.7 | Publisher policy: `manageable_queryset`, `publishers_for`, `can_manage`, `validate_publisher`, and the `CanManageObject` permission | `apps/publishing/policies.py` | Role × publisher × department matrix | `feat(publishing): add publisher policy` |
+| M2.8 | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, and a staff home placeholder | `shared/auth/*`, `app/layouts/StaffLayout.tsx` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
+| M2.9 | Shared form components: fields, `MarkdownField`, `PublisherSelect`, `AudienceFields`, `SourceLinkFields`, the `Markdown` renderer, `DataTable`, `Dialog` and `Toast` | `shared/forms/*`, `shared/ui/*` | Markdown strips HTML and `javascript:` links; the audience summary is correct | `feat(frontend): add shared form and table components` |
+| M2.10 | Staff users page | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
+| M2.11 | Staff reference data pages | `features/staff/academics/*` (or `features/academics/staff/*`) | Create, edit and deactivate each type | `feat(staff): add reference data management pages` |
+
+## M3 — Announcements
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M3.1 | Model and back-office admin | Constraints and indexes | `feat(announcements): add announcement model` |
+| M3.2 | Read API: feed, detail and filters (django-filter) | 404 for invisible items; filters; ordering | `feat(announcements): add announcement feed endpoints` |
+| M3.3 | Manage API: CRUD, publish and archive | Every role × action; publishing as another department → 403 | `feat(announcements): add announcement management endpoints` |
+| M3.4 | Student feed page | Loading, error, empty and data states; filters kept in the URL | `feat(announcements): add announcement feed page` |
+| M3.5 | Student detail page | Markdown, source link, expired label | `feat(announcements): add announcement detail page` |
+| M3.6 | Staff list page | Status tabs; row actions follow `can_edit` | `feat(staff): add announcements management list` |
+| M3.7 | Staff form: create, edit, publish and archive | Validation; server errors shown; a successful publish updates the lists | `feat(staff): add announcement form` |
+
+## M4 — Documents
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M4.1 | Model and upload checks (`filetype`) | Spoofed type, oversized file and forbidden type are all rejected | `feat(documents): add document model with upload validation` |
+| M4.2 | Read API and streamed download | Login required; download headers correct | `feat(documents): add document library and download endpoints` |
+| M4.3 | Manage API (multipart) | Scope and capability checks | `feat(documents): add document management endpoints` |
+| M4.4 | Announcement attachments (`attachment_ids`) | Only documents the user can manage can be attached | `feat(announcements): support document attachments` |
+| M4.5 | Library and detail pages, and `FileLink` | Download through a blob | `feat(documents): add document library pages` |
+| M4.6 | Staff documents pages | Upload progress; client-side checks mirror the server | `feat(staff): add document management pages` |
+| M4.7 | Attachment field in the announcement form, and attachments on the detail page | Attach and remove | `feat(announcements): add attachments to form and detail` |
+
+## M5 — Events
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M5.1 | Model and poster (Pillow) | An end time before the start time is rejected | `feat(events): add event model` |
+| M5.2 | Read API: list, range and calendar | Events spanning several days overlap the range; the range is capped at 62 days | `feat(events): add event list and calendar endpoints` |
+| M5.3 | Manage API | Scope and capability checks | `feat(events): add event management endpoints` |
+| M5.4 | List and detail pages | Grouping by date; closed registration hides the button | `feat(events): add events list and detail pages` |
+| M5.5 | Calendar view (FullCalendar `daygrid` and `list`) | Changing the visible range fetches with the correct `from` and `to` | `feat(events): add events calendar view` |
+| M5.6 | Staff events pages | Poster preview; time validation | `feat(staff): add event management pages` |
+
+## M6 — Communities
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M6.1 | Models and link host checks | Valid and invalid URLs for each platform | `feat(communities): add community models` |
+| M6.2 | Read API and follow | `for_me` and `following` filters; following is idempotent | `feat(communities): add community directory and follow endpoints` |
+| M6.3 | Manage API for communities and links | Department scope; communities with no department are admin-only | `feat(communities): add community management endpoints` |
+| M6.4 | Directory and detail pages, and the follow button | Follow updates instantly and rolls back on error; links have the correct `href` and `rel` | `feat(communities): add community directory pages` |
+| M6.5 | Staff communities pages with a link editor | An invalid WhatsApp host is rejected | `feat(staff): add community management pages` |
+
+## M7 — Timetable
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M7.1 | `Course` and `Term` models and read API | Only one current term | `feat(academics): add course and term models` |
+| M7.2 | `Course` and `Term` manage API | Terms are admin-only; department staff manage their own department's courses | `feat(academics): add course and term management endpoints` |
+| M7.3 | `CourseSection`, `ClassMeeting` and `SectionEnrollment` models | Constraints; `external_ref` is unique per term | `feat(timetable): add section, meeting and enrolment models` |
+| M7.4 | Manage API for sections and nested meetings | Department scope; `updated_by` is recorded | `feat(timetable): add timetable management endpoints` |
+| M7.5 | Import service that works with any file format (`apply_timetable_rows`, dry run and report) | Create, update and unchanged cases, and errors with row numbers; no adapter yet | `feat(timetable): add timetable import service` |
+| M7.6 | Student API: section catalogue and my sections | Only current-term sections can be added | `feat(timetable): add section selection endpoints` |
+| M7.7 | Student API: today and week | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |
+| M7.8 | Staff timetable pages: terms, courses, sections and inline meetings | Create, edit and deactivate | `feat(staff): add timetable management pages` |
+| M7.9 | Student section picker | Search, add and remove | `feat(timetable): add section picker` |
+| M7.10 | Today and week views (FullCalendar `timegrid` for the week) | Empty state links to the section picker | `feat(timetable): add today and weekly timetable views` |
+| M7.11 | *Blocked until the university's timetable format is known:* first import adapter and staff import screen | Dry run, review, then apply | `feat(timetable): add <format> timetable import` |
+
+## M8 — Applications and forms
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M8.1 | Model and derived status | Every status boundary | `feat(applications): add application listing model` |
+| M8.2 | Read API | Status filter; default ordering | `feat(applications): add application listing endpoints` |
+| M8.3 | Manage API, including supporting documents | Scope and capability checks | `feat(applications): add application management endpoints` |
+| M8.4 | List and detail pages | Countdown; closed listings disable the button | `feat(applications): add applications pages` |
+| M8.5 | Staff applications pages | Checks that the closing date is after the opening date | `feat(staff): add application management pages` |
+
+## M9 — Notifications
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M9.1 | Model and API: list, unread count, mark one read, mark all read | Users see only their own notifications | `feat(notifications): add in-app notification endpoints` |
+| M9.2 | `notify_audience` called when important announcements and new events are published | Only matching students; publishing twice sends nothing new; normal priority sends nothing | `feat(notifications): notify audience on publish` |
+| M9.3 | Bell, notification list page, and targets that link to the item | 60-second polling while the tab is visible; clicking marks the notification read and opens the item | `feat(notifications): add notification bell and list` |
+| M9.4 | System broadcast: super admin API and a small staff form | Every active user gets one | `feat(notifications): add system broadcast` |
+
+## M10 — Dashboard, search and release
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M10.1 | Dashboard API | 15 queries or fewer; visibility is the same as in the lists | `feat(dashboard): add dashboard endpoint` |
+| M10.2 | Student dashboard page | Each section has its own empty state | `feat(dashboard): add student dashboard page` |
+| M10.3 | Global search API | Items the user cannot see never appear | `feat(search): add global search endpoint` |
+| M10.4 | Search page and header search box | 300 ms debounce; a message for queries that are too short | `feat(search): add search page` |
+| M10.5 | Staff home: shortcuts and "my recent drafts" | Shows only granted shortcuts | `feat(staff): add staff home page` |
+| M10.6 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
+| M10.7 | Deployment guide and example nginx and systemd configuration (no Docker) | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
+
+---
+
+## Later backlog
+
+This work is kept documented so the MVP design leaves room for it.
+
+| Area | Items |
+|---|---|
+| Publishing | Community managers and a `community` publisher type, lecturer publishing to their sections, an approval workflow, scheduled publishing and the cron job it needs |
+| Targeting | Course, section, community-follower and semester targeting; document audiences |
+| Notifications | Closing and opening reminders, event and timetable change notifications, push via Expo with a `Device` model, email digests, preferences, retention |
+| Timetable | Additional import adapters, one-off class exceptions, lecturer edits, ICS export |
+| Content | Read tracking, event "interested" markers, ICS export, document versioning |
+| Platform | Anonymized self-service account deletion and data export, audit log, S3 storage, image resizing, cursor pagination and `updated_since`, full-text search, end-to-end tests with Playwright, SSO |
+| Integrations | Telegram bot inbox and outbound posting (see [08](08-messaging-integrations.md)); WhatsApp Cloud API outbound only, and only if justified |
+| Mobile | `packages/shared` extraction and an Expo app for the student side |
