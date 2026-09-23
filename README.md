@@ -20,6 +20,34 @@ UniFlow/
 - **Web:** React, TypeScript, Vite, React Router, TanStack Query, Axios, Tailwind CSS, React Hook Form, Zod
 - **Mobile (later):** React Native with Expo, using the same `/api/v1/` API
 
+## Getting started
+
+> The backend and frontend are not scaffolded yet. This section grows as each foundation task (M0) lands.
+
+### Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| Git | recent | Line endings are normalized to LF by `.gitattributes` |
+| Python | 3.12+ | Backend |
+| Node.js | current LTS | Frontend |
+| MySQL | 8.4 (any 8.x works) | Native local install, **no Docker** |
+| Editor | any with [EditorConfig](https://editorconfig.org) support | Picks up `.editorconfig` automatically (VS Code needs the EditorConfig extension) |
+
+### Setup
+
+1. Clone the repository.
+2. Local database setup: see `docs/development-setup.md` (added in M0.2).
+3. Backend setup: added in M0.3–M0.5.
+4. Frontend setup: added in M0.9–M0.11.
+
+### Repository conventions
+
+- **Configuration is scoped.** The root holds only repository-wide files: `.gitattributes`, `.editorconfig`, a `.gitignore` for OS and editor files, and `.github/`. Backend-specific configuration and ignores live in `backend/`, and frontend-specific ones in `frontend/`.
+- **Line endings:** LF in the repository for all text files, except Windows `.bat` and `.cmd` scripts.
+- **Indentation:** 4 spaces for Python, 2 spaces for everything else.
+- **Workflow:** one small task per commit, committed directly on `main`, using [Conventional Commits](https://www.conventionalcommits.org/). See [docs/11-roadmap.md](docs/11-roadmap.md#development-workflow).
+
 ## Documentation
 
 Start with [docs/README.md](docs/README.md). The development workflow and task list are in [docs/11-roadmap.md](docs/11-roadmap.md).

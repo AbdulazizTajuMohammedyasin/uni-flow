@@ -1,0 +1,31 @@
+# Repository-wide ignores: operating-system and editor files ONLY.
+# Backend rules live in backend/.gitignore; frontend rules live in frontend/.gitignore.
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# JetBrains IDEs
+.idea/
+
+# VS Code: ignore personal settings, but allow sharing recommended extensions
+.vscode/*
+!.vscode/extensions.json
+
+# Vim / Emacs
+*.swp
+*.swo
+\#*\#
+.#*
