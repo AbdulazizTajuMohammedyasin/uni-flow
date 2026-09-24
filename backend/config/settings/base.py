@@ -29,7 +29,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # UniFlow apps
+    "apps.accounts",
 ]
+
+# Email-based custom user. Must be set before the first migration.
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

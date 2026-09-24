@@ -62,6 +62,15 @@ Commit `Pipfile` and `Pipfile.lock` together.
 | Environment variables | `backend/.env`, loaded by `config/env.py`. Copy it from `.env.example`. Real environment variables win. `.env` is never committed. |
 | Django admin | `/django-admin/`. A back-office for developers and super admins only. |
 
-## Status
+## Database migrations
 
-- **Do not run `migrate` yet.** The custom user model (M0.6) must exist before the first migration.
+UniFlow uses a custom, email-based user model (`accounts.User`, `AUTH_USER_MODEL = "accounts.User"`). There is no `username`.
+
+```powershell
+pipenv run python manage.py migrate
+pipenv run python manage.py createsuperuser   # prompts for email, full name and password
+```
+
+The super admin can then log in to the back-office at `http://127.0.0.1:8000/django-admin/` (run `pipenv run python manage.py runserver` first).
+
+> **If you ran `migrate` before M0.6,** your database contains Django's default `auth_user` tables and `migrate` will fail with `InconsistentMigrationHistory`. The database has no real data yet, so drop and recreate it (see [docs/development-setup.md](../docs/development-setup.md#1-local-database)) and run `migrate` again.

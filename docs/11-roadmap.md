@@ -142,23 +142,27 @@ UniFlow is built **one small task at a time**.
 
 #### M0.6 — Custom user model
 - **Purpose:** Create the email-based user with a role, before the first migration.
-- **Prerequisites:** M0.5.
+- **Prerequisites:** M0.5, and a **fresh** `uniflow` database. If `migrate` was ever run before this task, drop and recreate the database.
 - **Files:**
-  - `backend/apps/accounts/{__init__,apps,models,managers,admin}.py`
-  - `backend/apps/accounts/migrations/0001_initial.py`
-  - `backend/apps/accounts/tests/test_models.py`
-  - `config/settings/base.py`: `AUTH_USER_MODEL` and `INSTALLED_APPS`
+  - `backend/apps/accounts/{__init__,apps,models,managers,forms,admin}.py`
+  - `backend/apps/accounts/migrations/{__init__,0001_initial}.py`
+  - `backend/apps/accounts/tests/{__init__,test_models}.py`
+  - `config/settings/base.py`: `INSTALLED_APPS` and `AUTH_USER_MODEL`
+  - `backend/README.md`
 - **Implementation:**
-  - `User(AbstractUser)` with `username=None`, a unique `email` as `USERNAME_FIELD`, `full_name`, `role` (TextChoices) and `is_suspended`.
-  - A `CheckConstraint` on `role`.
-  - `UserManager`: `create_user` lowercases the email. `create_superuser` sets `role=super_admin`, `is_staff`, `is_superuser` and `is_active`.
-  - A back-office admin, built on `UserAdmin` and adapted for email.
-  - Then the **first `migrate`**.
+  - `UserRole` TextChoices, also available as `User.Role`.
+  - `User(AbstractUser)` with `username`, `first_name` and `last_name` removed. It has a unique `email` (the `USERNAME_FIELD`), `full_name` (required, and asked for by `createsuperuser`), `role` (indexed, default `student`) and `is_suspended`.
+  - A `CheckConstraint`, `accounts_user_role_valid`.
+  - `UserManager`:
+    - It lowercases the **whole** email address, and `User.clean()` does the same, which covers the admin forms.
+    - `create_superuser` requires `role=super_admin`, `is_staff` and `is_superuser`.
+  - Uniqueness is case-insensitive at the database level too, because the `utf8mb4_0900_ai_ci` collation is case-insensitive.
+  - The back-office `UserAdmin` uses email-based versions of `AdminUserCreationForm` and `UserChangeForm`.
+  - `is_active` keeps Django's default of True for accounts created by admins. Djoser's registration creates users as inactive (M1.5).
 - **Verification:**
-  1. `pytest apps/accounts` covers: creating a user, lowercasing, a duplicate email failing, and creating a superuser.
-  2. `python manage.py migrate` succeeds.
-  3. `createsuperuser` succeeds.
-  4. Logging in at `/django-admin/` works.
+  1. `pipenv run pytest` passes the 11 user-model tests, including case-insensitive uniqueness and the role constraint on MySQL.
+  2. Ruff is clean, and `makemigrations --check` reports no changes.
+  3. The developer resets the database, then runs `migrate` and `createsuperuser`, and logs in at `/django-admin/`.
 - **Integration:** Profiles (M1.4), Djoser (M1.5) and capabilities (M2.1).
 - **Commit:** `feat(auth): add custom user model`
 
