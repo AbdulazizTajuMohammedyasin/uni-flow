@@ -18,5 +18,6 @@ from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Back-office for developers and super admins only; the staff UI is the React /staff area.
+    path('django-admin/', admin.site.urls),
 ]

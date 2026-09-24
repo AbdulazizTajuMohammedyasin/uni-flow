@@ -92,7 +92,8 @@ UniFlow is built **one small task at a time**.
   - `backend/.env.example`
   - `backend/requirements.txt`
   - `backend/apps/__init__.py` and `backend/core/__init__.py`, as empty packages
-  - `manage.py`, `wsgi.py` and `asgi.py`, changed to use `config.settings.dev` by default
+  - `manage.py` defaults to `config.settings.dev`. `wsgi.py` and `asgi.py` default to `config.settings.prod`, so a server that forgets `DJANGO_SETTINGS_MODULE` fails safe.
+  - `config/urls.py` (the admin moves to `/django-admin/`) and `backend/README.md` (the `.env` setup steps)
 - **Implementation:**
   - `DATABASES` is built from `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` and `DB_PORT`, with utf8mb4 and strict-mode `OPTIONS`.
   - `TIME_ZONE` comes from the environment, with `USE_TZ=True`.

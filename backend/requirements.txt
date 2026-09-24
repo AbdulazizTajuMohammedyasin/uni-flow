@@ -1,3 +1,4 @@
 # Runtime dependencies for the UniFlow backend.
 # Each dependency is added by the roadmap task that first needs it (see docs/11-roadmap.md).
 Django>=5.2,<5.3
+mysqlclient>=2.2,<2.3
