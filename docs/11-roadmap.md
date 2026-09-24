@@ -117,14 +117,26 @@ UniFlow is built **one small task at a time**.
 
 #### M0.5 — Backend test and lint tooling
 - **Purpose:** Make `pytest` and `ruff` available before any real code is written.
-- **Prerequisites:** M0.4.
-- **Libraries:** `pytest`, `pytest-django` and `ruff`, all approved. `factory_boy` is deferred; tests use plain helper functions until factories are clearly needed.
+- **Prerequisites:** M0.4a.
+- **Libraries:** these Pipenv `[dev-packages]`, all approved:
+  - `pytest>=9.1,<10`
+  - `pytest-django>=4.14,<5`
+  - `ruff>=0.16,<0.17`. Ruff is pinned to its minor version because its 0.x releases can change formatting and lint rules.
+
+  `factory_boy` is deferred.
 - **Files:**
-  - `backend/Pipfile` and `Pipfile.lock`: `pipenv install --dev pytest pytest-django ruff` adds them to `[dev-packages]`
-  - `backend/pyproject.toml` (the `[tool.ruff]` and `[tool.pytest.ini_options]` sections, with `DJANGO_SETTINGS_MODULE=config.settings.test`)
-  - `backend/conftest.py`
-  - `backend/tests/test_smoke.py`, which checks that the settings load and a database query works
-- **Verification:** `pytest` passes and creates and drops `test_uniflow`. `ruff check .` and `ruff format --check .` are clean.
+  - `backend/Pipfile` and `Pipfile.lock`
+  - `backend/pyproject.toml`: tool configuration only
+    - `[tool.ruff]`: py313, line length 100, migrations excluded, and the rule sets E, F, I, UP, B and DJ
+    - `[tool.pytest.ini_options]`: `DJANGO_SETTINGS_MODULE=config.settings.test`
+  - `backend/tests/__init__.py` and `backend/tests/test_smoke.py`
+  - `backend/README.md`
+  - A one-time `ruff format` of the existing files (the Django-generated `manage.py`, `wsgi.py`, `asgi.py` and `urls.py`, plus one long line in `env.py`). This changes style only.
+  - There is no `conftest.py` yet. It will be added when there are shared fixtures.
+- **Verification:**
+  1. `pipenv run pytest` passes 3 tests: the settings module, MySQL with utf8mb4, and a query against `test_uniflow`.
+  2. `pipenv run ruff check .` and `pipenv run ruff format --check .` are clean.
+  3. `manage.py check` and `makemigrations --check --dry-run` are unchanged.
 - **Integration:** Every backend task adds tests.
 - **Commit:** `chore(backend): add pytest and ruff tooling`
 

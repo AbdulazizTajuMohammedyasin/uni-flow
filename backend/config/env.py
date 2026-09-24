@@ -36,7 +36,9 @@ def load_env_file(path: Path) -> None:
         key, separator, value = line.partition("=")
         key = key.strip()
         if not separator or not key:
-            raise ImproperlyConfigured(f"{path}:{line_number}: expected KEY=VALUE, got {raw_line!r}")
+            raise ImproperlyConfigured(
+                f"{path}:{line_number}: expected KEY=VALUE, got {raw_line!r}"
+            )
 
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:

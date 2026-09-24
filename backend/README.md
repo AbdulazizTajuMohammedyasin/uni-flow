@@ -33,6 +33,16 @@ To avoid typing `pipenv run` every time, open a shell inside the environment wit
 
 > Pipenv also loads `backend/.env` automatically for `pipenv run` and `pipenv shell`. That is consistent with `config/env.py`, which never overrides variables that are already set.
 
+### Tests and linting
+
+```powershell
+pipenv run pytest                  # uses config.settings.test; creates and drops the test_uniflow database
+pipenv run ruff check .            # lint
+pipenv run ruff format .           # format (use --check to verify without changing files)
+```
+
+Tests run against **MySQL**, not SQLite. The MySQL account in `.env` must be able to create and drop `test_uniflow`. Tool configuration is in `pyproject.toml`.
+
 ### Adding a dependency
 
 Only add a dependency in the roadmap task that needs it, and only once it is approved:

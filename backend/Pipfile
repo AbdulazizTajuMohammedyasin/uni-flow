@@ -3,13 +3,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-# Runtime dependencies. Each is added by the roadmap task that first needs it (docs/11-roadmap.md).
 [packages]
 django = ">=5.2,<5.3"
 mysqlclient = ">=2.2,<2.3"
 
-# Development-only tools (tests, lint). Added from M0.5.
 [dev-packages]
+pytest = ">=9.1,<10"
+pytest-django = ">=4.14,<5"
+ruff = ">=0.16,<0.17"
 
 [requires]
 python_version = "3.13"
