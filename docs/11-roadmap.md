@@ -61,18 +61,13 @@ UniFlow is built **one small task at a time**.
 - **Integration:** Every later task follows these conventions.
 - **Commit:** `chore(repo): add repository conventions`
 
-#### M0.2 — Local MySQL setup
-- **Purpose:** Create a reproducible local MySQL 8.4 database, installed natively without Docker.
-- **Prerequisites:** M0.1. MySQL 8.4 installed with the MySQL Installer.
-- **Files:**
-  - `backend/scripts/mysql/create_database.sql`: creates the `uniflow` database (utf8mb4, `utf8mb4_0900_ai_ci`) and the `uniflow`@`localhost` user, and grants it `ALL` on `uniflow.*` and `test_uniflow.*`. The password is a placeholder to replace.
-  - `docs/development-setup.md`: install MySQL, run the script, and set up the prerequisites (Python 3.12 or newer, Node LTS).
-- **Verification:**
-  1. `mysql -u root -p < backend/scripts/mysql/create_database.sql`
-  2. `mysql -u uniflow -p -e "SELECT @@character_set_server; SHOW DATABASES;"` lists `uniflow`.
-  3. `SHOW CREATE DATABASE uniflow;` shows utf8mb4.
-- **Integration:** M0.4 connects to this database, and M0.5 creates `test_uniflow`.
-- **Commit:** `chore(db): add local mysql setup script and guide`
+#### M0.2 — Local database (manual step, no commit)
+- **Decision:** there is no setup script. Each developer creates the database themselves in their existing local MySQL server, and Django connects to it with the settings from M0.4.
+- **Requirements:**
+  - MySQL 8.x is running locally.
+  - A database named **`uniflow`** exists and uses `utf8mb4`. This is the MySQL 8 default. Example: `CREATE DATABASE uniflow CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;`
+  - The MySQL account Django uses can create and drop the `test_uniflow` database. pytest needs this from M0.5 onwards. Root can do this, and a dedicated user needs `ALL` on `test_uniflow.*`.
+- **Documented in:** [development-setup.md](development-setup.md#1-local-database).
 
 #### M0.3 — Django project initialization
 - **Purpose:** Create a bare Django 5.2 project inside `backend/`.
@@ -81,7 +76,7 @@ UniFlow is built **one small task at a time**.
   - `backend/requirements.txt` (`Django>=5.2,<5.3`)
   - `backend/.gitignore` (`.venv/`, `__pycache__/`, `*.pyc`, `.env`, `media/`, `staticfiles/`, `.pytest_cache/`, `.ruff_cache/`, `.coverage`)
   - `backend/manage.py` and `backend/config/{__init__,settings,urls,wsgi,asgi}.py`, created by `django-admin startproject config .`
-  - `docs/development-setup.md` (add the steps to create a venv and install the requirements)
+  - `backend/README.md`: backend setup steps (venv, install, check). Backend-only documentation lives with the backend.
 - **Implementation:** Use the default settings. **Do not run `migrate`**, because the custom user model must come first (M0.6).
 - **Verification:** `python -m venv .venv`, activate it, `pip install -r requirements.txt`, then `python manage.py check` reports "System check identified no issues".
 - **Integration:** M0.4 restructures the settings.
@@ -89,7 +84,7 @@ UniFlow is built **one small task at a time**.
 
 #### M0.4 — Backend configuration
 - **Purpose:** Split the settings by environment, read configuration from `.env`, and connect to MySQL.
-- **Prerequisites:** M0.2, M0.3.
+- **Prerequisites:** M0.3, plus the local `uniflow` database (M0.2).
 - **Libraries:** `mysqlclient` only. **No `django-environ`:** configuration comes from a small `config/env.py` helper that uses only the standard library.
 - **Files:**
   - `backend/config/settings/{__init__,base,dev,test,prod}.py`, replacing `settings.py`

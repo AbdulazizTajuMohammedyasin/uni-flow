@@ -90,7 +90,6 @@ backend/
 ├── pyproject.toml              # tool config only: ruff, pytest
 ├── .env.example
 ├── .gitignore                  # backend-only ignores
-├── scripts/mysql/create_database.sql
 ├── config/
 │   ├── settings/{base,dev,test,prod}.py
 │   ├── urls.py                 # /api/v1/ and /django-admin/
@@ -162,10 +161,8 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 
 ### MySQL configuration (local, native install, no Docker)
 
-- Install **MySQL 8.4 LTS** with the official MySQL Installer for Windows. Any MySQL 8.x works.
-- `backend/scripts/mysql/create_database.sql` creates:
-  - the `uniflow` database with `CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`,
-  - a `uniflow` user with privileges on `uniflow.*` and `test_uniflow.*`, so pytest can create and drop the test database.
+- Any local **MySQL 8.x** server works. 8.4 LTS is recommended for staging and production.
+- Each developer **creates the `uniflow` database manually**, with `utf8mb4` (the MySQL 8 default). There is no setup script. The account Django uses must be able to create and drop `test_uniflow` for pytest. See [development-setup.md](development-setup.md#1-local-database).
 - Django `OPTIONS` sets `{"charset": "utf8mb4", "init_command": "SET sql_mode='STRICT_TRANS_TABLES'"}`.
 - `USE_TZ = True`, and every datetime is stored in UTC.
 - **Time zone rule.** Code never uses MySQL-side date conversion (the `__date`, `__week_day` or `Trunc*` lookups with a local time zone). Local-day boundaries such as "today in Kuala Lumpur" are computed in Python and then queried as UTC ranges. This means the MySQL time zone tables, which are awkward to load on Windows, are never needed.

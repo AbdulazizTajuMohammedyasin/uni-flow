@@ -37,7 +37,7 @@ UniFlow/
 ### Setup
 
 1. Clone the repository.
-2. Local database setup: see `docs/development-setup.md` (added in M0.2).
+2. Create a local MySQL database named `uniflow` (see [docs/development-setup.md](docs/development-setup.md#1-local-database)).
 3. Backend setup: added in M0.3–M0.5.
 4. Frontend setup: added in M0.9–M0.11.
 
