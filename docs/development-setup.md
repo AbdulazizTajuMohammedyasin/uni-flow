@@ -7,7 +7,8 @@ This guide sets up a local UniFlow development environment. UniFlow uses **nativ
 | Tool | Version | Check |
 |---|---|---|
 | Git | recent | `git --version` |
-| Python | 3.12+ | `python --version` |
+| Python | 3.13 | `python --version` |
+| Pipenv | recent | `pipenv --version` (install: `python -m pip install --user pipenv`) |
 | Node.js | current LTS | `node --version` |
 | MySQL Server | 8.x (8.4 LTS recommended) | `mysql --version` |
 

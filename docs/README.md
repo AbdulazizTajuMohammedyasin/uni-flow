@@ -30,7 +30,7 @@ UniFlow/
 ├── .github/workflows/    # repo-level CI (backend.yml, frontend.yml)
 ├── README.md
 ├── docs/
-├── backend/              # Django API — owns its own .gitignore, .env.example, requirements*.txt, pyproject.toml
+├── backend/              # Django API — owns its own .gitignore, .env.example, Pipfile, Pipfile.lock, pyproject.toml
 └── frontend/             # React app — owns its own .gitignore, .env.example, package.json, eslint/tsconfig/vite config
 ```
 

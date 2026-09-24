@@ -4,21 +4,45 @@ The Django + Django REST Framework API for UniFlow. See [docs/](../docs/README.m
 
 ## Setup (Windows, PowerShell)
 
-Requires Python 3.12+ and a local MySQL 8.x server with a `uniflow` database ([docs/development-setup.md](../docs/development-setup.md#1-local-database)). Run these commands from the `backend/` folder.
+Requirements:
+
+- Python 3.13
+- [Pipenv](https://pipenv.pypa.io/): `python -m pip install --user pipenv`
+- A local MySQL 8.x server with a `uniflow` database ([docs/development-setup.md](../docs/development-setup.md#1-local-database))
+
+Dependencies live in `Pipfile` (the ranges you allow) and `Pipfile.lock` (exact pinned versions and hashes). Both are committed.
+
+**Keep the virtual environment inside `backend/.venv`** (it is git-ignored). Set this once for your user account, then open a new terminal:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-
-Copy-Item .env.example .env      # then edit .env: set DB_PASSWORD and DJANGO_SECRET_KEY
-python manage.py check
-python manage.py showmigrations  # connects to MySQL; lists Django's built-in apps as unapplied
+[Environment]::SetEnvironmentVariable("PIPENV_VENV_IN_PROJECT", "1", "User")
 ```
 
-`check` should report `System check identified no issues (0 silenced).` `showmigrations` should list the `admin`, `auth`, `contenttypes` and `sessions` migrations, all unapplied (`[ ]`), without a connection error.
+Run these commands from the `backend/` folder:
 
-> If PowerShell blocks `Activate.ps1`, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then try again.
+```powershell
+pipenv sync --dev                # create .venv and install exactly what Pipfile.lock pins
+Copy-Item .env.example .env      # then edit .env: DB_USER, DB_PASSWORD and DJANGO_SECRET_KEY
+pipenv run python manage.py check
+pipenv run python manage.py showmigrations
+```
+
+`check` should report `System check identified no issues (0 silenced).`
+
+To avoid typing `pipenv run` every time, open a shell inside the environment with `pipenv shell`, then run `python manage.py ...` directly.
+
+> Pipenv also loads `backend/.env` automatically for `pipenv run` and `pipenv shell`. That is consistent with `config/env.py`, which never overrides variables that are already set.
+
+### Adding a dependency
+
+Only add a dependency in the roadmap task that needs it, and only once it is approved:
+
+```powershell
+pipenv install "package>=x.y,<x.z"          # runtime dependency
+pipenv install --dev "package>=x.y,<x.z"    # development-only tool
+```
+
+Commit `Pipfile` and `Pipfile.lock` together.
 
 ## Configuration
 

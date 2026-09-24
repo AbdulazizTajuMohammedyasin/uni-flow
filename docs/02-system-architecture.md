@@ -39,6 +39,7 @@ Each library is added **in the task that first needs it**, never earlier.
 
 | Concern | Library | Status | First task |
 |---|---|---|---|
+| Dependency management | **Pipenv** (`Pipfile` + `Pipfile.lock`), with the virtual environment kept in `backend/.venv` (`PIPENV_VENV_IN_PROJECT=1`) | Decided | M0.4a |
 | Framework | Django **5.2 LTS** | Approved | M0.3 |
 | API | Django REST Framework | Approved | M0.7 |
 | Auth (accounts) | Djoser | Approved | M1.5 |
@@ -85,8 +86,8 @@ Each app has both a `views.py` (read) and a `manage_views.py` (manage). Keeping 
 ```
 backend/
 ├── manage.py
-├── requirements.txt            # runtime deps
-├── requirements-dev.txt        # test/lint deps (-r requirements.txt)
+├── Pipfile                     # dependency ranges: [packages] runtime, [dev-packages] test/lint
+├── Pipfile.lock                # exact pinned versions + hashes (committed)
 ├── pyproject.toml              # tool config only: ruff, pytest
 ├── .env.example
 ├── .gitignore                  # backend-only ignores

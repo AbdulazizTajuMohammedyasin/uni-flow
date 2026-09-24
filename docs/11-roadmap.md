@@ -73,7 +73,7 @@ UniFlow is built **one small task at a time**.
 - **Purpose:** Create a bare Django 5.2 project inside `backend/`.
 - **Prerequisites:** M0.1.
 - **Files:**
-  - `backend/requirements.txt` (`Django>=5.2,<5.3`)
+  - `backend/requirements.txt` (`Django>=5.2,<5.3`). Replaced by `Pipfile` in M0.4a.
   - `backend/.gitignore` (`.venv/`, `__pycache__/`, `*.pyc`, `.env`, `media/`, `staticfiles/`, `.pytest_cache/`, `.ruff_cache/`, `.coverage`)
   - `backend/manage.py` and `backend/config/{__init__,settings,urls,wsgi,asgi}.py`, created by `django-admin startproject config .`
   - `backend/README.md`: backend setup steps (venv, install, check). Backend-only documentation lives with the backend.
@@ -90,7 +90,7 @@ UniFlow is built **one small task at a time**.
   - `backend/config/settings/{__init__,base,dev,test,prod}.py`, replacing `settings.py`
   - `backend/config/env.py`: reads `backend/.env` if it exists (`KEY=VALUE` lines, `#` comments), never overrides real environment variables, and provides `env_str`, `env_bool` and `env_list`
   - `backend/.env.example`
-  - `backend/requirements.txt`
+  - `backend/requirements.txt` (adds `mysqlclient`; moved into `Pipfile` in M0.4a)
   - `backend/apps/__init__.py` and `backend/core/__init__.py`, as empty packages
   - `manage.py` defaults to `config.settings.dev`. `wsgi.py` and `asgi.py` default to `config.settings.prod`, so a server that forgets `DJANGO_SETTINGS_MODULE` fails safe.
   - `config/urls.py` (the admin moves to `/django-admin/`) and `backend/README.md` (the `.env` setup steps)
@@ -108,12 +108,19 @@ UniFlow is built **one small task at a time**.
 - **Integration:** Every backend task after this uses these settings.
 - **Commit:** `chore(backend): configure settings, environment and mysql`
 
+#### M0.4a — Switch dependency management to Pipenv (done)
+- **Purpose:** Manage backend dependencies with Pipenv instead of `venv` plus `requirements.txt`, as the developer chose.
+- **Files:** adds `backend/Pipfile` and `backend/Pipfile.lock`, and deletes `backend/requirements.txt`. Updates `backend/README.md` and the docs that mention installing.
+- **Implementation:** `PIPENV_VENV_IN_PROJECT=1` keeps the environment in `backend/.venv`, which is already git-ignored. The runtime packages are `django>=5.2,<5.3` and `mysqlclient>=2.2,<2.3`, and the Python version is `3.13`. Pipenv also loads `backend/.env` automatically, which is compatible with `config/env.py`.
+- **Verification:** `pipenv sync --dev`, `pipenv run python manage.py check`, `pipenv run python -c "import MySQLdb"`.
+- **Commit:** `chore(backend): switch dependency management to pipenv`
+
 #### M0.5 — Backend test and lint tooling
 - **Purpose:** Make `pytest` and `ruff` available before any real code is written.
 - **Prerequisites:** M0.4.
 - **Libraries:** `pytest`, `pytest-django` and `ruff`, all approved. `factory_boy` is deferred; tests use plain helper functions until factories are clearly needed.
 - **Files:**
-  - `backend/requirements-dev.txt`
+  - `backend/Pipfile` and `Pipfile.lock`: `pipenv install --dev pytest pytest-django ruff` adds them to `[dev-packages]`
   - `backend/pyproject.toml` (the `[tool.ruff]` and `[tool.pytest.ini_options]` sections, with `DJANGO_SETTINGS_MODULE=config.settings.test`)
   - `backend/conftest.py`
   - `backend/tests/test_smoke.py`, which checks that the settings load and a database query works
@@ -170,7 +177,7 @@ UniFlow is built **one small task at a time**.
 - **Purpose:** Run the backend checks on every push and pull request.
 - **Prerequisites:** M0.7.
 - **Files:** `.github/workflows/backend.yml`
-- **Implementation:** Ubuntu with Python 3.12 and a MySQL 8.4 *service*. Steps: install `requirements-dev.txt`, `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check --dry-run` and `pytest`. (`pip-audit` would be an extra tool, so it is added only if approved.) The workflow runs only when `backend/**` or the workflow file changes.
+- **Implementation:** Ubuntu with Python 3.13 (matching `Pipfile`) and a MySQL 8.4 *service*. Steps: `pip install pipenv`, then `pipenv sync --dev`, `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check --dry-run` and `pytest`. (`pip-audit` would be an extra tool, so it is added only if approved.) The workflow runs only when `backend/**` or the workflow file changes.
 - **Verification:** After you push `main`, the workflow is green on GitHub.
 - **Integration:** Guards `main`.
 - **Commit:** `ci(backend): add backend workflow`

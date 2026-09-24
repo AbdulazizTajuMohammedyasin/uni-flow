@@ -29,7 +29,8 @@ UniFlow/
 | Tool | Version | Notes |
 |---|---|---|
 | Git | recent | Line endings are normalized to LF by `.gitattributes` |
-| Python | 3.12+ | Backend |
+| Python | 3.13 | Backend |
+| Pipenv | recent | Backend dependency management (`Pipfile` / `Pipfile.lock`) |
 | Node.js | current LTS | Frontend |
 | MySQL | 8.4 (any 8.x works) | Native local install, **no Docker** |
 | Editor | any with [EditorConfig](https://editorconfig.org) support | Picks up `.editorconfig` automatically (VS Code needs the EditorConfig extension) |
@@ -38,7 +39,7 @@ UniFlow/
 
 1. Clone the repository.
 2. Create a local MySQL database named `uniflow` (see [docs/development-setup.md](docs/development-setup.md#1-local-database)).
-3. Backend setup: added in M0.3–M0.5.
+3. Backend setup: see [backend/README.md](backend/README.md).
 4. Frontend setup: added in M0.9–M0.11.
 
 ### Repository conventions

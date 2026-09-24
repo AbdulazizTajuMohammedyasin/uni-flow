@@ -57,10 +57,10 @@ There is no Docker in the current plan. Containerization can be revisited if the
         MySQL 8.4 (same VM, native)   ·   nightly mysqldump + media backup → off-site
 ```
 
-- Python virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M10.7 only if the final deployment design needs it.
+- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M10.7 only if the final deployment design needs it.
 - Release steps:
   1. `git pull`
-  2. `pip install -r requirements.txt`
+  2. `pipenv sync` (installs exactly what `Pipfile.lock` pins, with no dev packages)
   3. `manage.py migrate`
   4. `collectstatic`
   5. restart gunicorn
