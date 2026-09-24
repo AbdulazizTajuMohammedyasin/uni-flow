@@ -1,0 +1,24 @@
+# Backend-only ignores. Repository-wide OS/editor rules live in the root .gitignore.
+
+# Virtual environment
+.venv/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Local configuration and secrets (backend/.env.example IS committed, from M0.4)
+.env
+
+# User uploads and collected static files
+media/
+staticfiles/
+
+# Local SQLite file, in case Django's default database is ever touched before M0.4 switches to MySQL
+db.sqlite3
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
