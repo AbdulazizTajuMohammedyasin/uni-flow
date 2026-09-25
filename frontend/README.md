@@ -23,10 +23,13 @@ npm run dev                      # opens on http://localhost:5173
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Lint with oxlint (the linter that ships with the Vite template) |
 | `npm run typecheck` | TypeScript type check only |
+| `npm test` | Run all tests once (Vitest + React Testing Library, in a simulated browser) |
+| `npm run test:watch` | Re-run tests automatically on every save |
 
 ## Conventions
 
 - `@/` is an alias for `src/`, for example `import { api } from '@/shared/api/client'`.
 - TypeScript runs in `strict` mode.
 - **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/styles/index.css`, which holds the Tailwind import, the UniFlow theme tokens (for example `bg-brand-600`) and the base body styles. Add a theme token only when a real screen needs it.
+- **Tests** sit next to the code they test, as `*.test.ts(x)`, for example `src/App.test.tsx`. Use React Testing Library queries such as `getByRole` and `getByText`, and test what a user sees, not implementation details.
 - Only `VITE_*` environment variables reach the browser, so never put secrets in `.env`.

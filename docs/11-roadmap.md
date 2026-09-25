@@ -265,9 +265,22 @@ UniFlow is built **one small task at a time**.
 #### M0.11 — Frontend test tooling
 - **Purpose:** Set up Vitest and React Testing Library.
 - **Prerequisites:** M0.9.
-- **Libraries:** Vitest and React Testing Library (`@testing-library/react`), both approved. `jsdom` is also required, because it gives Vitest a browser-like DOM to render into. `@testing-library/jest-dom` is not added unless it becomes clearly useful.
-- **Files:** `frontend/package.json` (`test` script), `frontend/vite.config.ts` (the `test` block), `frontend/src/test/setup.ts`, `frontend/src/app/App.test.tsx`
-- **Verification:** `npm test` passes a smoke test that renders `App`.
+- **Libraries** (dev dependencies):
+  - Vitest `^5.0.2` and React Testing Library `@testing-library/react@^16.3.3`, both approved
+  - two helpers they cannot run without:
+    - `@testing-library/dom@^10.4.2`, React Testing Library's required peer
+    - `jsdom@^29.1.1`, the simulated browser
+  - `@testing-library/jest-dom` is **not** added.
+- **Files:**
+  - `frontend/package.json` and `package-lock.json`: adds the `test` script (`vitest run`) and the `test:watch` script (`vitest`)
+  - `frontend/vite.config.ts`: a `test` block with `environment: 'jsdom'`, the setup file and `src/**/*.test.{ts,tsx}`
+  - `frontend/src/test/setup.ts`: runs `cleanup()` after each test
+  - `frontend/src/App.test.tsx`
+  - `frontend/README.md`
+- **Verification:**
+  1. `npm test` passes 1 test.
+  2. As a sanity check, a deliberately broken page makes the test fail, and it passes again once restored.
+  3. `typecheck`, `lint` and `build` pass, and `npm audit` reports 0 vulnerabilities.
 - **Integration:** Every frontend task adds tests.
 - **Commit:** `chore(frontend): add vitest and testing library`
 
