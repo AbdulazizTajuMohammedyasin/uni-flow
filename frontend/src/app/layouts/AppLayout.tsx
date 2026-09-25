@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router'
 
+import { HealthBadge } from '../dev/HealthBadge'
 import { studentNavItems } from '../navigation'
 
 const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -27,11 +28,17 @@ export default function AppLayout() {
             </NavLink>
           ))}
         </nav>
+        {import.meta.env.DEV && (
+          <div className="mt-auto px-6 py-4">
+            <HealthBadge />
+          </div>
+        )}
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-3 md:hidden">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
           <span className="text-lg font-bold text-brand-600">UniFlow</span>
+          {import.meta.env.DEV && <HealthBadge />}
         </header>
 
         {/* Extra bottom padding on phones so content is not hidden behind the bottom bar. */}

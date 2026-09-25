@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M0 (Foundations) is almost done.
-**Next up:** M0.13, which connects the website to the backend.
+**Next up:** M0.14, where GitHub checks the website automatically, just like the backend.
 
 ---
 
@@ -44,8 +44,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M0.11 | Automatic website tests (Vitest) | `npm test` | ✅ Done |
 | M0.12 | Pages and addresses (`/`, `/login`, `/staff`, 404) plus the page frames | Click the menu links. Try a phone-size view. | ✅ Done |
 | M0.12a | Added **shadcn/ui** (ready-made buttons, dialogs and so on) with UniFlow's indigo colour. It is used on the 404 page's button. | http://localhost:5173/anything → "Go to home" button | ✅ Done |
-| **M0.13** | **Website ↔ backend connection: a small "API: ok" badge** | – | ⏭️ **Next** |
-| M0.14 | GitHub checks the website automatically too | – | ⏳ |
+| M0.13 | The website can talk to the backend. A small **API: ok** badge proves it. | Run both servers; see the badge in the sidebar | ✅ Done |
+| **M0.14** | **GitHub checks the website automatically too** | GitHub → **Actions** tab | ⏭️ **Next** |
 
 ---
 
@@ -68,7 +68,10 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `app/navigation.ts` | The menu links |
 | `app/layouts/` | Page frames: student, login, staff |
 | `app/pages/` | Placeholder, 404 and error pages |
-| `components/ui/` | **shadcn** components (Button so far). Add more with `npx shadcn@latest add <name>`. |
+| `app/providers.tsx`, `app/queryClient.ts` | Turn on TanStack Query (data loading) for the whole app |
+| `app/dev/HealthBadge.tsx` | The dev-only **API: ok** badge |
+| `shared/api/` | **Talking to the backend:** `client.ts` (the connection), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (login token, from M1) |
+| `components/ui/` | **shadcn** components (Button, Badge). Add more with `npx shadcn@latest add <name>`. |
 | `lib/utils.ts` | shadcn's small helper (`cn`) |
 | `shared/ui/` | UniFlow's own small reusable boxes |
 | `styles/index.css` | Colours and fonts |

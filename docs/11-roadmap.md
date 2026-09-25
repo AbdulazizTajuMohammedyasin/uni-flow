@@ -336,22 +336,24 @@ UniFlow is built **one small task at a time**.
 
 #### M0.13 — API client and query setup
 - **Purpose:** Set up a typed Axios client, the error format, and a React Query provider.
-- **Prerequisites:** M0.7, M0.12.
-- **Libraries:** Axios and TanStack Query (approved).
+- **Prerequisites:** M0.7, M0.12, M0.12a.
+- **Libraries:** Axios `^1.20.0` and TanStack Query `@tanstack/react-query@^5.103.2`, both approved. Also shadcn's `badge` component, added with `npx shadcn@latest add badge`.
 - **Files:**
-  - `frontend/src/shared/api/{client,errors,tokenStore}.ts`
-  - `frontend/src/app/providers.tsx`
-  - `frontend/src/shared/api/errors.test.ts`
-  - A dev-only `HealthBadge` component that calls `/health/`
-- **Implementation:**
-  - The client uses `baseURL` from `VITE_API_URL`, `withCredentials`, and the `X-Client: web` header.
-  - `ApiError` parses the error format.
-  - `tokenStore` is an in-memory holder. Its refresh logic arrives in M1.9.
-  - `QueryClient` defaults: `staleTime` 30 s, `retry` 1, no retry on 4xx.
+  - `src/shared/api/client.ts`: `api` with a `baseURL` from `VITE_API_URL`, `withCredentials` and `X-Client: web`. A request interceptor adds `Authorization: Bearer` when there is a token.
+  - `src/shared/api/errors.ts`: `ApiError`, and `toApiError()`, which handles the error envelope, network errors, responses without an envelope, and anything else thrown
+  - `src/shared/api/tokenStore.ts`: an in-memory access token. The refresh logic comes in M1.9.
+  - `src/shared/api/health.ts`
+  - `src/env.d.ts`: typed `VITE_API_URL`
+  - `src/app/queryClient.ts`: `createQueryClient()`, with `staleTime` 30 s, one retry, no retry on 4xx, and no refetch on window focus
+  - `src/app/providers.tsx` and `src/app/App.tsx`: wraps the app in `QueryClientProvider`
+  - `src/app/dev/HealthBadge.tsx`: `API: checking…`, `ok` or `offline`, shown in `AppLayout` **only when `import.meta.env.DEV`**
+  - `src/components/ui/badge.tsx`
+  - Tests: `errors.test.ts`, `client.test.ts`, `HealthBadge.test.tsx`, and `routes.test.tsx`, which is updated to use a mocked health call and the query provider
 - **Verification:**
-  - Unit tests parse a validation error, a network error and a 500 into `ApiError`.
-  - With `runserver` and `npm run dev` both running, the health badge shows "ok". This proves CORS works.
-- **Integration:** Every feature's `api.ts`.
+  1. `npm test` passes 17 tests, and they pass on repeated runs.
+  2. `typecheck` passes and `lint` is clean.
+  3. The production build leaves out the badge.
+  4. **Manual:** with the backend running, the sidebar badge shows **API: ok**. With the backend stopped, it shows **API: offline**. This also proves CORS works.
 - **Commit:** `feat(frontend): add api client and query provider`
 
 #### M0.14 — Frontend CI
