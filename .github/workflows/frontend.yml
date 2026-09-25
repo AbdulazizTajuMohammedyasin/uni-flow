@@ -1,0 +1,56 @@
+# Frontend CI: runs the same checks as local development on every push/PR that touches the frontend.
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+# If you push again before a run finishes, cancel the older run.
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, type-check, tests and build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js (LTS) with npm cache
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies exactly as locked (package-lock.json)
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Tests (Vitest)
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Security audit (high and critical only)
+        run: npm audit --audit-level=high

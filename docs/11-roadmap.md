@@ -357,11 +357,18 @@ UniFlow is built **one small task at a time**.
 - **Commit:** `feat(frontend): add api client and query provider`
 
 #### M0.14 — Frontend CI
-- **Purpose:** Run the frontend checks on every push and pull request.
-- **Prerequisites:** M0.11.
+- **Purpose:** GitHub runs the frontend checks automatically on every push and pull request.
+- **Prerequisites:** M0.11 and M0.13.
 - **Files:** `.github/workflows/frontend.yml`
-- **Implementation:** Node LTS. Steps: `npm ci`, lint, typecheck, test, build and `npm audit --audit-level=high`. The workflow runs only when `frontend/**` changes.
-- **Verification:** The workflow is green on GitHub.
+- **Implementation:**
+  - Runs on `ubuntu-latest` with Node 24 (LTS) and the npm cache keyed on `frontend/package-lock.json`.
+  - Runs `npm ci`, then `lint`, `typecheck`, `test`, `build` and `npm audit --audit-level=high`.
+  - Only runs when `frontend/**` or the workflow file changes, and cancels older runs.
+  - Checked beforehand: the Windows-generated `package-lock.json` already lists the **Linux** native binaries that Tailwind's oxide, lightningcss, Vite's rolldown and oxlint need.
+- **Verification:**
+  1. The YAML is valid.
+  2. A local rehearsal (`npm ci`, then every step) passes once no dev server holds files in `node_modules`. On Windows, a running `npm run dev` locks Vite's binary and makes `npm ci` fail with EPERM.
+  3. Push `main`, and **Actions → Frontend CI** turns green.
 - **Commit:** `ci(frontend): add frontend workflow`
 
 #### M0.15 — OpenAPI type generation (**deferred**; reconsider once the frontend foundation works)

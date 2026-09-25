@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M0 (Foundations) is almost done.
-**Next up:** M0.14, where GitHub checks the website automatically, just like the backend.
+**Now:** M0 (Foundations) is finished once M0.14 is pushed and green.
+**Next up:** M1 (Identity), which starts with the academic structure: departments, programmes and intakes.
 
 ---
 
@@ -12,8 +12,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 | Milestone | In plain words | Status |
 |---|---|---|
-| **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | 🔄 In progress |
-| **M1** Identity | Students can register, log in and fill in their profile | ⏳ Not started |
+| **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
+| **M1** Identity | Students can register, log in and fill in their profile | ⏭️ Next |
 | **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | ⏳ |
 | **M3** Announcements | Staff post announcements, and students see the ones meant for them | ⏳ |
 | **M4** Documents | Upload and download documents, and attach them to announcements | ⏳ |
@@ -45,7 +45,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M0.12 | Pages and addresses (`/`, `/login`, `/staff`, 404) plus the page frames | Click the menu links. Try a phone-size view. | ✅ Done |
 | M0.12a | Added **shadcn/ui** (ready-made buttons, dialogs and so on) with UniFlow's indigo colour. It is used on the 404 page's button. | http://localhost:5173/anything → "Go to home" button | ✅ Done |
 | M0.13 | The website can talk to the backend. A small **API: ok** badge proves it. | Run both servers; see the badge in the sidebar | ✅ Done |
-| **M0.14** | **GitHub checks the website automatically too** | GitHub → **Actions** tab | ⏭️ **Next** |
+| M0.14 | GitHub checks the website automatically too (CI) | GitHub → **Actions** → Frontend CI | ✅ Done (confirm it's green) |
 
 ---
 
