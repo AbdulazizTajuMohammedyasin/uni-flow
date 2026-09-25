@@ -243,9 +243,22 @@ UniFlow is built **one small task at a time**.
 #### M0.10 — Tailwind CSS setup
 - **Purpose:** Set up the approved styling foundation.
 - **Prerequisites:** M0.9.
-- **Libraries:** Tailwind CSS (approved).
-- **Files:** `frontend/package.json`, `frontend/vite.config.ts` (Tailwind's Vite plugin), `frontend/src/styles/index.css` (Tailwind import and base theme tokens), `frontend/src/main.tsx`
-- **Verification:** The placeholder page renders with Tailwind classes. `npm run build` passes.
+- **Libraries:** Tailwind CSS v4, which is approved. `tailwindcss@^4.3.3` and its official Vite connector `@tailwindcss/vite@^4.3.3` are dev dependencies because they only run at build time. Tailwind v4 needs no PostCSS config and no `tailwind.config.js`.
+- **Files:**
+  - `frontend/package.json` and `package-lock.json`
+  - `frontend/vite.config.ts`: adds the `tailwindcss()` plugin
+  - `frontend/src/styles/index.css`:
+    - `@import 'tailwindcss'`
+    - the `@theme` tokens: a system `font-sans` and brand colours `brand-50` through `brand-900` (indigo-blue)
+    - a base `body` style (the `slate-50` background)
+  - `frontend/src/main.tsx`: imports the stylesheet
+  - `frontend/src/App.tsx`: the placeholder page, styled with Tailwind as a visible proof
+  - `frontend/README.md`
+- **Verification:**
+  1. `typecheck`, `lint` and `build` pass.
+  2. The built CSS contains the utilities used, and `--color-brand-600`.
+  3. The dev server shows the styled card.
+  4. `npm audit` reports 0 vulnerabilities.
 - **Integration:** Every UI task after this.
 - **Commit:** `chore(frontend): add tailwind css`
 

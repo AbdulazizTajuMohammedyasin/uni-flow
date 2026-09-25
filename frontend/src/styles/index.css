@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+/*
+ * UniFlow design tokens (Tailwind v4 theme).
+ * Every token becomes a utility class, e.g. `bg-brand-600`, `text-brand-700`, `font-sans`.
+ * Keep this small; add tokens when real screens need them.
+ */
+@theme {
+  --font-sans:
+    ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Brand colour (indigo-blue) */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-900: #312e81;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  }
+}
