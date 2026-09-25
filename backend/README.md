@@ -62,6 +62,18 @@ Commit `Pipfile` and `Pipfile.lock` together.
 | Environment variables | `backend/.env`, loaded by `config/env.py`. Copy it from `.env.example`. Real environment variables win. `.env` is never committed. |
 | Django admin | `/django-admin/`. A back-office for developers and super admins only. |
 
+## API
+
+| URL | What it is |
+|---|---|
+| `/api/v1/health/` | Public health check: `{"status": "ok", "db": "ok"}`, or HTTP 503 if MySQL is unreachable |
+| `/api/v1/docs/` | Swagger UI. **Development only** (`DJANGO_DEBUG=true`). |
+| `/api/v1/schema/` | The OpenAPI 3 schema. Development only. |
+
+- **Error format:** every API error is `{"error": {"code": "...", "message": "...", "fields": {...}}}`. `fields` holds per-field validation messages and is `{}` for other errors.
+- **Defaults:** JSON only, login required (`IsAuthenticated`) unless a view allows public access, 20 items per page (`?page=`, `?page_size=`, at most 100), and rate limits of 30/min anonymous, 300/min authenticated and 10/min for `auth`-scoped views.
+- **CORS:** only the origins in `CORS_ALLOWED_ORIGINS` may call the API from a browser. In dev that defaults to the Vite server (`localhost:5173`).
+
 ## Database migrations
 
 UniFlow uses a custom, email-based user model (`accounts.User`, `AUTH_USER_MODEL = "accounts.User"`). There is no `username`.

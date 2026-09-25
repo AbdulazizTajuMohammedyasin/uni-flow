@@ -169,24 +169,38 @@ UniFlow is built **one small task at a time**.
 #### M0.7 — API base configuration
 - **Purpose:** Set up the `/api/v1/` mount, the error format, pagination, throttling, CORS, OpenAPI and the health check.
 - **Prerequisites:** M0.6.
-- **Libraries:** `djangorestframework`, `django-cors-headers` and `drf-spectacular`, all approved.
+- **Libraries** (Pipenv `[packages]`, all approved):
+  - `djangorestframework>=3.18,<4`
+  - `django-cors-headers>=4.9,<5`
+  - `drf-spectacular>=0.30,<0.31`, pinned to its minor version because it is on 0.x
 - **Files:**
-  - `backend/config/api_v1.py`
-  - `backend/config/urls.py`
+  - `backend/Pipfile` and `Pipfile.lock`
+  - `backend/config/api_v1.py` and `config/urls.py`
   - `backend/core/{exceptions,pagination,views}.py`
-  - `backend/core/tests/test_api_base.py`
-  - `config/settings/base.py`: the `REST_FRAMEWORK`, `CORS_*` and `SPECTACULAR_SETTINGS` settings
+  - `backend/core/tests/{__init__,test_api_base}.py`
+  - `backend/conftest.py`: the first shared fixture, which clears the cache so throttle counters never leak between tests
+  - `config/settings/{base,dev}.py`
+  - `backend/.env.example`: adds `CORS_ALLOWED_ORIGINS`
+  - `backend/README.md` and `docs/04-api.md`
 - **Implementation:**
-  - Default permission `IsAuthenticated`, with no authentication class yet (JWT arrives in M1.6).
-  - `StandardPagination`.
-  - Throttle rates, including an `auth` scope.
-  - An exception handler that produces `{"error": {code, message, fields}}`.
-  - `GET /api/v1/health/` (public).
-  - The schema and docs routes, in dev only.
+  - `REST_FRAMEWORK`:
+    - no authentication classes yet (JWT arrives in M1.6), with `IsAuthenticated` as the default permission
+    - JSON only, and `StandardPagination` (20 per page, at most 100)
+    - the `api_exception_handler` error format
+    - throttle rates: anonymous 30/min, user 300/min, `auth` 10/min
+  - Views:
+    - `GET /api/v1/health/` is public and returns 503 if MySQL is unreachable.
+    - A catch-all route makes unknown `/api/v1/` paths return the JSON 404 error.
+    - The OpenAPI schema and docs are served only when `DEBUG` is on.
+  - CORS:
+    - an exact list of allowed origins (dev defaults to the Vite server)
+    - `CORS_ALLOW_CREDENTIALS` enabled for the M1.6 cookie
+    - `x-client` allowed as a header
 - **Verification:**
-  1. `pytest core`: health returns 200 with `db: ok`, an unknown route returns 404 in the error format, and a validation error returns `fields`.
-  2. Open `/api/v1/docs/` in a browser.
-- **Integration:** Every app registers its routers in `api_v1.py`.
+  1. `pytest` passes 30 tests, covering health, the error format for every error type, pagination, CORS allow and deny, and schema generation with `--fail-on-warn`.
+  2. Ruff and the Django checks are clean.
+  3. With `runserver`, the health check returns 200, an unknown path returns the JSON 404, `/api/v1/docs/` returns 200, and the throttle returns 429 in the error format.
+- **Integration:** Every app registers its routes in `api_v1.py`, before the catch-all.
 - **Commit:** `feat(api): add api v1 base configuration and health check`
 
 #### M0.8 — Backend CI

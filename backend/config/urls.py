@@ -16,9 +16,11 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 urlpatterns = [
     # Back-office for developers and super admins only; the staff UI is the React /staff area.
     path("django-admin/", admin.site.urls),
+    # The versioned REST API used by the web app (and later the mobile app).
+    path("api/v1/", include("config.api_v1")),
 ]

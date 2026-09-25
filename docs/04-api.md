@@ -10,7 +10,7 @@
 | Auth | `Authorization: Bearer <access JWT>` on every endpoint except the ones marked *public*. |
 | Pagination | Page numbers: `?page=` and `?page_size=` (default 20, maximum 100). *[Later]*: cursor pagination and `?updated_since=` for mobile sync. |
 | Filtering | django-filter query parameters. Every list supports `?search=` and `?ordering=`. |
-| Errors | Every error has the same shape: `{"error": {"code": "validation_error", "message": "...", "fields": {"title": ["This field is required."]}}}`. Djoser's errors are wrapped into it too. |
+| Errors | Every error has the same shape: `{"error": {"code": "validation_error", "message": "...", "fields": {"title": ["This field is required."]}}}`. `fields` is **always present**: per-field messages for validation errors (a validation error with no field uses `non_field_errors`), and `{}` otherwise. `code` is DRF's error code, for example `not_found`, `permission_denied`, `not_authenticated` or `throttled`. Unknown `/api/v1/` paths return this format too, not HTML. Djoser's errors are wrapped into it as well. |
 | Media URLs | Always absolute URLs. |
 | Docs | `/api/v1/schema/` (OpenAPI) and `/api/v1/docs/`, in development only |
 | Rate limits | Anonymous users 30/min. Login, registration and password reset share an `auth` limit of 10/min per IP. Logged-in users 300/min. |

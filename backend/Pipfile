@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 django = ">=5.2,<5.3"
 mysqlclient = ">=2.2,<2.3"
+djangorestframework = ">=3.18,<4"
+django-cors-headers = ">=4.9,<5"
+drf-spectacular = ">=0.30,<0.31"
 
 [dev-packages]
 pytest = ">=9.1,<10"

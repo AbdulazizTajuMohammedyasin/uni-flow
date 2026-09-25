@@ -6,7 +6,9 @@ Configuration comes from environment variables, optionally loaded from `backend/
 
 from pathlib import Path
 
-from config.env import env_str, load_env_file
+from corsheaders.defaults import default_headers as default_cors_headers
+
+from config.env import env_list, env_str, load_env_file
 
 # backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -29,6 +31,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party
+    "rest_framework",
+    "corsheaders",
+    "drf_spectacular",
     # UniFlow apps
     "apps.accounts",
 ]
@@ -39,6 +45,8 @@ AUTH_USER_MODEL = "accounts.User"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # CORS must run before CommonMiddleware so preflight responses get CORS headers.
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -117,3 +125,43 @@ MEDIA_ROOT = Path(env_str("MEDIA_ROOT", str(BASE_DIR / "media")))
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Django REST Framework (see docs/04-api.md)
+
+REST_FRAMEWORK = {
+    # JWT authentication arrives in M1.6; until then only public (AllowAny) endpoints work.
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardPagination",
+    "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "30/min",
+        "user": "300/min",
+        # Login, registration and password reset (M1) opt in with throttle_scope = "auth".
+        "auth": "10/min",
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "UniFlow API",
+    "DESCRIPTION": "Student information platform API (web now, mobile later).",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
+
+# CORS: only the listed frontend origins may call the API from a browser.
+
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", [])
+# Needed from M1.6 for the httpOnly refresh-token cookie; safe because origins are an exact list.
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (*default_cors_headers, "x-client")
