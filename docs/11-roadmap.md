@@ -204,12 +204,18 @@ UniFlow is built **one small task at a time**.
 - **Commit:** `feat(api): add api v1 base configuration and health check`
 
 #### M0.8 — Backend CI
-- **Purpose:** Run the backend checks on every push and pull request.
-- **Prerequisites:** M0.7.
+- **Purpose:** GitHub runs the backend checks automatically on every push and pull request.
+- **Prerequisites:** M0.7, and the repository pushed to GitHub.
 - **Files:** `.github/workflows/backend.yml`
-- **Implementation:** Ubuntu with Python 3.13 (matching `Pipfile`) and a MySQL 8.4 *service*. Steps: `pip install pipenv`, then `pipenv sync --dev`, `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check --dry-run` and `pytest`. (`pip-audit` would be an extra tool, so it is added only if approved.) The workflow runs only when `backend/**` or the workflow file changes.
-- **Verification:** After you push `main`, the workflow is green on GitHub.
-- **Integration:** Guards `main`.
+- **Implementation:**
+  - Runs on `ubuntu-latest` with Python 3.13 and a **MySQL 8.4 service**. The service runs on GitHub's machines, and no Docker files are added to the repository.
+  - Installs the Linux MySQL client headers that `mysqlclient` needs, then Pipenv, then `pipenv sync --dev`.
+  - Runs `ruff check`, `ruff format --check`, `manage.py check`, `makemigrations --check --dry-run` and `pytest`.
+  - Only runs when `backend/**` or the workflow file changes, and cancels older runs of the same branch.
+  - CI has no `.env` file, so the `DB_*` variables and a CI-only `DJANGO_SECRET_KEY` are set in the workflow. None of them are real secrets.
+  - `pip-audit` is not included, because it was never approved.
+- **Verification:** push `main`. On GitHub, **Actions → Backend CI** turns green, and the commit shows a ✓.
+- **Integration:** Guards `main`. The frontend gets its own workflow in M0.14.
 - **Commit:** `ci(backend): add backend workflow`
 
 #### M0.9 — Frontend initialization
