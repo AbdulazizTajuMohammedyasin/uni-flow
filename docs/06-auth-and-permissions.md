@@ -20,10 +20,11 @@ UniFlow does **not** include `djoser.urls` or `djoser.urls.jwt`. It registers it
 4. Login before activation fails. A correct password on an inactive account returns 403 `email_not_verified`. A wrong password always returns 401, so the response never reveals whether an email is registered.
 5. Students without a complete profile are sent to `/onboarding`.
 
-**Staff accounts:**
+**Staff accounts:** decided for the MVP.
 
-- Staff register the same way.
-- A `super_admin` then assigns their role and department in the staff dashboard (`/staff/users`).
+- **Only `@student.aiu.edu.my` addresses can self-register** (`ALLOWED_EMAIL_DOMAINS=student.aiu.edu.my`). Staff and lecturers (`@aiu.edu.my`) therefore **cannot** register themselves.
+- A `super_admin` **creates staff accounts** in the staff dashboard (`/staff/users`, API `POST /api/v1/manage/users/`, M2.2). They set the email, full name, role and department. The account is created active with no usable password, and UniFlow emails a **"set your password"** link using Djoser's password-reset flow.
+- Until M2.2 exists, staff accounts can be created in the Django admin back-office.
 - The first `super_admin` is created with `createsuperuser`.
 
 **Suspension** uses `is_suspended`, not `is_active`. Otherwise a blocked user could reactivate their own account through `resend_activation`. Both the JWT authentication class and the login serializer reject suspended users.
@@ -111,7 +112,7 @@ A capability is a named permission to manage one kind of resource. Every capabil
 | `communities.manage` | – | – | ✔ own-dept communities | ✔ all | ✔ all |
 | `timetable.manage` | – | – | ✔ sections of own-dept courses | ✔ all, plus terms | ✔ all, plus terms |
 | `academics.manage` (reference data) | – | – | – | ✔ | ✔ |
-| `users.manage` (roles, suspension) | – | – | – | – | ✔ |
+| `users.manage` (create staff accounts, roles, suspension) | – | – | – | – | ✔ |
 | Django admin (back-office) | – | – | – | – | ✔ |
 
 A `department_staff` user with no department on their `StaffProfile` gets **no** capabilities, so a half-configured account can do nothing.

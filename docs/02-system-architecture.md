@@ -152,7 +152,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `FRONTEND_DOMAIN` | `localhost:5173` | Becomes Django's `DOMAIN` setting, which Djoser uses to build email links |
 | `JWT_ACCESS_MINUTES` / `JWT_REFRESH_DAYS` | `15` / `14` | |
 | `REFRESH_COOKIE_SECURE` | `false` (dev) / `true` (prod) | |
-| `ALLOWED_EMAIL_DOMAINS` | `student.aiu.edu.my,aiu.edu.my` | *Pending confirmation* |
+| `ALLOWED_EMAIL_DOMAINS` | `student.aiu.edu.my` | **Decided:** only student addresses can self-register. Staff accounts are created by a super admin (see [06](06-auth-and-permissions.md#registration)). |
 | `EMAIL_BACKEND` | `django.core.mail.backends.console.EmailBackend` (dev) | Production uses the SMTP backend together with `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` and `EMAIL_USE_TLS`. |
 | `DEFAULT_FROM_EMAIL` | `UniFlow <no-reply@…>` | |
 | `TIME_ZONE` | `Asia/Kuala_Lumpur` | |

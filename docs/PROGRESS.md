@@ -88,8 +88,11 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ---
 
+## Decided recently
+
+- **Who can register:** only `@student.aiu.edu.my` emails, for example `abdulaziz.mohammedyasin@student.aiu.edu.my`. **Staff accounts** are created by a super admin inside UniFlow (M2.2), or in the Django admin until then.
+
 ## Open decisions
 
-- Allowed email domains for registration. This is needed before M1.5.
 - The university's timetable format. This is needed before M7.11.
 - Hosting. This is needed before M10.7.

@@ -403,7 +403,7 @@ Unless a task says otherwise, each one depends on the task before it.
 | # | Task | Main files | Verify | Commit |
 |---|---|---|---|---|
 | M2.1 | `capabilities_for`, `me.capabilities` and `me.publishers`, and the `HasCapability` permission class | `apps/accounts/capabilities.py`, `core/permissions.py` | A role × capability matrix test; a department staff member without a department gets no capabilities | `feat(accounts): add role-based capabilities` |
-| M2.2 | Staff user management API: list, role and department, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
+| M2.2 | Staff user management API: list, **create staff account** (with a "set your password" email, because only `@student.aiu.edu.my` can self-register), role and department, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
 | M2.3 | Reference data management API | `apps/academics/manage_views.py` | Only admins; deactivating hides the item from the read API | `feat(academics): add reference data management endpoints` |
 | M2.4 | `Audience` model with 3 fields, its serializer and its summary text | `apps/audiences/*` | Summary text for each combination | `feat(audiences): add audience model` |
 | M2.5 | Visibility selectors `visible_audience_q` and `students_matching` | `apps/audiences/selectors.py` | A matrix of 15 or more cases; the two functions agree; no duplicate rows | `feat(audiences): add audience visibility selectors` |
@@ -411,7 +411,7 @@ Unless a task says otherwise, each one depends on the task before it.
 | M2.7 | Publisher policy: `manageable_queryset`, `publishers_for`, `can_manage`, `validate_publisher`, and the `CanManageObject` permission | `apps/publishing/policies.py` | Role × publisher × department matrix | `feat(publishing): add publisher policy` |
 | M2.8 | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, and a staff home placeholder | `shared/auth/*`, `app/layouts/StaffLayout.tsx` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
 | M2.9 | Shared form components: fields, `MarkdownField`, `PublisherSelect`, `AudienceFields`, `SourceLinkFields`, the `Markdown` renderer, `DataTable`, `Dialog` and `Toast` | `shared/forms/*`, `shared/ui/*` | Markdown strips HTML and `javascript:` links; the audience summary is correct | `feat(frontend): add shared form and table components` |
-| M2.10 | Staff users page | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
+| M2.10 | Staff users page, including a "create staff account" form | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
 | M2.11 | Staff reference data pages | `features/staff/academics/*` (or `features/academics/staff/*`) | Create, edit and deactivate each type | `feat(staff): add reference data management pages` |
 
 ## M3 — Announcements

@@ -60,7 +60,6 @@ UniFlow/
 
 ## Remaining decisions (see the summary in the latest review)
 
-1. Which email domains may register? **This blocks M1.5.**
 2. The official name of the level above Department (School or Faculty), if UniFlow ever needs to model it. It is not modelled for now.
 3. The university's timetable format. **This blocks only M7.11.**
 4. Hosting. **This blocks only M10.7.**
@@ -74,6 +73,7 @@ UniFlow/
 ### Resolved
 
 - **Supporting libraries:** approved are `pytest`, `pytest-django`, `ruff`, `django-cors-headers`, `drf-spectacular`, `django-filter`, Vitest and React Testing Library. `django-environ` is rejected in favour of a small `config/env.py` helper that uses only the standard library.
+- **Registration:** only `@student.aiu.edu.my` addresses can self-register. Staff accounts are created by a super admin (M2.2), or in the Django admin until then.
 - **Terminology:** a Programme is the degree, a Course is a subject or module (for example CDE2313), and a Department is an academic department.
 - **Department staff** manage only content that belongs to and is targeted within their own department.
 - **CI:** a MySQL service container in GitHub Actions is acceptable. Local development has no Docker.
