@@ -312,6 +312,28 @@ UniFlow is built **one small task at a time**.
 - **Integration:** Every feature replaces a placeholder route. M0.13 adds the providers to `App.tsx`.
 - **Commit:** `feat(frontend): add routing and layout foundation`
 
+#### M0.12a — shadcn/ui setup (added at the developer's request)
+- **Purpose:** Use shadcn/ui for ready-made, accessible UI components (buttons, dialogs, tables, forms), especially for the staff dashboard.
+- **Libraries** (approved together with shadcn):
+  - `radix-ui`, `class-variance-authority`, `cn`, `lucide-react`, `tw-animate-css` and `@fontsource-variable/geist`
+  - `shadcn` as a **dev** dependency. It is the setup tool; only its stylesheet is imported, at build time.
+  - `cn` was checked: it is shadcn's official package (`github.com/shadcn-ui/cn`) and has no dependencies.
+- **Files:**
+  - `frontend/components.json`: shadcn config. The base is Radix, the preset is "nova", and the aliases are `@/components/ui` and `@/lib`.
+  - `frontend/src/lib/utils.ts`: exports `cn`
+  - `frontend/src/components/ui/button.tsx`: the only component so far
+  - `frontend/src/styles/index.css`: rewritten cleanly with shadcn's theme variables, **primary = UniFlow indigo**, a light grey page background, the Geist font, the brand scale kept, and dark-theme tokens ready but unused
+  - `frontend/tsconfig.json`: the `@/*` path, which the shadcn tool reads
+  - `frontend/.oxlintrc.json`: turns off `only-export-components` for shadcn's generated folder only
+  - `NotFoundPage.tsx` and `RouteErrorPage.tsx`: now use `<Button>`
+- **Command used:** `npx shadcn@latest init --base radix --template vite --preset nova --no-monorepo --no-rtl --yes`
+- **Verification:**
+  1. The 6 tests still pass.
+  2. `typecheck` passes, and `lint` is clean with no warnings.
+  3. The build passes, and the built CSS has `--primary` equal to indigo `oklch(51.1% .262 276.966)`.
+  4. `npm audit` reports 0 vulnerabilities.
+- **Commit:** `feat(frontend): add shadcn/ui with uniflow theme`
+
 #### M0.13 — API client and query setup
 - **Purpose:** Set up a typed Axios client, the error format, and a React Query provider.
 - **Prerequisites:** M0.7, M0.12.

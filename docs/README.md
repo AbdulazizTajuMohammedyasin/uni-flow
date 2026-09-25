@@ -56,6 +56,7 @@ UniFlow/
 | D11 | Integrations use official channels only. The MVP has deep links, the original source link, and manual publishing. |
 | D12 | Native MySQL 8.4 with no Docker. Local-day logic (such as "today in Kuala Lumpur") is computed in Python, so MySQL's time zone tables are never needed. |
 | D13 | Libraries are added only in the task that needs them, and only once approved. |
+| D14 | **shadcn/ui** (Radix-based, preset "nova") provides the UI components, themed with UniFlow indigo as the primary colour. Components live in `src/components/ui/` and UniFlow's own small components live in `src/shared/ui/`. |
 
 ## Remaining decisions (see the summary in the latest review)
 

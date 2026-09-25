@@ -30,6 +30,7 @@ npm run dev                      # opens on http://localhost:5173
 
 - `@/` is an alias for `src/`, for example `import { api } from '@/shared/api/client'`.
 - TypeScript runs in `strict` mode.
-- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/styles/index.css`, which holds the Tailwind import, the UniFlow theme tokens (for example `bg-brand-600`) and the base body styles. Add a theme token only when a real screen needs it.
+- **UI components come from shadcn/ui** and live in `src/components/ui/`, for example `import { Button } from '@/components/ui/button'`. Add a new one only when a screen needs it: `npx shadcn@latest add dialog`. UniFlow's own small components live in `src/shared/ui/`.
+- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/styles/index.css`, which holds the Tailwind import, the shadcn theme (with UniFlow indigo as `primary`), the brand colours (for example `bg-brand-600`) and the base body styles. Add a theme token only when a real screen needs it.
 - **Tests** sit next to the code they test, as `*.test.ts(x)`, for example `src/App.test.tsx`. Use React Testing Library queries such as `getByRole` and `getByText`, and test what a user sees, not implementation details.
 - Only `VITE_*` environment variables reach the browser, so never put secrets in `.env`.

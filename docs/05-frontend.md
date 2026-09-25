@@ -20,6 +20,7 @@ They share authentication, the API client, the UI components and the build. Spli
 | Server state | TanStack Query | Approved |
 | HTTP | Axios | Approved |
 | Styling | Tailwind CSS | Approved |
+| UI components | **shadcn/ui** (preset "nova", built on **Radix**). Components are copied into `src/components/ui/` and added one at a time with `npx shadcn@latest add <name>`, only when a screen needs them. They bring `radix-ui`, `class-variance-authority`, `cn` (shadcn's class-merge helper), `lucide-react` (icons), `tw-animate-css` and `@fontsource-variable/geist` (the font). | Approved (M0.12a) |
 | Forms | React Hook Form + Zod (through `@hookform/resolvers`, which connects the two) | Approved |
 | Dates | date-fns (formats times in Asia/Kuala_Lumpur) | Approved |
 | Markdown | react-markdown (raw HTML turned off) | Approved |

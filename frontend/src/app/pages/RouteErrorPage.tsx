@@ -1,5 +1,6 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router'
 
+import { Button } from '@/components/ui/button'
 import { ErrorState } from '@/shared/ui/ErrorState'
 
 import { NotFoundPage } from './NotFoundPage'
@@ -19,13 +20,9 @@ export function RouteErrorPage() {
           title="Something went wrong"
           message="An unexpected error occurred. Reloading the page usually helps."
           action={
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
-            >
+            <Button type="button" size="lg" onClick={() => window.location.reload()}>
               Reload page
-            </button>
+            </Button>
           }
         />
       </div>

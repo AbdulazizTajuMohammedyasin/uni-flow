@@ -43,6 +43,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M0.10 | Styling with Tailwind (colours, fonts) | The styled page | ✅ Done |
 | M0.11 | Automatic website tests (Vitest) | `npm test` | ✅ Done |
 | M0.12 | Pages and addresses (`/`, `/login`, `/staff`, 404) plus the page frames | Click the menu links. Try a phone-size view. | ✅ Done |
+| M0.12a | Added **shadcn/ui** (ready-made buttons, dialogs and so on) with UniFlow's indigo colour. It is used on the 404 page's button. | http://localhost:5173/anything → "Go to home" button | ✅ Done |
 | **M0.13** | **Website ↔ backend connection: a small "API: ok" badge** | – | ⏭️ **Next** |
 | M0.14 | GitHub checks the website automatically too | – | ⏳ |
 
@@ -67,7 +68,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `app/navigation.ts` | The menu links |
 | `app/layouts/` | Page frames: student, login, staff |
 | `app/pages/` | Placeholder, 404 and error pages |
-| `shared/ui/` | Small reusable boxes |
+| `components/ui/` | **shadcn** components (Button so far). Add more with `npx shadcn@latest add <name>`. |
+| `lib/utils.ts` | shadcn's small helper (`cn`) |
+| `shared/ui/` | UniFlow's own small reusable boxes |
 | `styles/index.css` | Colours and fonts |
 
 ### Backend files so far (`backend/`)
@@ -84,7 +87,6 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ## Open decisions
 
-- **shadcn/ui:** ready-made UI components (buttons, dialogs, tables). Not decided yet. See the latest chat.
 - Allowed email domains for registration. This is needed before M1.5.
 - The university's timetable format. This is needed before M7.11.
 - Hosting. This is needed before M10.7.
