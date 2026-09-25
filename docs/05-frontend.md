@@ -15,7 +15,7 @@ They share authentication, the API client, the UI components and the build. Spli
 
 | Concern | Library | Status |
 |---|---|---|
-| Build | Vite + React + TypeScript (`strict`) | Approved |
+| Build | Vite 8 + React 19 + TypeScript 6 (`strict`) | Approved |
 | Routing | React Router (`createBrowserRouter`) | Approved |
 | Server state | TanStack Query | Approved |
 | HTTP | Axios | Approved |
@@ -24,7 +24,7 @@ They share authentication, the API client, the UI components and the build. Spli
 | Dates | date-fns (formats times in Asia/Kuala_Lumpur) | Approved |
 | Markdown | react-markdown (raw HTML turned off) | Approved |
 | Calendar | FullCalendar React: the `daygrid` plugin for the event month view, `timegrid` for the timetable week view, and `list` for small screens | Approved, used only in M5 and M7 |
-| Lint | ESLint (it comes with the Vite template) | Approved as part of the template |
+| Lint | **oxlint**. The current Vite template ships oxlint instead of ESLint. It is configured in `.oxlintrc.json`. | Approved as part of the template |
 | Tests | Vitest + React Testing Library, with `jsdom` as the test environment | Approved |
 | API types | `openapi-typescript` (generates TypeScript types from the OpenAPI schema) | **Deferred.** Reconsider after the frontend foundation works (M0.15). Until then, types are written by hand in each feature's `types.ts`. |
 | Not planned | Radix, sonner, MSW, Playwright, Redux or Zustand | Add one only when a real need appears |

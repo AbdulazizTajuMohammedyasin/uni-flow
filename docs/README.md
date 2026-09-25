@@ -31,7 +31,7 @@ UniFlow/
 ├── README.md
 ├── docs/
 ├── backend/              # Django API — owns its own .gitignore, .env.example, Pipfile, Pipfile.lock, pyproject.toml
-└── frontend/             # React app — owns its own .gitignore, .env.example, package.json, eslint/tsconfig/vite config
+└── frontend/             # React app — owns its own .gitignore, .env.example, package.json, oxlint/tsconfig/vite config
 ```
 
 - Settings that apply to only one side of the project live inside `backend/` or `frontend/`.

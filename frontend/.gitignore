@@ -1,0 +1,15 @@
+# Frontend-only ignores. Repository-wide OS/editor rules live in the root .gitignore.
+
+# Dependencies and build output
+node_modules
+dist
+dist-ssr
+
+# Local environment files (.env.example IS committed)
+.env
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
