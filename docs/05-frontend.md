@@ -16,7 +16,7 @@ They share authentication, the API client, the UI components and the build. Spli
 | Concern | Library | Status |
 |---|---|---|
 | Build | Vite 8 + React 19 + TypeScript 6 (`strict`) | Approved |
-| Routing | React Router (`createBrowserRouter`) | Approved |
+| Routing | React Router v8 (`react-router`, `createBrowserRouter`) | Approved |
 | Server state | TanStack Query | Approved |
 | HTTP | Axios | Approved |
 | Styling | Tailwind CSS | Approved |
@@ -35,8 +35,10 @@ Toasts, dialogs and dropdowns are small in-house components in `shared/ui`.
 
 ```
 frontend/src/
+├── main.tsx                    # entry point (Vite convention: stays in src/)
 ├── app/
-│   ├── main.tsx  App.tsx  providers.tsx  router.tsx
+│   ├── App.tsx  routes.tsx  navigation.ts  providers.tsx (M0.13)
+│   ├── pages/                  # NotFoundPage, RouteErrorPage, PlaceholderPage
 │   └── layouts/
 │       ├── AuthLayout.tsx        # login/register/etc.
 │       ├── AppLayout.tsx         # student area: sidebar (md+) / bottom nav (mobile)

@@ -287,20 +287,29 @@ UniFlow is built **one small task at a time**.
 #### M0.12 — Routing and layout foundation
 - **Purpose:** Build the route tree and the three layouts, with placeholder pages.
 - **Prerequisites:** M0.10, M0.11.
-- **Libraries:** React Router (approved).
+- **Libraries:** React Router (approved). npm installed **v8** (`react-router@^8.4.0`). Before any code was written, its exports and lazy-route API were checked against the installed package.
 - **Files:**
-  - `frontend/src/app/{App,router}.tsx`
-  - `frontend/src/app/layouts/{AuthLayout,AppLayout,StaffLayout}.tsx`
-  - `frontend/src/shared/ui/{Skeleton,EmptyState,ErrorState}.tsx`
-  - `frontend/src/app/pages/{NotFoundPage,RouteErrorPage}.tsx`
-  - A few placeholder pages
+  - `src/main.tsx`, which stays at `src/`, the Vite convention
+  - `src/app/{App,routes,navigation}.tsx|ts`
+  - `src/app/layouts/{AppLayout,AuthLayout,StaffLayout}.tsx`
+  - `src/app/pages/{PlaceholderPage,NotFoundPage,RouteErrorPage}.tsx`
+  - `src/shared/ui/{EmptyState,ErrorState,PageLoading}.tsx`
+  - `src/app/routes.test.tsx`
+  - The M0.9 placeholder `src/App.tsx` and its test are deleted.
 - **Implementation:**
-  - `createBrowserRouter` with lazy routes for `/`, `/login` and `/staff`.
-  - `AppLayout` shows a bottom nav below `md` and a sidebar at `md` and above.
-  - `StaffLayout` has an empty side nav for now.
-  - Add a 404 page and an `errorElement`.
-- **Verification:** RTL tests: an unknown route renders the 404 page, and the navigation renders. By hand: at 375 px width there is no horizontal scroll.
-- **Integration:** Every feature adds routes. `StaffLayout` gets capability-driven navigation in M2.
+  - `createAppRoutes()` returns a fresh route tree. It is a function rather than a constant because React Router mutates route objects when lazy routes resolve, and a shared constant made the second router in the tests show a 404.
+  - The pathless root has an `errorElement` (`RouteErrorPage`) and a `hydrateFallbackElement` (`PageLoading`).
+  - The three layouts are lazy, and the build emits a separate chunk for each.
+  - `AppLayout` has a sidebar at `md` and wider, and a top bar plus a 5-item bottom navigation bar on phones. Both use one list, `studentNavItems`, which has short labels for mobile.
+  - `AuthLayout` is a centred card with no navigation.
+  - `StaffLayout` has a dark sidebar, a "Back to UniFlow" link and an empty menu, which is filled from capabilities in M2.8.
+  - Unknown paths show a 404 page.
+  - A `Skeleton` component is deferred until data loading exists.
+- **Verification:**
+  1. `npm test` passes 6 tests: the home layout with both navigation bars, the active link, the login and staff layouts, the 404 page, and the crash page. They pass on repeated runs.
+  2. `typecheck`, `lint` and `build` pass, and the build produces separate layout chunks.
+  3. **Manual:** at 375 px width there is no horizontal scroll, and the bottom navigation is visible.
+- **Integration:** Every feature replaces a placeholder route. M0.13 adds the providers to `App.tsx`.
 - **Commit:** `feat(frontend): add routing and layout foundation`
 
 #### M0.13 — API client and query setup
