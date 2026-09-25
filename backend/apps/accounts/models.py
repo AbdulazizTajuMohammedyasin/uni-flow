@@ -7,7 +7,7 @@ from .managers import UserManager, normalize_email_address
 class UserRole(models.TextChoices):
     STUDENT = "student", "Student"
     LECTURER = "lecturer", "Lecturer"
-    DEPARTMENT_STAFF = "department_staff", "Department staff"
+    SCHOOL_STAFF = "school_staff", "School staff"
     UNIVERSITY_ADMIN = "university_admin", "University admin"
     SUPER_ADMIN = "super_admin", "Super admin"
 
