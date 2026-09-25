@@ -4,6 +4,8 @@ Status: **The architecture has been reviewed and updated. Implementation waits f
 
 Throughout these docs, **[MVP]** means the item is built in milestones M0–M10. **[Later]** means it is designed and documented but not built yet.
 
+> **Want the simple version?** [PROGRESS.md](PROGRESS.md) shows, in plain words, what is done, what is next, and where each file is.
+
 ## Reading order
 
 | # | Document | Covers |
