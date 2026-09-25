@@ -6,7 +6,7 @@
 
 **UniFlow is the single place a student opens to find out what is happening on campus.**
 
-Today, campus information is scattered across dozens of WhatsApp groups and channels, Telegram groups and channels, university and department notices, club pages and posters. Students have to check many places, miss important things, and cannot tell what matters from what is noise.
+Today, campus information is scattered across dozens of WhatsApp groups and channels, Telegram groups and channels, university and school notices, club pages and posters. Students have to check many places, miss important things, and cannot tell what matters from what is noise.
 
 UniFlow organizes that information. It does not replace where it was created. Authorized staff publish information to UniFlow once, through the UniFlow **staff dashboard**. The backend decides who it is relevant to. Every client (the web app now, a React Native app later) shows each student the part that applies to them.
 
@@ -49,7 +49,7 @@ UniFlow is an **information layer**. WhatsApp and Telegram remain the places whe
 | Area | In the MVP |
 |---|---|
 | Authentication | Registration restricted to university email domains, email activation, JWT login, refresh and logout (the web app keeps the refresh token in an httpOnly cookie), password reset and change |
-| Profile and onboarding | Students choose their department, programme and intake, and can edit their profile |
+| Profile and onboarding | Students choose their school, programme and intake, and can edit their profile |
 | **Staff dashboard (React)** | Authorized staff create, edit, publish and archive announcements, events, documents, applications, communities and timetable data. Staff see only the actions their role allows. |
 | Student dashboard | One personalized home page |
 | Announcements | Categories, `normal` or `important` priority, pinning, audience targeting, attachments, optional expiry, source link |
@@ -95,8 +95,8 @@ Every user has exactly **one role**.
 |---|---|---|
 | `student` | Read content targeted at them, manage their profile and timetable sections, follow communities, receive notifications | Can also publish if they are a community manager |
 | `lecturer` | **Read-only** (the same as a student, plus they can see all published content) | Publish to the sections they teach, edit their own timetable entries |
-| `department_staff` | Use the staff dashboard to manage announcements, events, documents, applications, communities and timetable data that **belong to their own department and are targeted within it**. They cannot target all students or another department. | A university admin may explicitly grant wider reach |
-| `university_admin` | Manage content across all departments and for the university as a whole, send it to any audience, and archive any item | Manage community managers, and grant wider reach to department staff |
+| `school_staff` | Use the staff dashboard to manage announcements, events, documents, applications, communities and timetable data that **belong to their own school and are targeted within it**. They cannot target all students or another school. | A university admin may explicitly grant wider reach |
+| `university_admin` | Manage content across all schools and for the university as a whole, send it to any audience, and archive any item | Manage community managers, and grant wider reach to school staff |
 | `super_admin` | Everything, plus assigning roles, suspending users and using the Django admin | |
 
 **Community manager [Later]** will be a per-community permission rather than a role. For example, a student who leads the Robotics Club would stay a `student` and be recorded as that club's manager.
@@ -122,7 +122,7 @@ Every user has exactly **one role**.
 
 Announcements, events, documents and applications all share these behaviours, and they are implemented once:
 
-- **Publisher [MVP].** Content is published on behalf of the `university` or a `department`. This is separate from the user who typed it. The publisher decides who may manage the item and what byline students see. The `community` publisher type comes later.
-- **Audience [MVP].** Who the content is for: all students, or specific departments, programmes or intakes. Documents have no audience in the MVP, so every logged-in user can see them. See [03](03-data-model.md#audiences--audience-targeting).
+- **Publisher [MVP].** Content is published on behalf of the `university` or a `school`. This is separate from the user who typed it. The publisher decides who may manage the item and what byline students see. The `community` publisher type comes later.
+- **Audience [MVP].** Who the content is for: all students, or specific schools, programmes or intakes. Documents have no audience in the MVP, so every logged-in user can see them. See [03](03-data-model.md#audiences--audience-targeting).
 - **Lifecycle [MVP].** Content moves from `draft` to `published` to `archived`. Publishing takes effect immediately and sets `published_at`. An optional `expires_at` hides the item once it passes. Scheduled publishing comes later.
 - **Source [MVP].** An optional `source_platform` and `source_url` point to the original WhatsApp or Telegram post, portal page or other source.

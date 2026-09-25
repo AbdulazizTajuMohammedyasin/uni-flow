@@ -46,9 +46,9 @@ UniFlow/
 | D1 | A modular Django monolith. Each app is split into selectors (reads), services (writes) and policies (permissions). |
 | D2 | One versioned API at `/api/v1/` for web now and mobile later. It has two surfaces: **read** (`/api/v1/<resource>/`) and **manage** (`/api/v1/manage/<resource>/`). |
 | D3 | **A React staff dashboard (`/staff`) is the staff interface.** The Django admin (`/django-admin/`) is a back-office tool for developers and super admins only. |
-| D4 | **The frontend is not a security boundary.** Roles map to *capabilities*, and a department scope limits what each user can manage. The same functions drive both the API's permission checks and the `me.capabilities` field that the UI uses to hide actions. |
-| D5 | MVP publishers are `university_admin` (content across all departments, sent to any audience) and `department_staff` (only content that belongs to and is targeted within their own department; wider reach needs an explicit grant from a university admin, which comes later). Lecturers are read-only. Community managers come later. |
-| D6 | A single `Audience` model per item. The MVP targets all students, departments, programmes or intakes. Course, section, follower and semester targeting are designed but come later. |
+| D4 | **The frontend is not a security boundary.** Roles map to *capabilities*, and a school scope limits what each user can manage. The same functions drive both the API's permission checks and the `me.capabilities` field that the UI uses to hide actions. |
+| D5 | MVP publishers are `university_admin` (content across all schools, sent to any audience) and `school_staff` (only content that belongs to and is targeted within their own school; wider reach needs an explicit grant from a university admin, which comes later). Lecturers are read-only. Community managers come later. |
+| D6 | A single `Audience` model per item. The MVP targets all students, schools, programmes or intakes. Course, section, follower and semester targeting are designed but come later. |
 | D7 | Publishing takes effect immediately, with an optional expiry. There is no scheduling, cron, queue or Redis in the MVP. |
 | D8 | Djoser handles the account lifecycle and SimpleJWT handles tokens. The web refresh token is an httpOnly cookie, and mobile will keep it in SecureStore. `is_active` means the email is verified, and suspension is a separate `is_suspended` flag. |
 | D9 | Every file is a `Document`, stored locally and streamed only to logged-in users. Documents have no audience in the MVP. |
@@ -60,10 +60,9 @@ UniFlow/
 
 ## Remaining decisions (see the summary in the latest review)
 
-2. The official name of the level above Department (School or Faculty), if UniFlow ever needs to model it. It is not modelled for now.
-3. The university's timetable format. **This blocks only M7.11.**
-4. Hosting. **This blocks only M10.7.**
-5. Deferred libraries, to be decided when their task arrives:
+1. The university's timetable format. **This blocks only M7.11.**
+2. Hosting. **This blocks only M10.7.**
+3. Deferred libraries, to be decided when their task arrives:
    - `factory_boy`
    - `filetype` (M4.1)
    - Pillow (M5.1)
@@ -74,6 +73,6 @@ UniFlow/
 
 - **Supporting libraries:** approved are `pytest`, `pytest-django`, `ruff`, `django-cors-headers`, `drf-spectacular`, `django-filter`, Vitest and React Testing Library. `django-environ` is rejected in favour of a small `config/env.py` helper that uses only the standard library.
 - **Registration:** only `@student.aiu.edu.my` addresses can self-register. Staff accounts are created by a super admin (M2.2), or in the Django admin until then.
-- **Terminology:** a Programme is the degree, a Course is a subject or module (for example CDE2313), and a Department is an academic department.
-- **Department staff** manage only content that belongs to and is targeted within their own department.
+- **Terminology:** AIU is organised into **Schools** (plus the Centre for Foundation and General Studies, stored as a School). A Programme is the degree and belongs to one school. A Course is a subject or module (for example CDE2313). UniFlow therefore uses "school" everywhere: the role is `school_staff`, and staff manage content for their own school.
+- **School staff** manage only content that belongs to and is targeted within their own school.
 - **CI:** a MySQL service container in GitHub Actions is acceptable. Local development has no Docker.

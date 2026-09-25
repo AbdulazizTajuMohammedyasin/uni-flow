@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M0 (Foundations) is finished once M0.14 is pushed and green.
-**Next up:** M1 (Identity), which starts with the academic structure: departments, programmes and intakes.
+**Now:** M1 (Identity). M0 is done ✅.
+**Next up:** M1.2, the API that lets the website read schools, programmes and intakes.
 
 ---
 
@@ -13,7 +13,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Milestone | In plain words | Status |
 |---|---|---|
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
-| **M1** Identity | Students can register, log in and fill in their profile | ⏭️ Next |
+| **M1** Identity | Students can register, log in and fill in their profile | 🔄 In progress |
 | **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | ⏳ |
 | **M3** Announcements | Staff post announcements, and students see the ones meant for them | ⏳ |
 | **M4** Documents | Upload and download documents, and attach them to announcements | ⏳ |
@@ -45,7 +45,23 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M0.12 | Pages and addresses (`/`, `/login`, `/staff`, 404) plus the page frames | Click the menu links. Try a phone-size view. | ✅ Done |
 | M0.12a | Added **shadcn/ui** (ready-made buttons, dialogs and so on) with UniFlow's indigo colour. It is used on the 404 page's button. | http://localhost:5173/anything → "Go to home" button | ✅ Done |
 | M0.13 | The website can talk to the backend. A small **API: ok** badge proves it. | Run both servers; see the badge in the sidebar | ✅ Done |
-| M0.14 | GitHub checks the website automatically too (CI) | GitHub → **Actions** → Frontend CI | ✅ Done (confirm it's green) |
+| M0.14 | GitHub checks the website automatically too (CI) | GitHub → **Actions** → Frontend CI | ✅ Done (green) |
+
+---
+
+## M1 Identity: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M1.1 | Database tables for AIU's structure: **schools**, **programmes** (degrees) and **intakes** (batches). The role "department staff" was renamed **school staff**, because AIU uses schools. | `/django-admin/` → Academics | ✅ Done |
+| **M1.2** | **Website can read that structure through the API** | – | ⏭️ **Next** |
+| M1.3 | Load **AIU's real list** (3 schools, the Foundation centre and 23 programmes) into the database with one command | – | ⏳ |
+| M1.4 | Student and staff profiles (which school, programme and intake a student is in) | – | ⏳ |
+| M1.5 | Registration with `@student.aiu.edu.my` emails and an activation email | – | ⏳ |
+| M1.6 | Log in and log out | – | ⏳ |
+| M1.7 | Forgot password and change password | – | ⏳ |
+| M1.8 | "My profile" API | – | ⏳ |
+| M1.9 – M1.12 | Website pages: log in, register, activate, reset password, onboarding, profile | – | ⏳ |
 
 ---
 
@@ -83,12 +99,16 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `config/settings/` | Settings (dev, test, prod) |
 | `config/api_v1.py` | The list of API addresses |
 | `apps/accounts/` | User accounts |
+| `apps/academics/` | University structure: schools, programmes and intakes |
+| `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
 | `.env` | Your local passwords (never committed) |
 
 ---
 
 ## Decided recently
+
+- **AIU uses Schools, not departments.** Everything is called "school" (the role is `school_staff`). The Centre for Foundation and General Studies is stored as a school.
 
 - **Who can register:** only `@student.aiu.edu.my` emails, for example `abdulaziz.mohammedyasin@student.aiu.edu.my`. **Staff accounts** are created by a super admin inside UniFlow (M2.2), or in the Django admin until then.
 

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # UniFlow apps
     "apps.accounts",
+    "apps.academics",
 ]
 
 # Email-based custom user. Must be set before the first migration.

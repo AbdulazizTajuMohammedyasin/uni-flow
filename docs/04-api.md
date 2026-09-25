@@ -25,7 +25,7 @@ UniFlow registers its own subclass of Djoser's `UserViewSet`, so the paths below
 | POST | `users/` | public | Registration. Takes `{email, full_name, password, re_password}`. The email domain must be in `ALLOWED_EMAIL_DOMAINS`. The new account is inactive and an activation email is sent. |
 | POST | `users/activation/` | public | Takes `{uid, token}` |
 | POST | `users/resend_activation/` | public | Takes `{email}` |
-| GET, PATCH | `users/me/` | auth | Returns the user, role, profile, `profile_complete` and **`capabilities`**. PATCH changes the name, department, programme and intake. The role and email cannot be changed here. |
+| GET, PATCH | `users/me/` | auth | Returns the user, role, profile, `profile_complete` and **`capabilities`**. PATCH changes the name, school, programme and intake. The role and email cannot be changed here. |
 | POST | `users/set_password/` | auth | Also revokes all of the user's refresh tokens |
 | POST | `users/reset_password/` | public | Always returns 204, so it never reveals whether an email is registered |
 | POST | `users/reset_password_confirm/` | public | Also revokes all of the user's refresh tokens |
@@ -45,12 +45,12 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 
 | Resource | Endpoints | Filters and notes |
 |---|---|---|
-| Academics | `GET academics/departments/`, `programmes/`, `intakes/`. M7 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters |
-| Announcements | `GET announcements/`, `GET announcements/{id}/` | `category`, `priority`, `publisher_type`, `department`, `pinned`, `date_from`, `date_to`, `search`. Ordered by pinned first, then important first, then `-published_at`. Items the user cannot see return **404**. |
-| Documents | `GET documents/`, `GET documents/{id}/`, `GET documents/{id}/download/` | The list shows only items where `listed_in_library` is true. Filters: `category`, `department`, `search`. A download streams the file to any logged-in user. |
-| Events | `GET events/`, `GET events/{id}/`, `GET events/calendar/?from=&to=` | `from`, `to`, `category`, `department`, `upcoming=true`. The calendar endpoint returns a lighter shape and allows a range of at most 62 days. |
-| Communities | `GET communities/`, `GET communities/{slug}/`, `POST` or `DELETE communities/{slug}/follow/` | `category`, `department`, `programme`, `intake`, `following=true`, `for_me=true` (a simple filter by the user's profile, not a recommendation engine), `search` |
-| Timetable | `GET timetable/sections/` (the current term's catalogue), `GET`/`POST timetable/my-sections/`, `DELETE timetable/my-sections/{section_id}/`, `GET timetable/today/`, `GET timetable/week/?date=` | The catalogue filters by `course`, `department` and `search`. Only students can add their own sections. |
+| Academics | `GET academics/schools/`, `programmes/`, `intakes/`. M7 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters |
+| Announcements | `GET announcements/`, `GET announcements/{id}/` | `category`, `priority`, `publisher_type`, `school`, `pinned`, `date_from`, `date_to`, `search`. Ordered by pinned first, then important first, then `-published_at`. Items the user cannot see return **404**. |
+| Documents | `GET documents/`, `GET documents/{id}/`, `GET documents/{id}/download/` | The list shows only items where `listed_in_library` is true. Filters: `category`, `school`, `search`. A download streams the file to any logged-in user. |
+| Events | `GET events/`, `GET events/{id}/`, `GET events/calendar/?from=&to=` | `from`, `to`, `category`, `school`, `upcoming=true`. The calendar endpoint returns a lighter shape and allows a range of at most 62 days. |
+| Communities | `GET communities/`, `GET communities/{slug}/`, `POST` or `DELETE communities/{slug}/follow/` | `category`, `school`, `programme`, `intake`, `following=true`, `for_me=true` (a simple filter by the user's profile, not a recommendation engine), `search` |
+| Timetable | `GET timetable/sections/` (the current term's catalogue), `GET`/`POST timetable/my-sections/`, `DELETE timetable/my-sections/{section_id}/`, `GET timetable/today/`, `GET timetable/week/?date=` | The catalogue filters by `course`, `school` and `search`. Only students can add their own sections. |
 | Applications | `GET applications/`, `GET applications/{id}/` | `status` (upcoming, open, closing_soon, closed), `category`, `search`. By default it shows open and closing-soon listings, ordered by `closes_at`. |
 | Notifications | `GET notifications/`, `GET notifications/unread-count/`, `POST notifications/{id}/read/`, `POST notifications/read-all/` | Only the caller's own notifications |
 | Dashboard | `GET dashboard/` | `{important_announcements, recent_announcements, todays_classes, upcoming_events, closing_applications, recent_documents, followed_communities, unread_notifications}`, each limited to a few items |
@@ -61,8 +61,8 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 Every manage endpoint:
 
 - requires the matching capability,
-- filters its queryset to what the user may manage (a department staff member sees only their department's items),
-- checks the publisher and audience in the request body on the server (for `department_staff`, both must stay inside their own department; see [06](06-auth-and-permissions.md#the-department-boundary-mvp-rule)),
+- filters its queryset to what the user may manage (a school staff member sees only their school's items),
+- checks the publisher and audience in the request body on the server (for `school_staff`, both must stay inside their own school; see [06](06-auth-and-permissions.md#the-school-boundary-mvp-rule)),
 - returns 403 when the capability is missing and 404 for items outside the user's scope.
 
 | Resource | Endpoints | Capability |
@@ -73,8 +73,8 @@ Every manage endpoint:
 | Applications | `manage/applications/` for list and create, `{id}/`, plus `publish/` and `archive/` | `applications.manage` |
 | Communities | `manage/communities/` for list and create, `{slug}/` for PATCH and deactivation, and `{slug}/links/` for CRUD | `communities.manage` |
 | Timetable | `manage/timetable/terms/` for CRUD (university admin only); `manage/timetable/courses/` for CRUD; `manage/timetable/sections/` for CRUD with nested `meetings/`; `manage/timetable/import/` (POST with `dry_run`) *[with the first adapter]* | `timetable.manage` |
-| Users | `manage/users/` for a list filtered by `role`, `department` and `search`, and **POST to create a staff account** (email, full name, role, department; a "set your password" email is sent); `{id}/role/` to PATCH the role and staff department; `{id}/suspension/` to PATCH `is_suspended` | `users.manage` (super admin only) |
-| Reference data | `manage/academics/departments/`, `programmes/` and `intakes/` for CRUD | `academics.manage` (university admin and super admin) |
+| Users | `manage/users/` for a list filtered by `role`, `school` and `search`, and **POST to create a staff account** (email, full name, role, school; a "set your password" email is sent); `{id}/role/` to PATCH the role and staff school; `{id}/suspension/` to PATCH `is_suspended` | `users.manage` (super admin only) |
+| Reference data | `manage/academics/schools/`, `programmes/` and `intakes/` for CRUD | `academics.manage` (university admin and super admin) |
 
 Every manage response includes `can_edit` and `can_publish`, so the dashboard never has to work out permissions itself.
 
@@ -92,8 +92,8 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
   "body": "Check-in runs **5–7 October**...",
   "category": "student_affairs",
   "priority": "important",
-  "publisher": { "type": "department", "id": 3 },
-  "audience": { "departments": [], "programmes": [], "intakes": [12] },
+  "publisher": { "type": "school", "id": 3 },
+  "audience": { "schools": [], "programmes": [], "intakes": [12] },
   "attachment_ids": [88],
   "source_platform": "whatsapp",
   "source_url": "https://whatsapp.com/channel/0029Va...",
@@ -113,7 +113,7 @@ The read shape at `GET /api/v1/announcements/214/`:
   "category": "student_affairs",
   "priority": "important",
   "is_pinned": false,
-  "publisher": { "type": "department", "id": 3, "name": "Student Affairs" },
+  "publisher": { "type": "school", "id": 3, "name": "Student Affairs" },
   "audience_summary": "Intake Sept 2026",
   "attachments": [{ "id": 88, "title": "Check-in map", "mime_type": "application/pdf", "size_bytes": 482133, "download_url": "https://api.../api/v1/documents/88/download/" }],
   "source": { "platform": "whatsapp", "url": "https://whatsapp.com/channel/0029Va..." },

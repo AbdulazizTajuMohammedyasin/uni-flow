@@ -23,7 +23,7 @@ UniFlow does **not** include `djoser.urls` or `djoser.urls.jwt`. It registers it
 **Staff accounts:** decided for the MVP.
 
 - **Only `@student.aiu.edu.my` addresses can self-register** (`ALLOWED_EMAIL_DOMAINS=student.aiu.edu.my`). Staff and lecturers (`@aiu.edu.my`) therefore **cannot** register themselves.
-- A `super_admin` **creates staff accounts** in the staff dashboard (`/staff/users`, API `POST /api/v1/manage/users/`, M2.2). They set the email, full name, role and department. The account is created active with no usable password, and UniFlow emails a **"set your password"** link using Djoser's password-reset flow.
+- A `super_admin` **creates staff accounts** in the staff dashboard (`/staff/users`, API `POST /api/v1/manage/users/`, M2.2). They set the email, full name, role and school. The account is created active with no usable password, and UniFlow emails a **"set your password"** link using Djoser's password-reset flow.
 - Until M2.2 exists, staff accounts can be created in the Django admin back-office.
 - The first `super_admin` is created with `createsuperuser`.
 
@@ -103,19 +103,19 @@ The frontend is **not** the security boundary. Every manage endpoint enforces th
 
 A capability is a named permission to manage one kind of resource. Every capability is computed in one place, `accounts.capabilities.capabilities_for(user) -> dict[str, bool]`:
 
-| Capability | student | lecturer | department_staff | university_admin | super_admin |
+| Capability | student | lecturer | school_staff | university_admin | super_admin |
 |---|:-:|:-:|:-:|:-:|:-:|
-| `announcements.manage` | – | – | ✔ own dept | ✔ all | ✔ all |
-| `events.manage` | – | – | ✔ own dept | ✔ all | ✔ all |
-| `documents.manage` | – | – | ✔ own dept | ✔ all | ✔ all |
-| `applications.manage` | – | – | ✔ own dept | ✔ all | ✔ all |
-| `communities.manage` | – | – | ✔ own-dept communities | ✔ all | ✔ all |
-| `timetable.manage` | – | – | ✔ sections of own-dept courses | ✔ all, plus terms | ✔ all, plus terms |
+| `announcements.manage` | – | – | ✔ own school | ✔ all | ✔ all |
+| `events.manage` | – | – | ✔ own school | ✔ all | ✔ all |
+| `documents.manage` | – | – | ✔ own school | ✔ all | ✔ all |
+| `applications.manage` | – | – | ✔ own school | ✔ all | ✔ all |
+| `communities.manage` | – | – | ✔ own-school communities | ✔ all | ✔ all |
+| `timetable.manage` | – | – | ✔ sections of own-school courses | ✔ all, plus terms | ✔ all, plus terms |
 | `academics.manage` (reference data) | – | – | – | ✔ | ✔ |
 | `users.manage` (create staff accounts, roles, suspension) | – | – | – | – | ✔ |
 | Django admin (back-office) | – | – | – | – | ✔ |
 
-A `department_staff` user with no department on their `StaffProfile` gets **no** capabilities, so a half-configured account can do nothing.
+A `school_staff` user with no school on their `StaffProfile` gets **no** capabilities, so a half-configured account can do nothing.
 
 **Lecturers** are read-only in the MVP. Like every non-student role, they can see all published content. *[Later]*: publishing to the sections they teach, and editing their own timetable entries.
 
@@ -125,35 +125,35 @@ In `publishing.policies`:
 
 ```python
 def manageable_queryset(user, model):      # used by every /manage/ list/detail
-    # admins → all rows; department_staff → rows where publisher_department == their dept
+    # admins → all rows; school_staff → rows where publisher_school == their school
 def publishers_for(user) -> list[PublisherRef]:
-    # admins → [university] + all active departments; department_staff → [their department]
+    # admins → [university] + all active schools; school_staff → [their school]
 def can_manage(user, obj) -> bool          # object-level check, used by DRF permission + `can_edit` flag
 def validate_publisher(user, publisher)    # rejects a publisher outside publishers_for(user) → 403
-def validate_audience(user, audience)      # department_staff: audience must stay inside their department → 403
+def validate_audience(user, audience)      # school_staff: audience must stay inside their school → 403
 ```
 
-### The department boundary (MVP rule)
+### The school boundary (MVP rule)
 
 | Role | May manage |
 |---|---|
-| `university_admin` and `super_admin` | Content from any department or from the university, sent to any audience |
-| `department_staff` | Only content that **belongs to** their department **and** is **targeted within** it |
+| `university_admin` and `super_admin` | Content from any school or from the university, sent to any audience |
+| `school_staff` | Only content that **belongs to** their school **and** is **targeted within** it |
 | `lecturer` | Nothing. Read-only in the MVP. |
 
-For a `department_staff` user, "belongs to and targeted within" means all of the following:
+For a `school_staff` user, "belongs to and targeted within" means all of the following:
 
-- **Publisher:** `publisher_type = department` and `publisher_department` is their department. They can never publish as the university or as another department.
-- **Audience:** `departments` must be exactly their own department. Their audience can never be "all students" or include another department. Any `programmes` must belong to their department. `intakes` may be added to narrow the audience further, since they are combined with the department using AND.
-- **Items they can manage:** the list and detail views show only items whose `publisher_department` is their department. Other departments' items return 404.
+- **Publisher:** `publisher_type = school` and `publisher_school` is their school. They can never publish as the university or as another school.
+- **Audience:** `schools` must be exactly their own school. Their audience can never be "all students" or include another school. Any `programmes` must belong to their school. `intakes` may be added to narrow the audience further, since they are combined with the school using AND.
+- **Items they can manage:** the list and detail views show only items whose `publisher_school` is their school. Other schools' items return 404.
 - **Documents** have no audience in the MVP, so the rule applies through the publisher only. Every logged-in user can still read published documents, as decided.
-- **Communities and timetable:** the same boundary, applied through `community.department` and `section.course.department`.
+- **Communities and timetable:** the same boundary, applied through `community.school` and `section.course.school`.
 
-The server enforces every one of these rules through `validate_publisher`, `validate_audience` and `manageable_queryset`. The staff dashboard shows the department preselected and locked, but that is only a convenience.
+The server enforces every one of these rules through `validate_publisher`, `validate_audience` and `manageable_queryset`. The staff dashboard shows the school preselected and locked, but that is only a convenience.
 
-**Cross-department content** (for example, a department event open to all students) is published by a **university admin** in the MVP. *[Later]*: a university admin can explicitly grant a department staff member wider reach, for example through a per-user "may target all students" grant or by approving a request. Nothing is granted implicitly.
+**Cross-school content** (for example, a school event open to all students) is published by a **university admin** in the MVP. *[Later]*: a university admin can explicitly grant a school staff member wider reach, for example through a per-user "may target all students" grant or by approving a request. Nothing is granted implicitly.
 
-Equivalent functions exist for communities (scoped by `community.department`) and the timetable (scoped by `section.course.department`).
+Equivalent functions exist for communities (scoped by `community.school`) and the timetable (scoped by `section.course.school`).
 
 **How the pieces connect:**
 
@@ -164,7 +164,7 @@ Equivalent functions exist for communities (scoped by `community.department`) an
 
 Because the UI and the API use the same functions, the UI can never show an action that the API would refuse.
 
-**Why not Django groups or django-guardian?** The rules depend on the user's department, not on fixed permission lists. One small module of code is easier to test than permission rows stored in the database.
+**Why not Django groups or django-guardian?** The rules depend on the user's school, not on fixed permission lists. One small module of code is easier to test than permission rows stored in the database.
 
 ### Later
 

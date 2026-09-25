@@ -56,7 +56,7 @@ Docs: https://developers.facebook.com/docs/whatsapp and https://faq.whatsapp.com
 ### [Later] Telegram bot, inbound
 
 - The university and each club register a channel with one UniFlow bot and add it as a channel admin.
-- `TelegramSource(chat_id, title, community FK / department FK, default_category, is_active)` maps chats to publishers.
+- `TelegramSource(chat_id, title, community FK / school FK, default_category, is_active)` maps chats to publishers.
 - The webhook stores each post as an `InboxItem(source, raw_text, attachments, message_link, received_at, status)`.
 - **Nothing auto-publishes.** A publisher for that community reviews the inbox, clicks "Convert to announcement or event", chooses an audience and publishes. The Telegram message link fills `source_url` automatically.
 - Media: the backend fetches files with `getFile` and stores them as `Document`s.

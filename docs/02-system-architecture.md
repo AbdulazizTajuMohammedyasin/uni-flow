@@ -99,7 +99,7 @@ backend/
 ├── core/                       # TimeStampedModel, pagination, error envelope, base permissions, health
 └── apps/
     ├── accounts/       [MVP]   User, profiles, Djoser/JWT wiring, capabilities, staff user management
-    ├── academics/      [MVP]   Department, Programme, Intake (M1); Course, Term (M7)
+    ├── academics/      [MVP]   School, Programme, Intake (M1); Course, Term (M7)
     ├── audiences/      [MVP]   Audience + visibility selector
     ├── publishing/     [MVP]   PublishableModel base, publisher policy, publish/archive services
     ├── announcements/  [MVP]

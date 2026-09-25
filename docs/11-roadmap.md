@@ -385,30 +385,30 @@ Unless a task says otherwise, each one depends on the task before it.
 
 | # | Task | Main files | Verify | Commit |
 |---|---|---|---|---|
-| M1.1 | Department, Programme and Intake models, plus back-office admin | `apps/academics/{models,admin}.py`, migration, tests | Uniqueness tests, and the Programme → Department relationship | `feat(academics): add department, programme and intake models` |
-| M1.2 | Reference data read API | `apps/academics/{serializers,views,urls}.py` | Requires login, and the `?department=` filter works | `feat(academics): add reference data read endpoints` |
-| M1.3 | Development seed command | `apps/academics/management/commands/seed_academics.py`, `fixtures/academics_dev.json` | The command is idempotent (running it twice creates no duplicates) | `chore(academics): add development seed command` |
+| M1.1 ✅ | School, Programme and Intake models, plus back-office admin, and the shared `core.models.TimeStampedModel` (`created_at`, `updated_at`) | `core/models.py`, `apps/academics/{apps,models,admin}.py`, migration `0001_initial`, `tests/test_models.py`, `INSTALLED_APPS` | Uniqueness tests, and the Programme → School relationship | `feat(academics): add school, programme and intake models` |
+| M1.2 | Reference data read API | `apps/academics/{serializers,views,urls}.py` | Requires login, and the `?school=` filter works | `feat(academics): add reference data read endpoints` |
+| M1.3 | Seed command that loads **AIU's real structure** from https://aiu.edu.my/academic-programmes/: 3 schools plus the Centre for Foundation and General Studies, and their 23 programmes, with short codes made up by UniFlow because the page shows none. Also a few sample intakes. | `apps/academics/management/commands/seed_academics.py`, `fixtures/aiu_academics.json` | The command is idempotent (running it twice creates no duplicates) | `chore(academics): add aiu academic structure seed command` |
 | M1.4 | Student and staff profiles, the `create_user` service and `profile_complete` | `apps/accounts/{models,services,admin}.py` | The profile is created with the user, and `profile_complete` is correct for each combination | `feat(accounts): add student and staff profiles` |
 | M1.5 | Djoser registration with the domain rule and activation email | `apps/accounts/{serializers,views,urls,emails}.py`, email templates, `DJOSER` settings | Wrong domain → 400; one activation email sent; activation works; a reused token fails; `set_email` and `DELETE me` return 403 for non-admins | `feat(auth): add registration with email activation` |
 | M1.6 | JWT create, refresh, verify and logout with cookie transport and suspension checks | `apps/accounts/{jwt_views,jwt_serializers,authentication}.py` | Web and mobile get different response shapes; `email_not_verified` only with the right password; suspended users are rejected; refresh rotation works; a bad Origin is rejected | `feat(auth): add jwt login, refresh and logout` |
 | M1.7 | Password reset and change, with refresh-token revocation | `apps/accounts/{views,services}.py`, template | No enumeration of registered emails; old refresh tokens rejected after a change | `feat(auth): add password reset and change` |
-| M1.8 | The "me" serializer (profile, `profile_complete`, empty `capabilities`) | `apps/accounts/serializers.py` | Role and email are read-only; a programme outside the chosen department is rejected | `feat(accounts): add current user profile endpoint` |
+| M1.8 | The "me" serializer (profile, `profile_complete`, empty `capabilities`) | `apps/accounts/serializers.py` | Role and email are read-only; a programme outside the chosen school is rejected | `feat(accounts): add current user profile endpoint` |
 | M1.9 | Frontend session: `AuthProvider`, refresh on startup, 401 refresh interceptor, `RequireAuth` | `shared/api/client.ts`, `features/auth/{AuthProvider,RequireAuth}.tsx` | Mocked Axios: a 401 triggers one refresh and a retry; a failed refresh logs the user out | `feat(auth): add frontend session handling` |
 | M1.10 | Login and registration pages | `features/auth/pages/{Login,Register}Page.tsx`, `schemas.ts` | Zod validation; server field errors are shown; the `email_not_verified` state appears | `feat(auth): add login and registration pages` |
 | M1.11 | Activation, forgot-password and reset-password pages | `features/auth/pages/*` | Route parameters are posted; success and error states | `feat(auth): add activation and password reset pages` |
-| M1.12 | Onboarding and profile pages, including the change-password form | `features/profile/*` | The programme list depends on the department; incomplete profiles are redirected to onboarding | `feat(profile): add onboarding and profile pages` |
+| M1.12 | Onboarding and profile pages, including the change-password form | `features/profile/*` | The programme list depends on the school; incomplete profiles are redirected to onboarding | `feat(profile): add onboarding and profile pages` |
 
 ## M2 — Permissions, publishing core and staff dashboard shell
 
 | # | Task | Main files | Verify | Commit |
 |---|---|---|---|---|
-| M2.1 | `capabilities_for`, `me.capabilities` and `me.publishers`, and the `HasCapability` permission class | `apps/accounts/capabilities.py`, `core/permissions.py` | A role × capability matrix test; a department staff member without a department gets no capabilities | `feat(accounts): add role-based capabilities` |
-| M2.2 | Staff user management API: list, **create staff account** (with a "set your password" email, because only `@student.aiu.edu.my` can self-register), role and department, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
+| M2.1 | `capabilities_for`, `me.capabilities` and `me.publishers`, and the `HasCapability` permission class | `apps/accounts/capabilities.py`, `core/permissions.py` | A role × capability matrix test; a school staff member without a school gets no capabilities | `feat(accounts): add role-based capabilities` |
+| M2.2 | Staff user management API: list, **create staff account** (with a "set your password" email, because only `@student.aiu.edu.my` can self-register), role and school, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
 | M2.3 | Reference data management API | `apps/academics/manage_views.py` | Only admins; deactivating hides the item from the read API | `feat(academics): add reference data management endpoints` |
 | M2.4 | `Audience` model with 3 fields, its serializer and its summary text | `apps/audiences/*` | Summary text for each combination | `feat(audiences): add audience model` |
 | M2.5 | Visibility selectors `visible_audience_q` and `students_matching` | `apps/audiences/selectors.py` | A matrix of 15 or more cases; the two functions agree; no duplicate rows | `feat(audiences): add audience visibility selectors` |
 | M2.6 | `PublishableModel` and `TargetedModel`, `published_q`, and the publish and archive services | `apps/publishing/{models,selectors,services}.py` | Constraint violations; expiry boundaries; publishing sets `published_at` | `feat(publishing): add publishable content base` |
-| M2.7 | Publisher policy: `manageable_queryset`, `publishers_for`, `can_manage`, `validate_publisher`, and the `CanManageObject` permission | `apps/publishing/policies.py` | Role × publisher × department matrix | `feat(publishing): add publisher policy` |
+| M2.7 | Publisher policy: `manageable_queryset`, `publishers_for`, `can_manage`, `validate_publisher`, and the `CanManageObject` permission | `apps/publishing/policies.py` | Role × publisher × school matrix | `feat(publishing): add publisher policy` |
 | M2.8 | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, and a staff home placeholder | `shared/auth/*`, `app/layouts/StaffLayout.tsx` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
 | M2.9 | Shared form components: fields, `MarkdownField`, `PublisherSelect`, `AudienceFields`, `SourceLinkFields`, the `Markdown` renderer, `DataTable`, `Dialog` and `Toast` | `shared/forms/*`, `shared/ui/*` | Markdown strips HTML and `javascript:` links; the audience summary is correct | `feat(frontend): add shared form and table components` |
 | M2.10 | Staff users page, including a "create staff account" form | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
@@ -420,7 +420,7 @@ Unless a task says otherwise, each one depends on the task before it.
 |---|---|---|---|
 | M3.1 | Model and back-office admin | Constraints and indexes | `feat(announcements): add announcement model` |
 | M3.2 | Read API: feed, detail and filters (django-filter) | 404 for invisible items; filters; ordering | `feat(announcements): add announcement feed endpoints` |
-| M3.3 | Manage API: CRUD, publish and archive | Every role × action; publishing as another department → 403 | `feat(announcements): add announcement management endpoints` |
+| M3.3 | Manage API: CRUD, publish and archive | Every role × action; publishing as another school → 403 | `feat(announcements): add announcement management endpoints` |
 | M3.4 | Student feed page | Loading, error, empty and data states; filters kept in the URL | `feat(announcements): add announcement feed page` |
 | M3.5 | Student detail page | Markdown, source link, expired label | `feat(announcements): add announcement detail page` |
 | M3.6 | Staff list page | Status tabs; row actions follow `can_edit` | `feat(staff): add announcements management list` |
@@ -455,7 +455,7 @@ Unless a task says otherwise, each one depends on the task before it.
 |---|---|---|---|
 | M6.1 | Models and link host checks | Valid and invalid URLs for each platform | `feat(communities): add community models` |
 | M6.2 | Read API and follow | `for_me` and `following` filters; following is idempotent | `feat(communities): add community directory and follow endpoints` |
-| M6.3 | Manage API for communities and links | Department scope; communities with no department are admin-only | `feat(communities): add community management endpoints` |
+| M6.3 | Manage API for communities and links | School scope; communities with no school are admin-only | `feat(communities): add community management endpoints` |
 | M6.4 | Directory and detail pages, and the follow button | Follow updates instantly and rolls back on error; links have the correct `href` and `rel` | `feat(communities): add community directory pages` |
 | M6.5 | Staff communities pages with a link editor | An invalid WhatsApp host is rejected | `feat(staff): add community management pages` |
 
@@ -464,9 +464,9 @@ Unless a task says otherwise, each one depends on the task before it.
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M7.1 | `Course` and `Term` models and read API | Only one current term | `feat(academics): add course and term models` |
-| M7.2 | `Course` and `Term` manage API | Terms are admin-only; department staff manage their own department's courses | `feat(academics): add course and term management endpoints` |
+| M7.2 | `Course` and `Term` manage API | Terms are admin-only; school staff manage their own school's courses | `feat(academics): add course and term management endpoints` |
 | M7.3 | `CourseSection`, `ClassMeeting` and `SectionEnrollment` models | Constraints; `external_ref` is unique per term | `feat(timetable): add section, meeting and enrolment models` |
-| M7.4 | Manage API for sections and nested meetings | Department scope; `updated_by` is recorded | `feat(timetable): add timetable management endpoints` |
+| M7.4 | Manage API for sections and nested meetings | School scope; `updated_by` is recorded | `feat(timetable): add timetable management endpoints` |
 | M7.5 | Import service that works with any file format (`apply_timetable_rows`, dry run and report) | Create, update and unchanged cases, and errors with row numbers; no adapter yet | `feat(timetable): add timetable import service` |
 | M7.6 | Student API: section catalogue and my sections | Only current-term sections can be added | `feat(timetable): add section selection endpoints` |
 | M7.7 | Student API: today and week | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |

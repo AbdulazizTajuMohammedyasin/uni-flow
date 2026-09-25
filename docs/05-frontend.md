@@ -89,8 +89,8 @@ Rules:
   2. A form page for create and edit: React Hook Form with Zod, then Save draft, Publish or Archive.
   3. Actions confirmed with a dialog, with the result shown in a toast.
 - **Shared form parts:**
-  - `PublisherSelect`, with options from `me.publishers`. It is hidden when there is only one option, which is the case for department staff.
-  - `AudienceFields`, with multi-selects for department, programme and intake, and a live summary such as "Computing students, 2024-SEP intake". Leaving all of them empty means all students. That option is offered only to university admins. For department staff, the department is preselected and locked, and the programme list is limited to their department. This is only a convenience, because the API enforces the same rule.
+  - `PublisherSelect`, with options from `me.publishers`. It is hidden when there is only one option, which is the case for school staff.
+  - `AudienceFields`, with multi-selects for school, programme and intake, and a live summary such as "Computing students, 2024-SEP intake". Leaving all of them empty means all students. That option is offered only to university admins. For school staff, the school is preselected and locked, and the programme list is limited to their school. This is only a convenience, because the API enforces the same rule.
   - `MarkdownField`, a textarea with a preview tab rendered by react-markdown.
   - `FileField`, which uploads to `manage/documents/` and returns an id.
 - **Timetable management:** term selector, then courses, then sections, then weekly meetings. Meetings are edited inline. The import screen is added with the first import adapter.

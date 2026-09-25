@@ -15,8 +15,8 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 |---|---|---|
 | Models | Constraints and derived values | A mismatched publisher raises `IntegrityError`, and `ApplicationListing.status_at()` behaves correctly at every boundary |
 | Selectors | **Visibility**, the most important suite | A table-driven matrix of student profile × audience → visible or not, covering empty audiences, AND and OR, incomplete profiles, drafts and expired items |
-| Policies and capabilities | `capabilities_for`, `manageable_queryset`, `can_manage` | Every role × resource × department |
-| Manage API | Server-side enforcement | For every manage endpoint: a student gets 403, department staff get 404 on another department's item, and publishing as a department they don't belong to returns 403 |
+| Policies and capabilities | `capabilities_for`, `manageable_queryset`, `can_manage` | Every role × resource × school |
+| Manage API | Server-side enforcement | For every manage endpoint: a student gets 403, school staff get 404 on another school's item, and publishing as a school they don't belong to returns 403 |
 | Read API | Shape, filters, 404 for invisible items | |
 | Services | Side effects | Publishing an important announcement creates exactly N notifications, and publishing it again creates none |
 | Timetable | Time zone and import logic | Local "today" around midnight in Kuala Lumpur, plus the create, update and unchanged cases in an import dry run |

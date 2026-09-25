@@ -16,9 +16,9 @@
 erDiagram
     User ||--o| StudentProfile : has
     User ||--o| StaffProfile : has
-    Department ||--o{ Programme : offers
-    Department ||--o{ Course : owns
-    StudentProfile }o--o| Department : in
+    School ||--o{ Programme : offers
+    School ||--o{ Course : owns
+    StudentProfile }o--o| School : in
     StudentProfile }o--o| Programme : studies
     StudentProfile }o--o| Intake : "batch"
     Term ||--o{ CourseSection : has
@@ -45,7 +45,7 @@ erDiagram
 |---|---|---|
 | email | varchar(254), **unique** | `USERNAME_FIELD`. Stored in lowercase. |
 | full_name | varchar(150) | |
-| role | varchar(32), indexed | `student`, `lecturer`, `department_staff`, `university_admin` or `super_admin`. A `CheckConstraint` enforces the list. |
+| role | varchar(32), indexed | `student`, `lecturer`, `school_staff`, `university_admin` or `super_admin`. A `CheckConstraint` enforces the list. |
 | is_active | bool | **Means "email verified"**, because Djoser sets it on activation |
 | is_suspended | bool, default false | Blocks an account. Kept separate from `is_active` so a blocked user cannot reactivate themselves through Djoser's resend-activation endpoint. |
 | is_staff | bool | Synced from `role`. It is true only for `super_admin`, and it gates the Django admin (the back-office). React staff-dashboard access comes from **capabilities** instead (see [06](06-auth-and-permissions.md)). |
@@ -58,33 +58,31 @@ erDiagram
 |---|---|---|
 | user | O2O, PK | |
 | student_number | varchar(32), unique, null | Optional |
-| department | FK → Department, null, PROTECT | Chosen during onboarding |
-| programme | FK → Programme, null, PROTECT | Must belong to the chosen department |
+| school | FK → School, null, PROTECT | Chosen during onboarding |
+| programme | FK → Programme, null, PROTECT | Must belong to the chosen school |
 | intake | FK → Intake, null, PROTECT | |
 | *[Later]* current_semester | smallint, null | Only needed for semester targeting |
 
-`profile_complete` is true when the department, programme and intake are all set. Until then, the student sees only "all students" content.
+`profile_complete` is true when the school, programme and intake are all set. Until then, the student sees only "all students" content.
 
 ### `StaffProfile` (one-to-one with User)
 
-`department` (FK, null) and `position_title`. The department sets what a `department_staff` user may manage.
+`school` (FK, null) and `position_title`. The school sets what a `school_staff` user may manage.
 
 ## academics [MVP]
 
 | Model | Fields | Constraints | Built in |
 |---|---|---|---|
-| `Department` | code, name, is_active | `code` is unique | M1 |
-| `Programme` | department FK, code, name, level (foundation, diploma, bachelor, master, phd), is_active | `code` is unique | M1 |
+| `School` | code, name, is_active | `code` is unique | M1 |
+| `Programme` | school FK, code, name, level (foundation, diploma, bachelor, master, phd), is_active | `code` is unique | M1 |
 | `Intake` | code (for example `2024-SEP`), name, start_date, is_active | `code` is unique | M1 |
-| `Course` | department FK, code, name, is_active | `code` is unique | M7 |
+| `Course` | school FK, code, name, is_active | `code` is unique | M7 |
 | `Term` | name ("2025/26 Semester 1"), academic_session, number, starts_on, ends_on, is_current | `unique(academic_session, number)`, `ends_on > starts_on`, and only one row can be current (enforced in `save()` inside a transaction) | M7 |
 
 > **Terminology (confirmed):**
 > - **Programme:** the student's degree or programme of study, for example Bachelor of Computer Science.
 > - **Course:** an individual subject or module, for example CDE2313.
-> - **Department:** the academic department.
->
-> The level above Department (School or Faculty) is **not modelled yet**. If one is needed, it will use the university's official name once that is confirmed.
+> - **School:** an AIU academic school, from [aiu.edu.my/academic-programmes](https://aiu.edu.my/academic-programmes/). AIU has three schools (Business & Social Sciences; Education & Human Sciences; Computing and Informatics). The **Centre for Foundation and General Studies** is stored as a School too. AIU has no schools inside its schools, so every programme belongs directly to one school.
 
 ## audiences [MVP]
 
@@ -94,7 +92,7 @@ Announcements, events and application listings each own one `Audience` row throu
 
 | Field | Type | Status |
 |---|---|---|
-| departments | M2M → Department | **MVP** |
+| schools | M2M → School | **MVP** |
 | programmes | M2M → Programme | **MVP** |
 | intakes | M2M → Intake | **MVP** |
 | courses | M2M → Course | *[Later]* |
@@ -105,11 +103,11 @@ Announcements, events and application listings each own one `Audience` row throu
 Matching rules:
 
 - An audience with every field empty means **all students**.
-- Values within one field are combined with OR ("Computing *or* Engineering").
+- Values within one field are combined with OR ("Computing *or* Business").
 - Different non-empty fields are combined with AND ("Computing *and* the 2024-SEP intake").
 - Students whose profile is incomplete match only "all students".
 - In the MVP, every role except `student` sees all published content.
-- **Who may set which audience** is a permission rule, not part of the model. `department_staff` audiences must stay inside their own department. See [06](06-auth-and-permissions.md#the-department-boundary-mvp-rule).
+- **Who may set which audience** is a permission rule, not part of the model. `school_staff` audiences must stay inside their own school. See [06](06-auth-and-permissions.md#the-school-boundary-mvp-rule).
 
 The implementation is one selector, `audiences.selectors.visible_audience_q(user) -> Q`. It builds one `Exists` subquery per field, so rows are never duplicated. Its inverse, `students_matching(audience)`, returns the students an audience covers. Adding a later field means adding a field to the model, one clause to each function, and new rows in the shared test matrix. Nothing else changes.
 
@@ -119,8 +117,8 @@ The implementation is one selector, `audiences.selectors.visible_audience_q(user
 
 | Field | Type | Notes |
 |---|---|---|
-| publisher_type | varchar | `university` or `department`. *[Later]* adds `community`. |
-| publisher_department | FK → Department, null | Required when the type is `department` |
+| publisher_type | varchar | `university` or `school`. *[Later]* adds `community`. |
+| publisher_school | FK → School, null | Required when the type is `school` |
 | created_by, updated_by | FK → User, SET_NULL | Audit trail |
 | status | varchar | `draft`, `published` or `archived` |
 | published_at | datetime, null | Set by the publish service to **now**. There is no scheduling in the MVP. |
@@ -133,7 +131,7 @@ The implementation is one selector, `audiences.selectors.visible_audience_q(user
 
 Constraints:
 
-- A `CheckConstraint` requires `publisher_department` to be set if and only if `publisher_type = 'department'`.
+- A `CheckConstraint` requires `publisher_school` to be set if and only if `publisher_type = 'school'`.
 - A `CheckConstraint` requires `expires_at IS NULL OR published_at IS NULL OR expires_at > published_at`.
 - An index on `(status, published_at)`.
 
@@ -149,7 +147,7 @@ An item is **visible now** when `status = published AND (expires_at IS NULL OR e
 |---|---|
 | title | varchar(200) |
 | body | text (Markdown) |
-| category | `university`, `department`, `student_affairs`, `club`, `event`, `registration`, `academic_info` or `general` |
+| category | `university`, `school`, `student_affairs`, `club`, `event`, `registration`, `academic_info` or `general` |
 | priority | `normal` or `important` |
 | is_pinned | bool |
 | attachments | M2M → Document |
@@ -165,7 +163,7 @@ Indexes: `(status, published_at)`, `(is_pinned, priority)` and `category`.
 | Field | Type |
 |---|---|
 | title, description | varchar(200), text |
-| category | `notice`, `academic_calendar`, `guideline`, `form`, `event`, `department`, `handbook` or `other` |
+| category | `notice`, `academic_calendar`, `guideline`, `form`, `event`, `school`, `handbook` or `other` |
 | file | FileField (not public; only downloadable through the API) |
 | original_name, mime_type, size_bytes | metadata |
 | listed_in_library | bool. False means the document is only an attachment. |
@@ -179,7 +177,7 @@ Indexes: `(status, published_at)`, `(is_pinned, priority)` and `category`.
 | Field | Type |
 |---|---|
 | title, description | varchar(200), text (Markdown) |
-| category | `university`, `department`, `club`, `workshop`, `seminar`, `competition`, `activity`, `orientation`, `meeting`, `sports` or `other` |
+| category | `university`, `school`, `club`, `workshop`, `seminar`, `competition`, `activity`, `orientation`, `meeting`, `sports` or `other` |
 | starts_at, ends_at | datetime (a check requires `ends_at >= starts_at`) |
 | is_all_day | bool |
 | location_name, building, room, online_url | varchar, null |
@@ -210,7 +208,7 @@ Students **never** create the university's timetable. They only choose which of 
 
 | Model | Fields | Constraints and indexes |
 |---|---|---|
-| `CourseSection` | course FK, term FK, code ("A", "01"), lecturer_name (text), is_active, **source** (`manual` or `import`), **external_ref** (varchar, null: the identifier from the university's data, if it has one), updated_by | `unique(course, term, code)` and `unique(term, external_ref)`. A section belongs to the department of its course. |
+| `CourseSection` | course FK, term FK, code ("A", "01"), lecturer_name (text), is_active, **source** (`manual` or `import`), **external_ref** (varchar, null: the identifier from the university's data, if it has one), updated_by | `unique(course, term, code)` and `unique(term, external_ref)`. A section belongs to the school of its course. |
 | `ClassMeeting` | section FK, weekday (0 is Monday, 6 is Sunday), start_time, end_time, meeting_type (`lecture`, `tutorial`, `lab`, `other`), building, room, updated_by | `end_time > start_time`, and an index on `(section, weekday)` |
 | `SectionEnrollment` | user FK, section FK | `unique(user, section)` and an index on `user` |
 
@@ -233,12 +231,12 @@ The report lists what would be created, updated or left unchanged, plus errors w
 
 | Model | Fields | Constraints | Status |
 |---|---|---|---|
-| `Community` | name, slug, description, category (`club`, `society`, `department`, `programme`, `course`, `batch`, `interest`, `official`, `residential`), department FK null, programme FK null, intake FK null, logo, is_verified, is_active, created_by, updated_by | `slug` is unique; index on `category` | MVP |
+| `Community` | name, slug, description, category (`club`, `society`, `school`, `programme`, `course`, `batch`, `interest`, `official`, `residential`), school FK null, programme FK null, intake FK null, logo, is_verified, is_active, created_by, updated_by | `slug` is unique; index on `category` | MVP |
 | `CommunityLink` | community FK, platform (`whatsapp_group`, `whatsapp_channel`, `telegram_group`, `telegram_channel`, `instagram`, `facebook`, `website`, `email`, `other`), url, label, sort_order | The URL's host must match the platform (see [08](08-messaging-integrations.md)) | MVP |
 | `CommunityFollow` | user FK, community FK | `unique(user, community)` | MVP |
 | `CommunityManager` | user FK, community FK, added_by | `unique(user, community)` | *[Later]* |
 
-**Who manages communities:** `department_staff` manage communities whose `department` is their own. Only a `university_admin` can manage communities that have no department, such as university-wide clubs. Community managers come later.
+**Who manages communities:** `school_staff` manage communities whose `school` is their own. Only a `university_admin` can manage communities that have no school, such as university-wide clubs. Community managers come later.
 
 ## applications [MVP]
 
