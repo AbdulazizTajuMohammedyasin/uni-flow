@@ -45,7 +45,7 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 
 | Resource | Endpoints | Filters and notes |
 |---|---|---|
-| Academics | `GET academics/schools/`, `programmes/`, `intakes/`. M7 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters |
+| Academics | `GET academics/schools/`, `programmes/` (`?school=<id>`), `intakes/`. M7 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters. Returns **active items only**, as a **plain list without pagination**, because the lists are short and dropdowns need every item. Programmes of an inactive school are hidden. A non-numeric `?school=` returns 400. |
 | Announcements | `GET announcements/`, `GET announcements/{id}/` | `category`, `priority`, `publisher_type`, `school`, `pinned`, `date_from`, `date_to`, `search`. Ordered by pinned first, then important first, then `-published_at`. Items the user cannot see return **404**. |
 | Documents | `GET documents/`, `GET documents/{id}/`, `GET documents/{id}/download/` | The list shows only items where `listed_in_library` is true. Filters: `category`, `school`, `search`. A download streams the file to any logged-in user. |
 | Events | `GET events/`, `GET events/{id}/`, `GET events/calendar/?from=&to=` | `from`, `to`, `category`, `school`, `upcoming=true`. The calendar endpoint returns a lighter shape and allows a range of at most 62 days. |

@@ -1,13 +1,14 @@
 """All /api/v1/ routes. Each app registers its read (and later /manage/) routes here."""
 
 from django.conf import settings
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from core.views import api_not_found, health
 
 urlpatterns = [
     path("health/", health, name="health"),
+    path("academics/", include("apps.academics.urls")),
 ]
 
 # OpenAPI schema + Swagger UI: development only (DEBUG=True).
