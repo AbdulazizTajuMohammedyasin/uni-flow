@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "drf_spectacular",
+    "djoser",
     # UniFlow apps
     "apps.accounts",
     "apps.academics",
@@ -157,6 +158,41 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Student information platform API (web now, mobile later).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+}
+
+
+# Accounts: registration and activation (Djoser). See docs/06-auth-and-permissions.md.
+
+# Only these email domains may self-register (staff accounts are created by a super admin).
+ALLOWED_EMAIL_DOMAINS = env_list("ALLOWED_EMAIL_DOMAINS", ["student.aiu.edu.my"])
+
+# Links in emails point to the website (e.g. http://localhost:5173/verify-email/<uid>/<token>).
+DOMAIN = env_str("FRONTEND_DOMAIN", "localhost:5173")
+SITE_NAME = "UniFlow"
+
+# Development prints emails in the runserver terminal instead of sending them.
+EMAIL_BACKEND = env_str("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "UniFlow <no-reply@uniflow.local>")
+
+DJOSER = {
+    "LOGIN_FIELD": "email",
+    "USER_CREATE_PASSWORD_RETYPE": True,
+    "SEND_ACTIVATION_EMAIL": True,
+    "ACTIVATION_URL": "verify-email/{uid}/{token}",
+    "PASSWORD_RESET_CONFIRM_URL": "reset-password/{uid}/{token}",
+    "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": False,
+    "HIDE_USERS": True,
+    "SERIALIZERS": {
+        "user_create_password_retype": "apps.accounts.serializers.UserCreateSerializer",
+    },
+    # is_staff is only true for super admins, so IsAdminUser means "super admin".
+    "PERMISSIONS": {
+        "user_list": ["rest_framework.permissions.IsAdminUser"],
+        "user_delete": ["rest_framework.permissions.IsAdminUser"],  # Djoser would hard-delete
+        "set_username": ["rest_framework.permissions.IsAdminUser"],  # would bypass the domain rule
+        "username_reset": ["rest_framework.permissions.IsAdminUser"],
+        "username_reset_confirm": ["rest_framework.permissions.IsAdminUser"],
+    },
 }
 
 

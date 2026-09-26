@@ -74,6 +74,10 @@ Commit `Pipfile` and `Pipfile.lock` together.
 - **Defaults:** JSON only, login required (`IsAuthenticated`) unless a view allows public access, 20 items per page (`?page=`, `?page_size=`, at most 100), and rate limits of 30/min anonymous, 300/min authenticated and 10/min for `auth`-scoped views.
 - **CORS:** only the origins in `CORS_ALLOWED_ORIGINS` may call the API from a browser. In dev that defaults to the Vite server (`localhost:5173`).
 
+## Emails in development
+
+Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Real sending is set up at deployment (M10).
+
 ## Database migrations
 
 UniFlow uses a custom, email-based user model (`accounts.User`, `AUTH_USER_MODEL = "accounts.User"`). There is no `username`.

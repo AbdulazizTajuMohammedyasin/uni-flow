@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M1 (Identity). M0 is done ✅.
-**Next up:** M1.5, registration with `@student.aiu.edu.my` emails and an activation email.
+**Next up:** M1.6, log in and log out.
 
 ---
 
@@ -57,8 +57,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M1.2 | The website can read schools, programmes and intakes through the API (for the sign-up dropdowns). They are login-only, so for now they answer "403". | http://127.0.0.1:8000/api/v1/docs/ → **academics** | ✅ Done |
 | M1.3 | Loads AIU's real list (3 schools, the Foundation centre and 23 programmes) plus 8 intakes (March and October, 2023–2026) with one command | `pipenv run python manage.py seed_academics`, then `/django-admin/` → Academics | ✅ Done |
 | M1.4 | Student profiles (student number, school, programme, intake) and staff profiles (school, job title). A student's programme must belong to their school. | `/django-admin/` → Users → open a user | ✅ Done |
-| **M1.5** | **Registration with `@student.aiu.edu.my` emails and an activation email** | – | ⏭️ **Next** |
-| M1.6 | Log in and log out | – | ⏳ |
+| M1.5 | Students sign up with an `@student.aiu.edu.my` email. The account stays inactive until they click the activation email. On your computer, emails are printed in the backend terminal. | http://127.0.0.1:8000/api/v1/docs/ → **auth** → try `POST /auth/users/` | ✅ Done |
+| **M1.6** | **Log in and log out** | – | ⏭️ **Next** |
 | M1.7 | Forgot password and change password | – | ⏳ |
 | M1.8 | "My profile" API | – | ⏳ |
 | M1.9 – M1.12 | Website pages: log in, register, activate, reset password, onboarding, profile | – | ⏳ |
@@ -113,6 +113,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **Who can register:** only `@student.aiu.edu.my` emails, for example `abdulaziz.mohammedyasin@student.aiu.edu.my`. **Staff accounts** are created by a super admin inside UniFlow (M2.2), or in the Django admin until then.
 
 ## Open decisions
+
+- **Real email sending** (for example Gmail with an app password, or a university mailbox). For now emails are printed in the backend terminal. Set up before launch (M10); it needs 5 SMTP settings in `.env`.
 
 - The university's timetable format. This is needed before M7.11.
 - Hosting. This is needed before M10.7.

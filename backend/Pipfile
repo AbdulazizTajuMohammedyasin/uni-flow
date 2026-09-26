@@ -9,6 +9,7 @@ mysqlclient = ">=2.2,<2.3"
 djangorestframework = ">=3.18,<4"
 django-cors-headers = ">=4.9,<5"
 drf-spectacular = ">=0.30,<0.31"
+djoser = ">=2.3,<2.4"
 
 [dev-packages]
 pytest = ">=9.1,<10"

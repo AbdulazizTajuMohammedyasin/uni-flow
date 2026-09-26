@@ -9,6 +9,7 @@ from core.views import api_not_found, health
 urlpatterns = [
     path("health/", health, name="health"),
     path("academics/", include("apps.academics.urls")),
+    path("auth/", include("apps.accounts.urls")),
 ]
 
 # OpenAPI schema + Swagger UI: development only (DEBUG=True).
