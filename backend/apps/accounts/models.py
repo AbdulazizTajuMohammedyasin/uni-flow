@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from core.models import TimeStampedModel
 
 from .managers import UserManager, normalize_email_address
 
@@ -65,3 +68,49 @@ class User(AbstractUser):
 
     def get_short_name(self) -> str:
         return self.full_name.split(" ", 1)[0] if self.full_name else self.email
+
+    @property
+    def profile_complete(self) -> bool:
+        """Students must choose their school, programme and intake before using UniFlow.
+
+        Other roles have nothing to fill in, so they always count as complete.
+        """
+        if self.role != UserRole.STUDENT:
+            return True
+        profile = getattr(self, "student_profile", None)
+        return bool(profile and profile.school_id and profile.programme_id and profile.intake_id)
+
+
+class StudentProfile(TimeStampedModel):
+    """Where a student belongs. Chosen during onboarding; used for audience targeting."""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, primary_key=True, related_name="student_profile"
+    )
+    student_number = models.CharField(max_length=32, unique=True, null=True, blank=True)
+    school = models.ForeignKey("academics.School", on_delete=models.PROTECT, null=True, blank=True)
+    programme = models.ForeignKey(
+        "academics.Programme", on_delete=models.PROTECT, null=True, blank=True
+    )
+    intake = models.ForeignKey("academics.Intake", on_delete=models.PROTECT, null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"Student profile of {self.user}"
+
+    def clean(self):
+        super().clean()
+        if self.programme_id and self.school_id and self.programme.school_id != self.school_id:
+            raise ValidationError({"programme": "This programme does not belong to that school."})
+
+
+class StaffProfile(TimeStampedModel):
+    """Which school a staff member works for; decides what they may manage (M2)."""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, primary_key=True, related_name="staff_profile"
+    )
+    school = models.ForeignKey("academics.School", on_delete=models.PROTECT, null=True, blank=True)
+    position_title = models.CharField(max_length=150, blank=True)
+
+    def __str__(self) -> str:
+        return f"Staff profile of {self.user}"

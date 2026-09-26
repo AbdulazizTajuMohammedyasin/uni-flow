@@ -4,13 +4,26 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .forms import UserAdminChangeForm, UserAdminCreationForm
-from .models import User
+from .models import StaffProfile, StudentProfile, User
+
+
+class StudentProfileInline(admin.StackedInline):
+    model = StudentProfile
+    can_delete = False
+    extra = 0
+
+
+class StaffProfileInline(admin.StackedInline):
+    model = StaffProfile
+    can_delete = False
+    extra = 0
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
+    inlines = [StudentProfileInline, StaffProfileInline]
 
     ordering = ("email",)
     list_display = ("email", "full_name", "role", "is_active", "is_suspended", "is_staff")
