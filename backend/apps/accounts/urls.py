@@ -1,4 +1,4 @@
-"""Account API, mounted at /api/v1/auth/ — Djoser's own URLs (like the E-commerce project).
+"""Account API, mounted at /api/v1/auth/ — Djoser's own URLs.
 
 users/                     register (POST), current user (users/me/)
 users/activation/          activate with {uid, token} from the email
