@@ -62,10 +62,8 @@ def structure():
 def test_login_is_required(url):
     response = APIClient().get(url)
 
-    # No login method exists until M1.6, so DRF answers 403 "permission_denied".
-    # From M1.6 (JWT) this becomes 401 "not_authenticated": update this test then.
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "permission_denied"
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "not_authenticated"
 
 
 def test_schools_lists_active_schools_sorted_by_name(client, structure):

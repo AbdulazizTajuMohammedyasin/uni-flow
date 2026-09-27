@@ -1,16 +1,16 @@
-"""Account API addresses, mounted at /api/v1/auth/ (see config/api_v1.py).
+"""Account API, mounted at /api/v1/auth/ — Djoser's own URLs (like the E-commerce project).
 
-POST users/                    register
-POST users/activation/         activate with {uid, token} from the email
-POST users/resend_activation/  send the activation email again
-Login (jwt/...) arrives in M1.6.
+users/                     register (POST), current user (users/me/)
+users/activation/          activate with {uid, token} from the email
+users/resend_activation/   send the activation email again
+jwt/create/                log in -> {access, refresh}
+jwt/refresh/               new access token from the refresh token
+jwt/verify/                check that a token is still valid
 """
 
-from rest_framework.routers import SimpleRouter
+from django.urls import include, path
 
-from .views import UniFlowUserViewSet
-
-router = SimpleRouter()
-router.register("users", UniFlowUserViewSet, basename="user")
-
-urlpatterns = router.urls
+urlpatterns = [
+    path("", include("djoser.urls")),
+    path("", include("djoser.urls.jwt")),
+]

@@ -2,37 +2,42 @@
 
 ## 12. Authentication architecture [MVP]
 
-### Libraries: Djoser and SimpleJWT
+**Kept simple on purpose:** UniFlow uses **Djoser's own URLs** for accounts and login, the same setup as a standard Djoser project. There are no custom login views.
+
+```python
+# backend/apps/accounts/urls.py  (mounted at /api/v1/auth/)
+urlpatterns = [
+    path("", include("djoser.urls")),      # register, activate, users/me/, password reset/change
+    path("", include("djoser.urls.jwt")),  # jwt/create/ (login), jwt/refresh/, jwt/verify/
+]
+```
 
 | Library | Responsibility |
 |---|---|
-| **Djoser** | The account lifecycle: registration, activation email, resending activation, the "me" endpoint, password reset and change. It uses `django-templated-mail`, which Djoser installs itself. |
-| **SimpleJWT** | Issuing, rotating, verifying and blacklisting tokens |
-| **UniFlow** (`apps/accounts`) | The email domain rule, the web cookie transport, logout, suspension, capabilities, and staff user management |
-
-UniFlow does **not** include `djoser.urls` or `djoser.urls.jwt`. It registers its own subclass of Djoser's `UserViewSet` at `auth/users/`, and cookie-aware SimpleJWT subclasses at `auth/jwt/create|refresh|verify/`, plus `auth/jwt/logout/`.
+| **Djoser** | Registration, activation email, resending activation, `users/me/`, password reset and change |
+| **SimpleJWT** | Login tokens: issuing, refreshing and verifying them (`JWTAuthentication`) |
+| **UniFlow** (`apps/accounts`) | Only the rules Djoser can't know: the `@student.aiu.edu.my` domain check and creating the student profile (`serializers.py`), plus profiles, capabilities and staff management later |
 
 ### Registration
 
 1. `POST /api/v1/auth/users/` takes `{email, full_name, password, re_password}`.
-2. The email domain must be in `ALLOWED_EMAIL_DOMAINS`. `UserCreateSerializer` enforces this.
-3. The user is created through `accounts.services.create_user()` with `role = student` and `is_active = false`. The student profile is created at the same time. **`is_active` means "email verified".** Djoser emails a link to `https://<FRONTEND_DOMAIN>/verify-email/{uid}/{token}`. The frontend page sends `{uid, token}` to `users/activation/`.
-4. Login before activation fails. A correct password on an inactive account returns 403 `email_not_verified`. A wrong password always returns 401, so the response never reveals whether an email is registered.
+2. The email domain must be in `ALLOWED_EMAIL_DOMAINS` (`student.aiu.edu.my`). `UserCreateSerializer` enforces this.
+3. The user is created through `accounts.services.create_user()` with `role = student` and `is_active = false`, together with their student profile. **`is_active` means "email verified".** Djoser emails a link to `http://<FRONTEND_DOMAIN>/verify-email/{uid}/{token}`, and the website page sends `{uid, token}` to `users/activation/`.
+4. Logging in before activation fails with 401 (Djoser and SimpleJWT's normal "no active account" answer).
 5. Students without a complete profile are sent to `/onboarding`.
 
-**Staff accounts:** decided for the MVP.
+**Staff accounts:**
 
-- **Only `@student.aiu.edu.my` addresses can self-register** (`ALLOWED_EMAIL_DOMAINS=student.aiu.edu.my`). Staff and lecturers (`@aiu.edu.my`) therefore **cannot** register themselves.
-- A `super_admin` **creates staff accounts** in the staff dashboard (`/staff/users`, API `POST /api/v1/manage/users/`, M2.2). They set the email, full name, role and school. The account is created active with no usable password, and UniFlow emails a **"set your password"** link using Djoser's password-reset flow.
-- Until M2.2 exists, staff accounts can be created in the Django admin back-office.
-- The first `super_admin` is created with `createsuperuser`.
+- **Only `@student.aiu.edu.my` addresses can self-register.** Staff and lecturers (`@aiu.edu.my`) cannot.
+- A `super_admin` **creates staff accounts** in the staff dashboard (`POST /api/v1/manage/users/`, M2.2), and UniFlow emails a "set your password" link using Djoser's password-reset flow.
+- Until M2.2 exists, staff accounts can be created in the Django admin back-office. The first `super_admin` is created with `createsuperuser`.
 
-**Suspension** uses `is_suspended`, not `is_active`. Otherwise a blocked user could reactivate their own account through `resend_activation`. Both the JWT authentication class and the login serializer reject suspended users.
+**Suspension** (`is_suspended`) is stored on the user, but in the MVP so far it is **not enforced at login**. Blocking suspended users is added together with staff user management (M2.2), where it is actually needed.
 
 ### Djoser configuration
 
 ```python
-DOMAIN = env("FRONTEND_DOMAIN")
+DOMAIN = env_str("FRONTEND_DOMAIN", "localhost:5173")   # used in email links
 SITE_NAME = "UniFlow"
 
 DJOSER = {
@@ -41,59 +46,39 @@ DJOSER = {
     "SEND_ACTIVATION_EMAIL": True,
     "ACTIVATION_URL": "verify-email/{uid}/{token}",
     "PASSWORD_RESET_CONFIRM_URL": "reset-password/{uid}/{token}",
-    "PASSWORD_RESET_CONFIRM_RETYPE": True,
     "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": False,
-    "SET_PASSWORD_RETYPE": True,
-    "PASSWORD_CHANGED_EMAIL_CONFIRMATION": True,
     "HIDE_USERS": True,
     "SERIALIZERS": {
         "user_create_password_retype": "apps.accounts.serializers.UserCreateSerializer",
-        "user": "apps.accounts.serializers.UserSerializer",
-        "current_user": "apps.accounts.serializers.MeSerializer",   # profile, profile_complete, capabilities, publishers
     },
+    # is_staff is only true for super admins, so IsAdminUser means "super admin".
     "PERMISSIONS": {
-        # is_staff is true only for super_admin, so IsAdminUser means "super admin".
         "user_list": ["rest_framework.permissions.IsAdminUser"],
-        "user_delete": ["rest_framework.permissions.IsAdminUser"],      # Djoser's default is a hard delete. See the MVP note below.
-        "set_username": ["rest_framework.permissions.IsAdminUser"],     # changing an email would bypass the domain rule
+        "user_delete": ["rest_framework.permissions.IsAdminUser"],   # Djoser would hard-delete
+        "set_username": ["rest_framework.permissions.IsAdminUser"],  # would bypass the domain rule
         "username_reset": ["rest_framework.permissions.IsAdminUser"],
         "username_reset_confirm": ["rest_framework.permissions.IsAdminUser"],
-    },
-    "EMAIL": {
-        "activation": "apps.accounts.emails.ActivationEmail",
-        "password_reset": "apps.accounts.emails.PasswordResetEmail",
     },
 }
 ```
 
-`UniFlowUserViewSet` changes Djoser's behaviour in two ways:
-
-- It applies `throttle_scope = "auth"` to the public actions.
-- After `set_password` or `reset_password_confirm`, it revokes every outstanding refresh token for the user.
-
-**Account deletion:** in the MVP, only admins can delete accounts. *[Later]*, `perform_destroy` will anonymize the account instead of deleting it, and self-service deletion will be opened to users.
-
-### JWT settings (SimpleJWT)
+### Login tokens (SimpleJWT)
 
 | Setting | Value |
 |---|---|
 | Access token lifetime | 15 minutes |
 | Refresh token lifetime | 14 days |
-| `ROTATE_REFRESH_TOKENS` and `BLACKLIST_AFTER_ROTATION` | `True` |
-| Claims | `user_id`. The server always reloads the user, so the role is never trusted from the token. |
+| `ROTATE_REFRESH_TOKENS` and `BLACKLIST_AFTER_ROTATION` | `True`: each refresh returns a new refresh token, and the old one stops working |
+| Authentication class | `rest_framework_simplejwt.authentication.JWTAuthentication` (`Authorization: Bearer <access>`) |
 
-### Token transport (one API, two clients)
+**How clients use it.** Web now and mobile later work the same way:
 
-| | Web | Mobile [Later] |
-|---|---|---|
-| How the client identifies itself | The `X-Client: web` header | No header |
-| `jwt/create/` response | `{access}` plus `Set-Cookie: uf_refresh=…; HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth/jwt/` | `{access, refresh}` |
-| Where the refresh token is stored | The httpOnly cookie | `expo-secure-store` |
-| Refresh | `POST jwt/refresh/`, which sends the cookie | `POST jwt/refresh/ {refresh}` |
+1. `POST jwt/create/ {email, password}` returns `{access, refresh}`.
+2. Every request sends `Authorization: Bearer <access>`.
+3. When the access token expires (401), the client sends `POST jwt/refresh/ {refresh}` and gets a new `{access, refresh}`.
+4. **Log out** means the client deletes both tokens. The access token expires within 15 minutes anyway.
 
-**CSRF protection.** Only `jwt/refresh/` and `jwt/logout/` read the cookie. They require the `X-Client: web` header and check `Origin` against `CSRF_TRUSTED_ORIGINS`. In production, the frontend and the API run on the same site, for example `uniflow.example.edu` and `api.uniflow.example.edu`.
-
-**Logout.** `POST jwt/logout/` blacklists the refresh token and clears the cookie.
+Where the website keeps the tokens is decided in M1.9. The mobile app will keep them in secure device storage.
 
 ## 13. Authorization: roles → capabilities → scope [MVP]
 

@@ -18,7 +18,7 @@
 
 ## Auth — `/api/v1/auth/` (Djoser + SimpleJWT) [MVP]
 
-UniFlow registers its own subclass of Djoser's `UserViewSet`, so the paths below are Djoser's. See [06](06-auth-and-permissions.md#djoser-configuration).
+UniFlow uses **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`), so the paths below are Djoser's standard ones. See [06](06-auth-and-permissions.md#12-authentication-architecture-mvp).
 
 | Method | Path | Who | Purpose |
 |---|---|---|---|
@@ -26,13 +26,12 @@ UniFlow registers its own subclass of Djoser's `UserViewSet`, so the paths below
 | POST | `users/activation/` | public | Takes `{uid, token}` |
 | POST | `users/resend_activation/` | public | Takes `{email}` |
 | GET, PATCH | `users/me/` | auth | Returns the user, role, profile, `profile_complete` and **`capabilities`**. PATCH changes the name, school, programme and intake. The role and email cannot be changed here. |
-| POST | `users/set_password/` | auth | Also revokes all of the user's refresh tokens |
+| POST | `users/set_password/` | auth | Change password (M1.7) |
 | POST | `users/reset_password/` | public | Always returns 204, so it never reveals whether an email is registered |
-| POST | `users/reset_password_confirm/` | public | Also revokes all of the user's refresh tokens |
-| POST | `jwt/create/` | public | Login. Returns `{access}`, and also `{refresh}` for mobile. The web app gets the refresh token as a cookie instead. Wrong credentials return 401. A correct password on an unactivated account returns 403 `email_not_verified`. A suspended account returns 403 `account_suspended`. |
-| POST | `jwt/refresh/` | public | Takes the refresh token from the cookie (web) or the body (mobile). Rotates it. |
+| POST | `users/reset_password_confirm/` | public | Set a new password from the reset email (M1.7) |
+| POST | `jwt/create/` | public | Login. Takes `{email, password}` and returns `{access, refresh}`. Wrong credentials, or an account that is not activated yet, return 401. |
+| POST | `jwt/refresh/` | public | Takes `{refresh}` and returns a new `{access, refresh}`. The old refresh token stops working. |
 | POST | `jwt/verify/` | public | |
-| POST | `jwt/logout/` | auth | Blacklists the refresh token and clears the cookie |
 
 These Djoser endpoints are restricted to `super_admin` in the MVP:
 

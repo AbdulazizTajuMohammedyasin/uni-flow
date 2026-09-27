@@ -48,7 +48,7 @@ UniFlow is an **information layer**. WhatsApp and Telegram remain the places whe
 
 | Area | In the MVP |
 |---|---|
-| Authentication | Registration restricted to university email domains, email activation, JWT login, refresh and logout (the web app keeps the refresh token in an httpOnly cookie), password reset and change |
+| Authentication | Registration restricted to university email domains, email activation, JWT login and refresh (Djoser's standard endpoints), password reset and change |
 | Profile and onboarding | Students choose their school, programme and intake, and can edit their profile |
 | **Staff dashboard (React)** | Authorized staff create, edit, publish and archive announcements, events, documents, applications, communities and timetable data. Staff see only the actions their role allows. |
 | Student dashboard | One personalized home page |
@@ -105,7 +105,7 @@ Every user has exactly **one role**.
 
 | # | Feature | MVP | Later |
 |---|---|---|---|
-| F1 | Auth and profile | Djoser registration limited to university email domains, activation, JWT login with the web cookie, password reset and change, onboarding, the "me" endpoint | Self-service account deletion (anonymized), SSO |
+| F1 | Auth and profile | Djoser registration limited to university email domains, activation, JWT login (Djoser's standard endpoints), password reset and change, onboarding, the "me" endpoint | Self-service account deletion (anonymized), SSO |
 | F2 | Student dashboard | One aggregated endpoint and page | Personalization |
 | F3 | Announcements | Student feed, detail, filters; staff create, edit, publish, archive; targeting; attachments; pinning; expiry; source link | Read tracking, scheduling, approval workflow |
 | F4 | Events | Student list, calendar and detail; staff create, edit, publish, archive; poster; registration link | "Interested" markers, ICS export, change notifications |

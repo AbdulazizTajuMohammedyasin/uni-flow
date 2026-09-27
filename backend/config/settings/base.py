@@ -4,6 +4,7 @@ Environment-specific modules import everything from here and override only what 
 Configuration comes from environment variables, optionally loaded from `backend/.env`.
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 from corsheaders.defaults import default_headers as default_cors_headers
@@ -36,6 +37,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     "djoser",
+    "rest_framework_simplejwt.token_blacklist",  # remembers logged-out / rotated refresh tokens
     # UniFlow apps
     "apps.accounts",
     "apps.academics",
@@ -132,8 +134,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework (see docs/04-api.md)
 
 REST_FRAMEWORK = {
-    # JWT authentication arrives in M1.6; until then only public (AllowAny) endpoints work.
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    # "Authorization: Bearer <access token>" (SimpleJWT).
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardPagination",
@@ -196,9 +198,20 @@ DJOSER = {
 }
 
 
+# Login tokens (SimpleJWT, via djoser.urls.jwt).
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+    "ROTATE_REFRESH_TOKENS": True,  # every refresh gives a new refresh token...
+    "BLACKLIST_AFTER_ROTATION": True,  # ...and the old one stops working
+    "UPDATE_LAST_LOGIN": True,
+}
+
+
 # CORS: only the listed frontend origins may call the API from a browser.
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", [])
-# Needed from M1.6 for the httpOnly refresh-token cookie; safe because origins are an exact list.
+# The website's API client sends credentials; safe because origins are an exact list.
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (*default_cors_headers, "x-client")

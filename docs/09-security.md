@@ -9,8 +9,8 @@ All controls below are **[MVP]** unless marked otherwise.
 | Credentials | Brute force or credential stuffing | An `auth` throttle of 10/min per IP, Django password validators (minimum 10 characters), and generic 401 errors |
 | Account changes | Changing an email to bypass the domain rule, or hard-deleting accounts | Djoser's email-change and delete endpoints are restricted to super admins |
 | Suspension | A blocked user reactivates themselves | `is_suspended` is separate from `is_active` and is checked at login and on every authenticated request |
-| Tokens | XSS steals tokens | The access token is kept in memory and expires in 15 minutes. The refresh token is in an httpOnly cookie (web) or SecureStore (mobile). Refresh tokens rotate and are blacklisted after use, and all of them are revoked when the password changes. |
-| CSRF | A cross-site call to the cookie refresh endpoint | `SameSite=Lax`, a cookie path limited to `/api/v1/auth/jwt/`, the required `X-Client` header and an `Origin` check |
+| Tokens | Stolen tokens | The access token expires in 15 minutes. Refresh tokens rotate, and a used one stops working. Where the website stores tokens is decided in M1.9. |
+| CSRF | Cross-site requests | Not applicable to the API: it uses `Authorization: Bearer` headers, not cookies, so another site cannot make requests as the user. |
 | Read authorization | Seeing content aimed at another group | Every read endpoint queries through the visibility selector, and items the user cannot see return 404. There are tests for "a school A student cannot fetch a school B item". Documents are available to every logged-in user, by decision. |
 | Privilege escalation | A user changes their own role | `role`, `is_staff` and `is_suspended` are read-only everywhere except `manage/users/`, which is super admin only |
 | Mass assignment | A client sets `created_by`, `status` or `notified_at` | Serializers list their writable fields explicitly. Status changes only through `publish/` and `archive/`. |

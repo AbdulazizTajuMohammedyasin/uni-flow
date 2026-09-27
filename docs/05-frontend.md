@@ -107,7 +107,7 @@ export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, withCre
 ```
 
 - The access token is kept in memory only.
-- When the app starts, it calls `jwt/refresh/`, which sends the httpOnly cookie. If that succeeds, it loads `users/me/`.
+- Login returns `{access, refresh}`. Where the website stores them is decided in M1.9. On a 401, the client calls `jwt/refresh/ {refresh}` once and retries.
 - `ApiError {code, message, fields}` reads the backend's error format. Forms pass `fields` to React Hook Form's `setError`.
 
 ### React Query usage
@@ -150,7 +150,7 @@ UniFlow/  (later additions, subject to approval then)
 | Concern | Web | Mobile | Shared? |
 |---|---|---|---|
 | API functions, types, Zod schemas, query hooks | frontend | the same | Yes, moved to `packages/shared` |
-| Refresh token | httpOnly cookie | `expo-secure-store` | Only the transport differs |
+| Tokens | Stored by the web app (decided in M1.9) | `expo-secure-store` | The same API calls |
 | Navigation and UI | React Router, Tailwind | Expo Router, RN components | No |
 | Notifications | In-app polling | Expo push through a new `Device` endpoint | The same `Notification` rows |
 | Deep links | `/events/42` | `uniflow://events/42` | Both built from `(target_type, target_id)` |

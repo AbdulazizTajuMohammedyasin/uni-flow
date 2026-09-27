@@ -50,7 +50,7 @@ UniFlow/
 | D5 | MVP publishers are `university_admin` (content across all schools, sent to any audience) and `school_staff` (only content that belongs to and is targeted within their own school; wider reach needs an explicit grant from a university admin, which comes later). Lecturers are read-only. Community managers come later. |
 | D6 | A single `Audience` model per item. The MVP targets all students, schools, programmes or intakes. Course, section, follower and semester targeting are designed but come later. |
 | D7 | Publishing takes effect immediately, with an optional expiry. There is no scheduling, cron, queue or Redis in the MVP. |
-| D8 | Djoser handles the account lifecycle and SimpleJWT handles tokens. The web refresh token is an httpOnly cookie, and mobile will keep it in SecureStore. `is_active` means the email is verified, and suspension is a separate `is_suspended` flag. |
+| D8 | **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`) handle accounts and login, and SimpleJWT handles tokens. There are no custom login views. Tokens are returned as `{access, refresh}` for web and mobile alike. `is_active` means the email is verified. |
 | D9 | Every file is a `Document`, stored locally and streamed only to logged-in users. Documents have no audience in the MVP. |
 | D10 | The timetable is **supplied by the university and maintained by staff**. An import service accepts rows in a common structure, so the university's actual file format only affects one small adapter, written once the format is known. Students only choose their sections. |
 | D11 | Integrations use official channels only. The MVP has deep links, the original source link, and manual publishing. |

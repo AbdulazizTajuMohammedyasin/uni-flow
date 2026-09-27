@@ -2,7 +2,7 @@
 
 from .base import *  # noqa: F401,F403
 
-SECRET_KEY = "django-insecure-test-only"
+SECRET_KEY = "django-insecure-test-only-key-at-least-32-bytes-long"
 DEBUG = False
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 

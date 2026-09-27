@@ -131,7 +131,7 @@ def test_activation_email_can_be_resent(client):
 
 def test_listing_users_is_not_public(client):
     response = client.get(REGISTER_URL)
-    assert response.status_code == 403
+    assert response.status_code == 401  # not logged in (and even then, super admins only)
 
 
 def test_normal_user_cannot_change_email_or_delete_account(client):

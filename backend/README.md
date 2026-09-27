@@ -74,6 +74,14 @@ Commit `Pipfile` and `Pipfile.lock` together.
 - **Defaults:** JSON only, login required (`IsAuthenticated`) unless a view allows public access, 20 items per page (`?page=`, `?page_size=`, at most 100), and rate limits of 30/min anonymous, 300/min authenticated and 10/min for `auth`-scoped views.
 - **CORS:** only the origins in `CORS_ALLOWED_ORIGINS` may call the API from a browser. In dev that defaults to the Vite server (`localhost:5173`).
 
+## Logging in (API)
+
+Accounts and login use **Djoser's own URLs** (`apps/accounts/urls.py`):
+
+- `POST /api/v1/auth/jwt/create/` with `{"email", "password"}` returns `{access, refresh}`.
+- Send `Authorization: Bearer <access>` on every request. In the Swagger docs, click **Authorize** and paste the access token.
+- The access token lasts 15 minutes. `POST /api/v1/auth/jwt/refresh/` with `{"refresh"}` gives new tokens.
+
 ## Emails in development
 
 Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Real sending is set up at deployment (M10).

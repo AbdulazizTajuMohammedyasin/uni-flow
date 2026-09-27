@@ -26,7 +26,7 @@ These are the key principles:
 
 1. **All business logic lives in the backend.** This covers who can see what, who can manage what, and derived statuses such as "closing soon".
 2. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
-3. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/`. Nothing depends on sessions or server-rendered pages. The web app gets exactly one concession, and it is to the transport only: the refresh token is stored in an httpOnly cookie.
+3. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
 4. **A modular monolith.** There is one Django project and one app per feature.
 5. **No background infrastructure in the MVP.** There is no task queue, no cron and no Redis. Notifications are created by `transaction.on_commit` inside the publish request. Expiry is checked when content is loaded, so nothing has to run on a schedule. Scheduling and reminders are the first things that will need a cron job, and they come later.
 6. **Django admin is secondary.** It is enabled for developers and super admins as a back-office tool, to inspect data and fix mistakes. Staff never need it. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
@@ -148,10 +148,8 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | |
 | `DB_NAME` / `DB_USER` / `DB_PASSWORD` / `DB_HOST` / `DB_PORT` | `uniflow` / `uniflow` / … / `127.0.0.1` / `3306` | Separate variables, so no URL parsing library is needed |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | The Vite dev server |
-| `CSRF_TRUSTED_ORIGINS` | `http://localhost:5173` | Checked on the cookie refresh endpoint |
 | `FRONTEND_DOMAIN` | `localhost:5173` | Becomes Django's `DOMAIN` setting, which Djoser uses to build email links |
 | `JWT_ACCESS_MINUTES` / `JWT_REFRESH_DAYS` | `15` / `14` | |
-| `REFRESH_COOKIE_SECURE` | `false` (dev) / `true` (prod) | |
 | `ALLOWED_EMAIL_DOMAINS` | `student.aiu.edu.my` | **Decided:** only student addresses can self-register. Staff accounts are created by a super admin (see [06](06-auth-and-permissions.md#registration)). |
 | `EMAIL_BACKEND` | `django.core.mail.backends.console.EmailBackend` (dev) | Production uses the SMTP backend together with `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` and `EMAIL_USE_TLS`. |
 | `DEFAULT_FROM_EMAIL` | `UniFlow <no-reply@…>` | |

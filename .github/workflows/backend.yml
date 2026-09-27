@@ -43,7 +43,7 @@ jobs:
 
     # Same variables as backend/.env locally (CI has no .env file).
     env:
-      DJANGO_SECRET_KEY: ci-only-not-secret
+      DJANGO_SECRET_KEY: ci-only-not-a-secret-but-at-least-32-bytes-long
       DB_NAME: uniflow
       DB_USER: root
       DB_PASSWORD: ci-root-password
