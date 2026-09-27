@@ -21,3 +21,10 @@ export type LoginData = {
   email: string
   password: string
 }
+
+export type RegisterData = {
+  full_name: string
+  email: string
+  password: string
+  re_password: string
+}

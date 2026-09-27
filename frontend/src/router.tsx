@@ -45,12 +45,19 @@ export function createAppRoutes(): RouteObject[] {
           ],
         },
         {
-          path: '/login',
+          // Public pages in the centred-card frame.
           lazy: { Component: async () => (await import('./components/AuthLayout')).default },
           children: [
+            // Loaded only when visited (keeps the form libraries out of the main download).
             {
-              index: true,
-              element: <PlaceholderPage title="Log in" description="The login page arrives in M1.10." />,
+              path: '/login',
+              lazy: { Component: async () => (await import('./pages/Login/Login')).LoginPage },
+            },
+            {
+              path: '/register',
+              lazy: {
+                Component: async () => (await import('./pages/Register/Register')).RegisterPage,
+              },
             },
           ],
         },

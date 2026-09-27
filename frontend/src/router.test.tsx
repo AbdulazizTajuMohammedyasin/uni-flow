@@ -92,11 +92,19 @@ describe('login protection', () => {
 })
 
 describe('other areas', () => {
-  it('renders the login page in the auth layout, without the student navigation', async () => {
-    renderAt('/login')
+  it('shows the login and register pages to visitors, without the student navigation', async () => {
+    vi.mocked(authApi.restoreSession).mockResolvedValue(false)
 
+    renderAt('/login')
     expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy()
     expect(screen.queryByRole('navigation', { name: 'Sidebar' })).toBeNull()
+  })
+
+  it('sends a logged-in user away from /login to Home', async () => {
+    const router = renderAt('/login')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/')
   })
 
   it('renders the staff dashboard in the staff layout', async () => {

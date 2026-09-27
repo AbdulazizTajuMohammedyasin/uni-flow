@@ -1,8 +1,17 @@
-import type { LoginData, User } from '@/types/auth'
+import type { LoginData, RegisterData, User } from '@/types/auth'
 
 import { api, refreshAccessToken } from './client'
 import { toApiError } from './errors'
 import { tokenStore } from './tokenStore'
+
+/** Register: creates an inactive account and emails an activation link. */
+export async function register(data: RegisterData): Promise<void> {
+  try {
+    await api.post('/auth/users/', data)
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
 
 /** Log in: the access token is kept in memory; the backend sets the refresh-token cookie. */
 export async function login(data: LoginData): Promise<void> {
