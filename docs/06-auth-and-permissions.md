@@ -2,7 +2,7 @@
 
 ## 12. Authentication architecture [MVP]
 
-**Kept simple on purpose:** UniFlow uses **Djoser's own URLs** for accounts and login, the same setup as a standard Djoser project. There are no custom login views.
+**Kept simple on purpose:** UniFlow uses **Djoser's own URLs** for accounts and login. The only addition is keeping the website's refresh token in a secure httpOnly cookie (`cookie_jwt.py`).
 
 ```python
 # backend/apps/accounts/urls.py  (mounted at /api/v1/auth/)
@@ -71,14 +71,20 @@ DJOSER = {
 | `ROTATE_REFRESH_TOKENS` and `BLACKLIST_AFTER_ROTATION` | `True`: each refresh returns a new refresh token, and the old one stops working |
 | Authentication class | `rest_framework_simplejwt.authentication.JWTAuthentication` (`Authorization: Bearer <access>`) |
 
-**How clients use it.** Web now and mobile later work the same way:
+**Where the tokens live (website):**
 
-1. `POST jwt/create/ {email, password}` returns `{access, refresh}`.
+- The **access token** is kept only in the website's memory. It is lost on page reload and restored through refresh.
+- The **refresh token** is in a **secure httpOnly cookie** named `uniflow_refresh`, set by `jwt/create/`. It uses `SameSite=Lax`, the path `/api/v1/auth/jwt/`, and HTTPS only outside development. Page scripts can never read it, and other websites can't send it.
+- `apps/accounts/cookie_jwt.py` is SimpleJWT's own login and refresh views with the refresh token moved into that cookie, plus `jwt/logout/`, which cancels it and deletes the cookie.
+
+**Flow:**
+
+1. `POST jwt/create/ {email, password}` returns `{access}` and sets the cookie.
 2. Every request sends `Authorization: Bearer <access>`.
-3. When the access token expires (401), the client sends `POST jwt/refresh/ {refresh}` and gets a new `{access, refresh}`.
-4. **Log out** means the client deletes both tokens. The access token expires within 15 minutes anyway.
+3. On a 401, or when the page first loads, `POST jwt/refresh/` sends the cookie and gets a new `{access}`. The cookie is rotated.
+4. `POST jwt/logout/` cancels the refresh token and deletes the cookie.
 
-Where the website keeps the tokens is decided in M1.9. The mobile app will keep them in secure device storage.
+The mobile app (later) can send `{refresh}` in the body instead, which `jwt/refresh/` also accepts.
 
 ## 13. Authorization: roles → capabilities → scope [MVP]
 

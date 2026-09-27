@@ -76,11 +76,12 @@ Commit `Pipfile` and `Pipfile.lock` together.
 
 ## Logging in (API)
 
-Accounts and login use **Djoser's own URLs** (`apps/accounts/urls.py`):
+Accounts use **Djoser's own URLs**. Login and refresh use SimpleJWT with one change (`apps/accounts/cookie_jwt.py`): **the refresh token is kept in a secure httpOnly cookie** (`uniflow_refresh`), so page scripts can never read it.
 
-- `POST /api/v1/auth/jwt/create/` with `{"email", "password"}` returns `{access, refresh}`.
+- `POST /api/v1/auth/jwt/create/` with `{"email", "password"}` returns `{access}` and sets the refresh-token cookie.
 - Send `Authorization: Bearer <access>` on every request. In the Swagger docs, click **Authorize** and paste the access token.
-- The access token lasts 15 minutes. `POST /api/v1/auth/jwt/refresh/` with `{"refresh"}` gives new tokens.
+- The access token lasts 15 minutes. `POST /api/v1/auth/jwt/refresh/` (no body; the browser sends the cookie) returns a new `{access}` and a new cookie.
+- `POST /api/v1/auth/jwt/logout/` cancels the refresh token and deletes the cookie.
 
 ## Emails in development
 

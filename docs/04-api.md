@@ -18,7 +18,7 @@
 
 ## Auth — `/api/v1/auth/` (Djoser + SimpleJWT) [MVP]
 
-UniFlow uses **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`), so the paths below are Djoser's standard ones. See [06](06-auth-and-permissions.md#12-authentication-architecture-mvp).
+UniFlow uses **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`), so the paths below are Djoser's standard ones. The one change is that `jwt/create/` and `jwt/refresh/` keep the refresh token in an httpOnly cookie, and `jwt/logout/` deletes it (`apps/accounts/cookie_jwt.py`). See [06](06-auth-and-permissions.md#12-authentication-architecture-mvp).
 
 | Method | Path | Who | Purpose |
 |---|---|---|---|
@@ -29,8 +29,9 @@ UniFlow uses **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`), so the
 | POST | `users/set_password/` | auth | Change password (M1.7) |
 | POST | `users/reset_password/` | public | Always returns 204, so it never reveals whether an email is registered |
 | POST | `users/reset_password_confirm/` | public | Set a new password from the reset email (M1.7) |
-| POST | `jwt/create/` | public | Login. Takes `{email, password}` and returns `{access, refresh}`. Wrong credentials, or an account that is not activated yet, return 401. |
-| POST | `jwt/refresh/` | public | Takes `{refresh}` and returns a new `{access, refresh}`. The old refresh token stops working. |
+| POST | `jwt/create/` | public | Login. Takes `{email, password}` and returns `{access}`. The refresh token is set as a secure httpOnly cookie (`uniflow_refresh`, path `/api/v1/auth/jwt/`). Wrong credentials, or an account that isn't activated, return 401. |
+| POST | `jwt/refresh/` | public | Reads the refresh-token cookie (or `{refresh}` in the body) and returns a new `{access}`. The cookie is rotated, and the old refresh token stops working. |
+| POST | `jwt/logout/` | public | Cancels the refresh token and deletes the cookie |
 | POST | `jwt/verify/` | public | |
 
 These Djoser endpoints are restricted to `super_admin` in the MVP:
