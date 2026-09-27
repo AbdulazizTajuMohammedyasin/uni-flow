@@ -188,6 +188,7 @@ DJOSER = {
     "HIDE_USERS": True,
     "SERIALIZERS": {
         "user_create_password_retype": "apps.accounts.serializers.UserCreateSerializer",
+        "current_user": "apps.accounts.serializers.MeSerializer",  # users/me/
     },
     # is_staff is only true for super admins, so IsAdminUser means "super admin".
     "PERMISSIONS": {
