@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M1 (Identity). M0 is done ✅.
-**Next up:** M1.7, forgot password and change password.
+**Next up:** M1.8, the "my profile" API (read and update your own details).
 
 ---
 
@@ -59,8 +59,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M1.4 | Student profiles (student number, school, programme, intake) and staff profiles (school, job title). A student's programme must belong to their school. | `/django-admin/` → Users → open a user | ✅ Done |
 | M1.5 | Students sign up with an `@student.aiu.edu.my` email. The account stays inactive until they click the activation email. On your computer, emails are printed in the backend terminal. | http://127.0.0.1:8000/api/v1/docs/ → **auth** → try `POST /auth/users/` | ✅ Done |
 | M1.6 | Log in with email and password using **Djoser's standard login**. You get a 15-minute access token and a 14-day refresh token. | http://127.0.0.1:8000/api/v1/docs/ → **auth** → `jwt/create/`, then the **Authorize** button | ✅ Done |
-| **M1.7** | **Forgot password and change password** | – | ⏭️ **Next** |
-| M1.8 | "My profile" API | – | ⏳ |
+| M1.7 | **Forgot password** (reset link by email, printed in the terminal on your PC) and **change password** (logged in, needs the current password). Both are Djoser's built-in features. | Swagger → **auth** → `users/reset_password/` | ✅ Done |
+| **M1.8** | **"My profile" API** | – | ⏭️ **Next** |
 | M1.9 – M1.12 | Website pages: log in, register, activate, reset password, onboarding, profile | – | ⏳ |
 
 ---

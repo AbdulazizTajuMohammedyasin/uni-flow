@@ -182,7 +182,9 @@ DJOSER = {
     "SEND_ACTIVATION_EMAIL": True,
     "ACTIVATION_URL": "verify-email/{uid}/{token}",
     "PASSWORD_RESET_CONFIRM_URL": "reset-password/{uid}/{token}",
-    "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": False,
+    "PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND": False,  # same reply for unknown emails
+    "PASSWORD_RESET_CONFIRM_RETYPE": True,  # new password typed twice (re_new_password)
+    "SET_PASSWORD_RETYPE": True,
     "HIDE_USERS": True,
     "SERIALIZERS": {
         "user_create_password_retype": "apps.accounts.serializers.UserCreateSerializer",
