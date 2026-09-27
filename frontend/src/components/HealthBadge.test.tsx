@@ -2,14 +2,14 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError } from '@/shared/api/errors'
-import { getHealth } from '@/shared/api/health'
+import { ApiError } from '@/api/errors'
+import { getHealth } from '@/api/health'
+import { createQueryClient } from '@/lib/queryClient'
 
-import { createQueryClient } from '../queryClient'
 import { HealthBadge } from './HealthBadge'
 
 // Replace the real network call with a controllable fake.
-vi.mock('@/shared/api/health', () => ({ getHealth: vi.fn() }))
+vi.mock('@/api/health', () => ({ getHealth: vi.fn() }))
 const mockedGetHealth = vi.mocked(getHealth)
 
 function renderBadge() {

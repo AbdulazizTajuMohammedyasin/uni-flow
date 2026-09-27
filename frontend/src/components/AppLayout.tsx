@@ -1,7 +1,8 @@
 import { NavLink, Outlet } from 'react-router'
 
-import { HealthBadge } from '../dev/HealthBadge'
-import { studentNavItems } from '../navigation'
+import { studentNavItems } from '@/lib/navigation'
+
+import { HealthBadge } from './HealthBadge'
 
 const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
   [

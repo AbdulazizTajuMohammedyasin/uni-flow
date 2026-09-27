@@ -1,9 +1,9 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router'
 
 import { Button } from '@/components/ui/button'
-import { ErrorState } from '@/shared/ui/ErrorState'
+import { ErrorState } from '@/components/ErrorState'
 
-import { NotFoundPage } from './NotFoundPage'
+import { NotFoundPage } from '../NotFound/NotFound'
 
 /** Catches errors thrown while loading or rendering any page (the route `errorElement`). */
 export function RouteErrorPage() {

@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M1 (Identity). M0 is done ✅.
-**Next up:** M1.9, where the **website** starts to use login (first website task of M1).
+**Next up:** M1.9, where the **website** starts to use login (`api/auth.ts`, `context/AuthContext.tsx`). Where the tokens are kept is being decided.
 
 ---
 
@@ -76,21 +76,18 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ### Website files so far (`frontend/src/`)
 
-| File | Job |
+| File or folder | Job |
 |---|---|
-| `main.tsx` | Starting point |
-| `app/App.tsx` | Turns the router on |
-| `app/routes.tsx` | **The router:** which address shows which page (the plan called this `router.tsx`) |
-| `app/navigation.ts` | The menu links |
-| `app/layouts/` | Page frames: student, login, staff |
-| `app/pages/` | Placeholder, 404 and error pages |
-| `app/providers.tsx`, `app/queryClient.ts` | Turn on TanStack Query (data loading) for the whole app |
-| `app/dev/HealthBadge.tsx` | The dev-only **API: ok** badge |
-| `shared/api/` | **Talking to the backend:** `client.ts` (the connection), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (login token, from M1) |
+| `main.tsx` | Starting point: turns on data loading (TanStack Query) and the router |
+| `router.tsx` | **The router:** which address shows which page |
+| `api/` | **Talking to the backend:** `client.ts` (the connection), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (login token; replaced in M1.9) |
+| `hooks/` | Data hooks for pages, e.g. `useHealth.ts` |
+| `types/` | TypeScript shapes of API data, e.g. `health.ts` |
+| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge). Add more with `npx shadcn@latest add <name>`. |
-| `lib/utils.ts` | shadcn's small helper (`cn`) |
-| `shared/ui/` | UniFlow's own small reusable boxes |
-| `styles/index.css` | Colours and fonts |
+| `pages/` | One folder per page: `NotFound/`, `Placeholder/`, `RouteError/`. Login and the rest are added in M1.10 onwards. |
+| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the menu links) |
+| `index.css` | Colours and fonts |
 
 ### Backend files so far (`backend/`)
 
@@ -108,7 +105,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ## Decided recently
 
-- **Login is kept simple:** UniFlow uses Djoser's own URLs, like the E-commerce project, with no custom login code. Suspended-account blocking comes with staff management (M2.2).
+- **Frontend folder layout:** `api/`, `components/`, `context/`, `hooks/`, `lib/`, `pages/<Name>/`, `types/` and `router.tsx`. It was restructured before M1.9.
+
+- **Login is kept simple:** UniFlow uses Djoser's own URLs, with no custom login code. Suspended-account blocking comes with staff management (M2.2).
 
 - **AIU uses Schools, not departments.** Everything is called "school" (the role is `school_staff`). The Centre for Foundation and General Studies is stored as a school.
 

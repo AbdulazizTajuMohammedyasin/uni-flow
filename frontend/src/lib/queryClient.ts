@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 
-import { ApiError } from '@/shared/api/errors'
+import { ApiError } from '@/api/errors'
 
 /** Retry a failed request once, but never retry 4xx errors (they will not fix themselves). */
 function shouldRetry(failureCount: number, error: unknown): boolean {

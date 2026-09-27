@@ -30,51 +30,31 @@ They share authentication, the API client, the UI components and the build. Spli
 | API types | `openapi-typescript` (generates TypeScript types from the OpenAPI schema) | **Deferred.** Reconsider after the frontend foundation works (M0.15). Until then, types are written by hand in each feature's `types.ts`. |
 | Not planned | Radix, sonner, MSW, Playwright, Redux or Zustand | Add one only when a real need appears |
 
-Toasts, dialogs and dropdowns are small in-house components in `shared/ui`.
+Toasts, dialogs and dropdowns come from shadcn (`components/ui/`), added when a screen needs them.
 
-### Folder structure (organized by feature)
+### Folder structure
 
 ```
 frontend/src/
-├── main.tsx                    # entry point (Vite convention: stays in src/)
-├── app/
-│   ├── App.tsx  routes.tsx  navigation.ts  providers.tsx (M0.13)
-│   ├── pages/                  # NotFoundPage, RouteErrorPage, PlaceholderPage
-│   └── layouts/
-│       ├── AuthLayout.tsx        # login/register/etc.
-│       ├── AppLayout.tsx         # student area: sidebar (md+) / bottom nav (mobile)
-│       └── StaffLayout.tsx       # staff dashboard: capability-driven side nav
-├── features/
-│   ├── auth/            AuthProvider, RequireAuth, pages
-│   ├── profile/         onboarding, profile
-│   ├── dashboard/       student dashboard
-│   ├── announcements/
-│   │   ├── api.ts            # read API functions (framework-agnostic)
-│   │   ├── queries.ts        # React Query hooks
-│   │   ├── types.ts
-│   │   ├── components/  pages/          # student area
-│   │   └── staff/                        # staff dashboard pages + manage api
-│   │       ├── manageApi.ts  manageQueries.ts  schemas.ts (zod)
-│   │       └── pages/ StaffAnnouncementsPage.tsx  AnnouncementFormPage.tsx
-│   ├── documents/ events/ communities/ timetable/ applications/   (same shape)
-│   ├── notifications/  search/
-│   └── staff/           # staff-only features without a student side:
-│       ├── home/        # staff landing page
-│       └── users/       # role & suspension management (super admin)
-├── shared/
-│   ├── api/       client.ts (axios + interceptors), tokenStore.ts, errors.ts   (schema.d.ts only if M0.15 is approved)
-│   ├── auth/      useCapabilities.ts, RequireCapability.tsx, Can.tsx
-│   ├── ui/        Button, Card, Badge, Skeleton, EmptyState, ErrorState, Toast, Dialog, DataTable, Pagination, Markdown ...
-│   ├── forms/     TextField, Select, MultiSelect, DateTimeField, FileField, MarkdownField,
-│   │              PublisherSelect, AudienceFields, SourceLinkFields
-│   └── lib/       dates.ts, format.ts, platformLinks.ts
-└── styles/index.css
+├── main.tsx            # entry: QueryClientProvider + RouterProvider (+ AuthProvider from M1.9)
+├── router.tsx          # createAppRoutes() and the app router
+├── index.css           # Tailwind + shadcn theme + UniFlow colours
+├── api/                # backend calls, one file per area: client.ts, errors.ts, health.ts, auth.ts (M1.9) ...
+├── hooks/              # React Query hooks per area: useHealth.ts, useAnnouncements.ts ...
+├── context/            # AuthContext.tsx (M1.9)
+├── types/              # TypeScript shapes of API data: health.ts, auth.ts ...
+├── components/         # layouts (AppLayout, AuthLayout, StaffLayout) and shared pieces
+│   └── ui/             # shadcn components
+├── pages/              # one folder per page: Login/Login.tsx, Register/Register.tsx, NotFound/NotFound.tsx ...
+│                       # staff pages later: pages/Staff/<Name>/<Name>.tsx
+├── lib/                # utils.ts (shadcn cn), queryClient.ts, navigation.ts
+└── test/setup.ts
 ```
 
 Rules:
 
-- A feature imports from `shared/` and from its own folder. Anything shared across features moves to `shared/`.
-- `api.ts` and `manageApi.ts` contain **plain typed functions with no React code**. A future React Native app can reuse them.
+- API calls live **only** in `api/`. Pages and components use them through `hooks/`.
+- `api/*.ts` files contain **plain typed functions with no React code**, so a future React Native app can reuse them.
 
 ### Staff dashboard [MVP]
 
@@ -99,7 +79,7 @@ Rules:
 ### API layer
 
 ```ts
-// shared/api/client.ts
+// api/client.ts
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, withCredentials: true,
                                   headers: { "X-Client": "web" } });
 // request: Authorization: Bearer <tokenStore.access>

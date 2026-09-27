@@ -1,18 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { Badge } from '@/components/ui/badge'
-import { getHealth } from '@/shared/api/health'
+import { useHealth } from '@/hooks/useHealth'
 
 /**
  * Development-only indicator: does the website reach the Django API (and the database)?
  * Rendered only when `import.meta.env.DEV` is true (see AppLayout).
  */
 export function HealthBadge() {
-  const { data, isPending, isError } = useQuery({
-    queryKey: ['health'],
-    queryFn: getHealth,
-    retry: false,
-  })
+  const { data, isPending, isError } = useHealth()
 
   if (isPending) {
     return <Badge variant="secondary">API: checking…</Badge>

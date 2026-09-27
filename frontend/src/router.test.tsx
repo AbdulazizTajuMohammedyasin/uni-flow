@@ -3,12 +3,12 @@ import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-import { RouteErrorPage } from './pages/RouteErrorPage'
-import { createQueryClient } from './queryClient'
-import { createAppRoutes } from './routes'
+import { createQueryClient } from './lib/queryClient'
+import { RouteErrorPage } from './pages/RouteError/RouteError'
+import { createAppRoutes } from './router'
 
 // The layout shows the dev-only API health badge; answer it with a fake "ok" (no network).
-vi.mock('@/shared/api/health', () => ({
+vi.mock('@/api/health', () => ({
   getHealth: vi.fn().mockResolvedValue({ status: 'ok', db: 'ok' }),
 }))
 

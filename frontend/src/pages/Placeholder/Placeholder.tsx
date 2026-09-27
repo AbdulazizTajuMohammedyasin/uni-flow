@@ -1,4 +1,4 @@
-import { EmptyState } from '@/shared/ui/EmptyState'
+import { EmptyState } from '@/components/EmptyState'
 
 type PlaceholderPageProps = {
   title: string

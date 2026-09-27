@@ -28,11 +28,12 @@ npm run dev                      # opens on http://localhost:5173
 
 ## Conventions
 
-- `@/` is an alias for `src/`, for example `import { api } from '@/shared/api/client'`.
+- `@/` is an alias for `src/`, for example `import { api } from '@/api/client'`.
+- **Folder layout:** `api/` holds backend calls, one file per area. `components/` holds layouts and shared pieces, with shadcn in `components/ui/`. `context/` holds React contexts such as auth. `hooks/` holds React Query hooks, `useX.ts`. `lib/` holds helpers. `pages/<Name>/<Name>.tsx` holds one folder per page. `types/` holds TypeScript types. `router.tsx` holds the routes.
 - TypeScript runs in `strict` mode.
 - **UI components come from shadcn/ui** and live in `src/components/ui/`, for example `import { Button } from '@/components/ui/button'`. Add a new one only when a screen needs it: `npx shadcn@latest add dialog`. UniFlow's own small components live in `src/shared/ui/`.
-- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/styles/index.css`, which holds the Tailwind import, the shadcn theme (with UniFlow indigo as `primary`), the brand colours (for example `bg-brand-600`) and the base body styles. Add a theme token only when a real screen needs it.
+- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/index.css`, which holds the Tailwind import, the shadcn theme (with UniFlow indigo as `primary`), the brand colours (for example `bg-brand-600`) and the base body styles. Add a theme token only when a real screen needs it.
 - **Tests** sit next to the code they test, as `*.test.ts(x)`, for example `src/App.test.tsx`. Use React Testing Library queries such as `getByRole` and `getByText`, and test what a user sees, not implementation details.
-- **Talking to the backend:** use the shared client `api` from `@/shared/api/client` (never call `fetch` directly), wrap each call in a small typed function (see `@/shared/api/health.ts`), and turn errors into an `ApiError` with `toApiError`. Components load data with TanStack Query (`useQuery`).
+- **Talking to the backend:** use the shared client `api` from `@/api/client` (never call `fetch` directly), add a small typed function to `src/api/<area>.ts` (see `api/health.ts`), and wrap it in a hook in `src/hooks/useX.ts` (see `hooks/useHealth.ts`). Errors become an `ApiError` via `toApiError`.
 - In development, a small **API status badge** (`API: ok` or `API: offline`) shows in the sidebar or the mobile top bar. It is not included in production builds.
 - Only `VITE_*` environment variables reach the browser, so never put secrets in `.env`.

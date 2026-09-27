@@ -1,10 +1,10 @@
-import type { RouteObject } from 'react-router'
+import { createBrowserRouter, type RouteObject } from 'react-router'
 
-import { PageLoading } from '@/shared/ui/PageLoading'
+import { PageLoading } from '@/components/PageLoading'
 
-import { NotFoundPage } from './pages/NotFoundPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
-import { RouteErrorPage } from './pages/RouteErrorPage'
+import { NotFoundPage } from './pages/NotFound/NotFound'
+import { PlaceholderPage } from './pages/Placeholder/Placeholder'
+import { RouteErrorPage } from './pages/RouteError/RouteError'
 
 /**
  * Builds the app's route tree. Layouts are lazy-loaded, so each area's code downloads
@@ -23,7 +23,7 @@ export function createAppRoutes(): RouteObject[] {
       children: [
         {
           path: '/',
-          lazy: { Component: async () => (await import('./layouts/AppLayout')).default },
+          lazy: { Component: async () => (await import('./components/AppLayout')).default },
           children: [
             { index: true, element: <PlaceholderPage title="Home" /> },
             { path: 'announcements', element: <PlaceholderPage title="Announcements" /> },
@@ -34,7 +34,7 @@ export function createAppRoutes(): RouteObject[] {
         },
         {
           path: '/login',
-          lazy: { Component: async () => (await import('./layouts/AuthLayout')).default },
+          lazy: { Component: async () => (await import('./components/AuthLayout')).default },
           children: [
             {
               index: true,
@@ -44,7 +44,7 @@ export function createAppRoutes(): RouteObject[] {
         },
         {
           path: '/staff',
-          lazy: { Component: async () => (await import('./layouts/StaffLayout')).default },
+          lazy: { Component: async () => (await import('./components/StaffLayout')).default },
           children: [{ index: true, element: <PlaceholderPage title="Staff dashboard" /> }],
         },
         { path: '*', element: <NotFoundPage /> },
@@ -52,3 +52,6 @@ export function createAppRoutes(): RouteObject[] {
     },
   ]
 }
+
+/** The app's router (main.tsx). Tests build their own with createAppRoutes(). */
+export const router = createBrowserRouter(createAppRoutes())
