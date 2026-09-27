@@ -35,6 +35,23 @@ export function createAppRoutes(): RouteObject[] {
                 { path: 'events', element: <PlaceholderPage title="Events" /> },
                 { path: 'timetable', element: <PlaceholderPage title="Timetable" /> },
                 { path: 'communities', element: <PlaceholderPage title="Communities" /> },
+                {
+                  path: 'profile',
+                  lazy: { Component: async () => (await import('./pages/Profile/Profile')).ProfilePage },
+                },
+              ],
+            },
+            {
+              // Students choose their school/programme/intake here (centred-card frame).
+              lazy: { Component: async () => (await import('./components/AuthLayout')).default },
+              children: [
+                {
+                  path: '/onboarding',
+                  lazy: {
+                    Component: async () =>
+                      (await import('./pages/Onboarding/Onboarding')).OnboardingPage,
+                  },
+                },
               ],
             },
             {

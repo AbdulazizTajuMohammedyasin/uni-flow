@@ -1,4 +1,7 @@
-import { NavLink, Outlet } from 'react-router'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router'
+
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/context/AuthContext'
 
 import { studentNavItems } from '@/lib/navigation'
 
@@ -29,17 +32,21 @@ export default function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        {import.meta.env.DEV && (
-          <div className="mt-auto px-6 py-4">
-            <HealthBadge />
-          </div>
-        )}
+        <div className="mt-auto space-y-3 px-6 py-4">
+          {import.meta.env.DEV && <HealthBadge />}
+          <UserMenu />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
           <span className="text-lg font-bold text-brand-600">UniFlow</span>
-          {import.meta.env.DEV && <HealthBadge />}
+          <div className="flex items-center gap-3">
+            {import.meta.env.DEV && <HealthBadge />}
+            <Link to="/profile" className="text-sm font-medium text-brand-700">
+              Profile
+            </Link>
+          </div>
         </header>
 
         {/* Extra bottom padding on phones so content is not hidden behind the bottom bar. */}
@@ -58,6 +65,31 @@ export default function AppLayout() {
           </NavLink>
         ))}
       </nav>
+    </div>
+  )
+}
+
+/** Sidebar footer: who is logged in, a link to the profile page, and log out. */
+function UserMenu() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
+  return (
+    <div className="border-t border-slate-200 pt-3">
+      <p className="truncate text-sm font-medium">{user?.full_name}</p>
+      <div className="mt-2 flex gap-2">
+        <Button asChild size="sm" variant="outline">
+          <NavLink to="/profile">Profile</NavLink>
+        </Button>
+        <Button size="sm" variant="ghost" onClick={handleLogout}>
+          Log out
+        </Button>
+      </div>
     </div>
   )
 }

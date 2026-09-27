@@ -22,6 +22,23 @@ export type LoginData = {
   password: string
 }
 
+/** PATCH /api/v1/auth/users/me/ (send only what changes) */
+export type UpdateMeData = {
+  full_name?: string
+  student_profile?: {
+    student_number?: string | null
+    school?: number | null
+    programme?: number | null
+    intake?: number | null
+  }
+}
+
+export type ChangePasswordData = {
+  current_password: string
+  new_password: string
+  re_new_password: string
+}
+
 export type RegisterData = {
   full_name: string
   email: string

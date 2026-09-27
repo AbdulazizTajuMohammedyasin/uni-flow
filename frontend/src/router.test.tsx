@@ -12,6 +12,11 @@ import { RouteErrorPage } from './pages/RouteError/RouteError'
 import { createAppRoutes } from './router'
 
 // The layout shows the dev-only API health badge; answer it with a fake "ok" (no network).
+vi.mock('@/api/academics', () => ({
+  getSchools: vi.fn().mockResolvedValue([]),
+  getProgrammes: vi.fn().mockResolvedValue([]),
+  getIntakes: vi.fn().mockResolvedValue([]),
+}))
 vi.mock('@/api/health', () => ({
   getHealth: vi.fn().mockResolvedValue({ status: 'ok', db: 'ok' }),
 }))
@@ -88,6 +93,17 @@ describe('login protection', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.search).toBe('?next=%2Fevents')
+  })
+})
+
+describe('onboarding', () => {
+  it('sends a student who has not chosen their studies to /onboarding', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({ ...student, profile_complete: false })
+
+    const router = renderAt('/events')
+
+    expect(await screen.findByRole('heading', { level: 1, name: /Welcome/ })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/onboarding')
   })
 })
 

@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M1 (Identity). M0 is done ✅.
-**Next up:** M1.12, **onboarding** (new students pick their school, programme and intake) and the **profile** page.
+**Now:** M1 (Identity) is done ✅. Students can register, activate, log in, choose their studies and manage their profile.
+**Next up:** M2 (Permissions and staff area), starting with M2.1: who is allowed to do what (capabilities).
 
 ---
 
@@ -13,8 +13,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Milestone | In plain words | Status |
 |---|---|---|
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
-| **M1** Identity | Students can register, log in and fill in their profile | 🔄 In progress |
-| **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | ⏳ |
+| **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
+| **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | ⏭️ Next |
 | **M3** Announcements | Staff post announcements, and students see the ones meant for them | ⏳ |
 | **M4** Documents | Upload and download documents, and attach them to announcements | ⏳ |
 | **M5** Events | Events list and calendar | ⏳ |
@@ -64,7 +64,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M1.9 | The website remembers who is logged in. The access token is kept only in memory, and the refresh token is in a **secure cookie** that page scripts can't read (nothing in `localStorage`). Pages are now **login-only**: visitors who aren't logged in go to `/login`. | http://localhost:5173 now redirects to `/login` | ✅ Done |
 | M1.10 | **Log in** and **Register** pages. Register only accepts `@student.aiu.edu.my` and shows "check your email"; login sends you where you were going. | http://localhost:5173/register and `/login` | ✅ Done |
 | M1.11 | The **links in emails now work**: the activation page (activates your account, or sends a new link if it's broken), **Forgot password?** and the reset-password page | Click the activation link from the backend terminal | ✅ Done |
-| **M1.12** | **Onboarding (pick school, programme, intake) and the profile page** | – | ⏭️ **Next** |
+| M1.12 | **Onboarding:** new students pick their school, then programme (only that school's), then intake. **Profile page:** your details, your studies, change password, log out. | Log in as a new student to see `/onboarding`, then the **Profile** link | ✅ Done |
 
 ---
 
@@ -83,13 +83,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `main.tsx` | Starting point: turns on data loading (TanStack Query) and the router |
 | `router.tsx` | **The router:** which address shows which page |
-| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
+| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
-| `hooks/` | Data hooks for pages, e.g. `useHealth.ts` |
-| `types/` | TypeScript shapes of API data: `auth.ts`, `health.ts` |
-| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages), `FormField` (label + input + error), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
+| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `useHealth.ts` |
+| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `health.ts` |
+| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `ChangePasswordForm`, small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `NotFound/`, `Placeholder/`, `RouteError/` |
 | `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the menu links) |
 | `index.css` | Colours and fonts |
 

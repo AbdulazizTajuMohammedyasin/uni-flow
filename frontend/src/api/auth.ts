@@ -1,4 +1,4 @@
-import type { LoginData, RegisterData, User } from '@/types/auth'
+import type { ChangePasswordData, LoginData, RegisterData, UpdateMeData, User } from '@/types/auth'
 
 import { api, refreshAccessToken } from './client'
 import { toApiError } from './errors'
@@ -82,6 +82,24 @@ export async function confirmPasswordReset(data: {
 }): Promise<void> {
   try {
     await api.post('/auth/users/reset_password_confirm/', data)
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Update your own details (name, student profile). Returns the updated user. */
+export async function updateCurrentUser(data: UpdateMeData): Promise<User> {
+  try {
+    return (await api.patch<User>('/auth/users/me/', data)).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Change your password (needs the current one). */
+export async function changePassword(data: ChangePasswordData): Promise<void> {
+  try {
+    await api.post('/auth/users/set_password/', data)
   } catch (error) {
     throw toApiError(error)
   }
