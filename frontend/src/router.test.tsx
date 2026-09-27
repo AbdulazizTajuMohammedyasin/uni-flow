@@ -1,7 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import * as authApi from '@/api/auth'
+import { AuthProvider } from '@/context/AuthContext'
+import type { User } from '@/types/auth'
 
 import { createQueryClient } from './lib/queryClient'
 import { RouteErrorPage } from './pages/RouteError/RouteError'
@@ -12,12 +16,36 @@ vi.mock('@/api/health', () => ({
   getHealth: vi.fn().mockResolvedValue({ status: 'ok', db: 'ok' }),
 }))
 
+// Pretend the session is restored as a logged-in student (no network).
+vi.mock('@/api/auth', () => ({
+  restoreSession: vi.fn(),
+  getCurrentUser: vi.fn(),
+  login: vi.fn(),
+  logout: vi.fn(),
+}))
+const student: User = {
+  id: 1,
+  email: 'ali@student.aiu.edu.my',
+  full_name: 'Ali Hassan',
+  role: 'student',
+  profile_complete: true,
+  student_profile: { student_number: null, school: 1, programme: 1, intake: 1 },
+  staff_profile: null,
+}
+
+beforeEach(() => {
+  vi.mocked(authApi.restoreSession).mockResolvedValue(true)
+  vi.mocked(authApi.getCurrentUser).mockResolvedValue(student)
+})
+
 /** Render the real route tree at a given address, without a real browser URL bar. */
 function renderAt(path: string) {
   const router = createMemoryRouter(createAppRoutes(), { initialEntries: [path] })
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>,
   )
   return router
@@ -48,6 +76,18 @@ describe('student area (AppLayout)', () => {
       'page',
     )
     expect(within(sidebar).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBeNull()
+  })
+})
+
+describe('login protection', () => {
+  it('sends visitors who are not logged in to /login, remembering where they were going', async () => {
+    vi.mocked(authApi.restoreSession).mockResolvedValue(false)
+
+    const router = renderAt('/events')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/login')
+    expect(router.state.location.search).toBe('?next=%2Fevents')
   })
 })
 

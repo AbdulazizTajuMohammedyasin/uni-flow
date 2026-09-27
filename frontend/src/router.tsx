@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 
 import { PageLoading } from '@/components/PageLoading'
+import { RequireAuth } from '@/components/RequireAuth'
 
 import { NotFoundPage } from './pages/NotFound/NotFound'
 import { PlaceholderPage } from './pages/Placeholder/Placeholder'
@@ -22,14 +23,25 @@ export function createAppRoutes(): RouteObject[] {
       hydrateFallbackElement: <PageLoading />,
       children: [
         {
-          path: '/',
-          lazy: { Component: async () => (await import('./components/AppLayout')).default },
+          // Login-only area: visitors who are not logged in are sent to /login.
+          element: <RequireAuth />,
           children: [
-            { index: true, element: <PlaceholderPage title="Home" /> },
-            { path: 'announcements', element: <PlaceholderPage title="Announcements" /> },
-            { path: 'events', element: <PlaceholderPage title="Events" /> },
-            { path: 'timetable', element: <PlaceholderPage title="Timetable" /> },
-            { path: 'communities', element: <PlaceholderPage title="Communities" /> },
+            {
+              path: '/',
+              lazy: { Component: async () => (await import('./components/AppLayout')).default },
+              children: [
+                { index: true, element: <PlaceholderPage title="Home" /> },
+                { path: 'announcements', element: <PlaceholderPage title="Announcements" /> },
+                { path: 'events', element: <PlaceholderPage title="Events" /> },
+                { path: 'timetable', element: <PlaceholderPage title="Timetable" /> },
+                { path: 'communities', element: <PlaceholderPage title="Communities" /> },
+              ],
+            },
+            {
+              path: '/staff',
+              lazy: { Component: async () => (await import('./components/StaffLayout')).default },
+              children: [{ index: true, element: <PlaceholderPage title="Staff dashboard" /> }],
+            },
           ],
         },
         {
@@ -38,14 +50,9 @@ export function createAppRoutes(): RouteObject[] {
           children: [
             {
               index: true,
-              element: <PlaceholderPage title="Log in" description="Login arrives in M1." />,
+              element: <PlaceholderPage title="Log in" description="The login page arrives in M1.10." />,
             },
           ],
-        },
-        {
-          path: '/staff',
-          lazy: { Component: async () => (await import('./components/StaffLayout')).default },
-          children: [{ index: true, element: <PlaceholderPage title="Staff dashboard" /> }],
         },
         { path: '*', element: <NotFoundPage /> },
       ],

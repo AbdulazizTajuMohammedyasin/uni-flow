@@ -1,6 +1,7 @@
 /**
- * Holds the JWT access token in memory only (never localStorage, so a malicious script
- * cannot read it from storage). Login fills it and the refresh logic renews it (M1.9).
+ * Holds the access token in memory only (never localStorage), so injected scripts cannot
+ * read it from storage. It is lost on page reload and restored from the refresh-token
+ * cookie (see AuthContext).
  */
 let accessToken: string | null = null
 

@@ -1,42 +1,70 @@
-import type { InternalAxiosRequestConfig } from 'axios'
-import { AxiosHeaders } from 'axios'
-import { afterEach, describe, expect, it } from 'vitest'
+import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosError } from 'axios'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from './client'
 import { tokenStore } from './tokenStore'
 
-/** Run the request interceptors on a blank request config and return the result. */
-async function runRequestInterceptors(): Promise<InternalAxiosRequestConfig> {
-  let config: InternalAxiosRequestConfig = { headers: new AxiosHeaders() }
-  // axios keeps registered interceptors in `handlers`; run each one in order.
-  const handlers = (
-    api.interceptors.request as unknown as {
-      handlers: Array<{ fulfilled: (c: InternalAxiosRequestConfig) => InternalAxiosRequestConfig }>
-    }
-  ).handlers
-  for (const handler of handlers) {
-    config = await handler.fulfilled(config)
+/** Build a fake axios response. */
+function reply(config: InternalAxiosRequestConfig, status: number, data: unknown = {}) {
+  const response = { config, status, statusText: '', headers: {}, data }
+  if (status >= 400) {
+    return Promise.reject(new AxiosError('fail', 'ERR', config, null, response))
   }
-  return config
+  return Promise.resolve(response)
 }
 
-afterEach(() => tokenStore.clear())
+const realAdapter = api.defaults.adapter
+
+beforeEach(() => tokenStore.clear())
+afterEach(() => {
+  api.defaults.adapter = realAdapter
+  vi.restoreAllMocks()
+})
 
 describe('api client', () => {
-  it('points at the API and identifies itself as the web client', () => {
+  it('points at the API and sends cookies', () => {
     expect(api.defaults.baseURL).toBe('http://localhost:8000/api/v1')
     expect(api.defaults.withCredentials).toBe(true)
-    expect(api.defaults.headers['X-Client']).toBe('web')
   })
 
-  it('adds no Authorization header when logged out', async () => {
-    const config = await runRequestInterceptors()
-    expect(config.headers.Authorization).toBeUndefined()
+  it('adds the access token when logged in', async () => {
+    tokenStore.set('abc')
+    const seen: (string | undefined)[] = []
+    api.defaults.adapter = ((config) => {
+      seen.push(config.headers.Authorization as string | undefined)
+      return reply(config, 200)
+    }) as AxiosAdapter
+
+    await api.get('/academics/schools/')
+
+    expect(seen).toEqual(['Bearer abc'])
   })
 
-  it('adds the Bearer token when logged in', async () => {
-    tokenStore.set('abc.def.ghi')
-    const config = await runRequestInterceptors()
-    expect(config.headers.Authorization).toBe('Bearer abc.def.ghi')
+  it('on 401, refreshes the token once (via the cookie) and repeats the request', async () => {
+    tokenStore.set('expired')
+    const refresh = vi.spyOn(axios, 'post').mockResolvedValue({ data: { access: 'fresh' } })
+    const seen: string[] = []
+    api.defaults.adapter = ((config) => {
+      seen.push(config.headers.Authorization as string)
+      return reply(config, config.headers.Authorization === 'Bearer fresh' ? 200 : 401)
+    }) as AxiosAdapter
+
+    const response = await api.get('/academics/schools/')
+
+    expect(response.status).toBe(200)
+    expect(seen).toEqual(['Bearer expired', 'Bearer fresh'])
+    expect(refresh).toHaveBeenCalledOnce()
+    expect(refresh.mock.calls[0][0]).toContain('/auth/jwt/refresh/')
+    expect(tokenStore.get()).toBe('fresh')
+  })
+
+  it('gives up when the refresh fails (the user must log in again)', async () => {
+    tokenStore.set('expired')
+    vi.spyOn(axios, 'post').mockRejectedValue(new Error('refresh failed'))
+    api.defaults.adapter = ((config) => reply(config, 401)) as AxiosAdapter
+
+    await expect(api.get('/academics/schools/')).rejects.toBeInstanceOf(AxiosError)
+    expect(tokenStore.get()).toBeNull()
   })
 })
