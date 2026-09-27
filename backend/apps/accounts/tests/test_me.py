@@ -68,6 +68,17 @@ def test_new_student_sees_their_details_and_an_incomplete_profile(student):
             "intake": None,
         },
         "staff_profile": None,
+        "capabilities": {
+            "announcements.manage": False,
+            "events.manage": False,
+            "documents.manage": False,
+            "applications.manage": False,
+            "communities.manage": False,
+            "timetable.manage": False,
+            "academics.manage": False,
+            "users.manage": False,
+        },
+        "publishers": [],
     }
 
 

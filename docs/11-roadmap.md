@@ -402,7 +402,7 @@ Unless a task says otherwise, each one depends on the task before it.
 
 | # | Task | Main files | Verify | Commit |
 |---|---|---|---|---|
-| M2.1 | `capabilities_for`, `me.capabilities` and `me.publishers`, and the `HasCapability` permission class | `apps/accounts/capabilities.py`, `core/permissions.py` | A role × capability matrix test; a school staff member without a school gets no capabilities | `feat(accounts): add role-based capabilities` |
+| M2.1 ✅ | `apps/accounts/capabilities.py`: `capabilities_for(user)`, `publishers_for(user)` and the `HasCapability("…")` permission. `users/me/` now includes `capabilities` and `publishers`. | `apps/accounts/{capabilities,serializers}.py`, `tests/test_capabilities.py`, `tests/test_me.py` | Role × capability matrix; school staff without a school get nothing; publishers per role; the permission class; the users/me fields | `feat(accounts): add role-based capabilities` |
 | M2.2 | Staff user management API: list, **create staff account** (with a "set your password" email, because only `@student.aiu.edu.my` can self-register), role and school, suspension, `is_staff` sync | `apps/accounts/manage_views.py`, `services.py` | Only super admins; the role change syncs `is_staff` | `feat(accounts): add staff user management endpoints` |
 | M2.3 | Reference data management API | `apps/academics/manage_views.py` | Only admins; deactivating hides the item from the read API | `feat(academics): add reference data management endpoints` |
 | M2.4 | `Audience` model with 3 fields, its serializer and its summary text | `apps/audiences/*` | Summary text for each combination | `feat(audiences): add audience model` |

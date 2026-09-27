@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 from apps.academics.models import Intake, Programme, School
 
+from .capabilities import capabilities_for, publishers_for
 from .managers import normalize_email_address
 from .models import StaffProfile, StudentProfile, User, UserRole
 from .services import create_user
@@ -80,6 +81,9 @@ class MeSerializer(serializers.ModelSerializer):
     profile_complete = serializers.BooleanField(read_only=True)
     student_profile = StudentProfileSerializer(required=False)
     staff_profile = StaffProfileSerializer(read_only=True)
+    # What the website may show this user (the API checks again on every action).
+    capabilities = serializers.SerializerMethodField()
+    publishers = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -91,8 +95,16 @@ class MeSerializer(serializers.ModelSerializer):
             "profile_complete",
             "student_profile",
             "staff_profile",
+            "capabilities",
+            "publishers",
         ]
         read_only_fields = ["id", "email", "role"]
+
+    def get_capabilities(self, user) -> dict[str, bool]:
+        return capabilities_for(user)
+
+    def get_publishers(self, user) -> list[dict]:
+        return publishers_for(user)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

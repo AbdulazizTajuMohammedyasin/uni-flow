@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M1 (Identity) is done ✅. Students can register, activate, log in, choose their studies and manage their profile.
-**Next up:** M2 (Permissions and staff area), starting with M2.1: who is allowed to do what (capabilities).
+**Next up:** M2.2, staff user management: a super admin creates staff accounts, sets roles and schools, and can suspend users.
 
 ---
 
@@ -14,7 +14,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|---|
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
-| **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | ⏭️ Next |
+| **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | 🔄 In progress |
 | **M3** Announcements | Staff post announcements, and students see the ones meant for them | ⏳ |
 | **M4** Documents | Upload and download documents, and attach them to announcements | ⏳ |
 | **M5** Events | Events list and calendar | ⏳ |
@@ -68,6 +68,16 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ---
 
+## M2 Permissions and staff area: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M2.1 | **Who may manage what:** school staff manage their own school's content, university admins manage everything, and super admins can also manage users. "My profile" now lists these permissions and who you can publish as. | Swagger → `users/me/` (logged in) → `capabilities`, `publishers` | ✅ Done |
+| **M2.2** | **Staff user management:** create staff accounts, set roles and schools, suspend users (super admin) | – | ⏭️ **Next** |
+| M2.3 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
+
+---
+
 ## Where things are
 
 | I want to... | Look at |
@@ -99,7 +109,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `config/settings/` | Settings (dev, test, prod) |
 | `config/api_v1.py` | The list of API addresses |
-| `apps/accounts/` | User accounts |
+| `apps/accounts/` | User accounts, login, profiles, and `capabilities.py` (who may manage what) |
 | `apps/academics/` | University structure: schools, programmes and intakes |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
