@@ -45,3 +45,44 @@ export async function getCurrentUser(): Promise<User> {
     throw toApiError(error)
   }
 }
+
+/** Activate an account with the uid/token from the activation email link. */
+export async function activateAccount(uid: string, token: string): Promise<void> {
+  try {
+    await api.post('/auth/users/activation/', { uid, token })
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Send the activation email again. */
+export async function resendActivation(email: string): Promise<void> {
+  try {
+    await api.post('/auth/users/resend_activation/', { email })
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Email a password-reset link (same answer whether or not the email exists). */
+export async function requestPasswordReset(email: string): Promise<void> {
+  try {
+    await api.post('/auth/users/reset_password/', { email })
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Set a new password with the uid/token from the reset email link. */
+export async function confirmPasswordReset(data: {
+  uid: string
+  token: string
+  new_password: string
+  re_new_password: string
+}): Promise<void> {
+  try {
+    await api.post('/auth/users/reset_password_confirm/', data)
+  } catch (error) {
+    throw toApiError(error)
+  }
+}

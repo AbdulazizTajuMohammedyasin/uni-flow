@@ -16,7 +16,9 @@ function reply(config: InternalAxiosRequestConfig, status: number, data: unknown
 
 const realAdapter = api.defaults.adapter
 
-beforeEach(() => tokenStore.clear())
+beforeEach(() => {
+  tokenStore.clear()
+})
 afterEach(() => {
   api.defaults.adapter = realAdapter
   vi.restoreAllMocks()

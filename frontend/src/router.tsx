@@ -59,6 +59,27 @@ export function createAppRoutes(): RouteObject[] {
                 Component: async () => (await import('./pages/Register/Register')).RegisterPage,
               },
             },
+            {
+              path: '/verify-email/:uid/:token', // the link in the activation email
+              lazy: {
+                Component: async () =>
+                  (await import('./pages/ActivateAccount/ActivateAccount')).ActivateAccountPage,
+              },
+            },
+            {
+              path: '/forgot-password',
+              lazy: {
+                Component: async () =>
+                  (await import('./pages/ForgotPassword/ForgotPassword')).ForgotPasswordPage,
+              },
+            },
+            {
+              path: '/reset-password/:uid/:token', // the link in the reset email
+              lazy: {
+                Component: async () =>
+                  (await import('./pages/ResetPassword/ResetPassword')).ResetPasswordPage,
+              },
+            },
           ],
         },
         { path: '*', element: <NotFoundPage /> },

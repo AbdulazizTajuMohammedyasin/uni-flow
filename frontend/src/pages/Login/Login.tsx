@@ -72,6 +72,11 @@ export function LoginPage() {
           error={errors.password?.message}
           {...register('password')}
         />
+        <div className="text-right text-sm">
+          <Link to="/forgot-password" className="font-medium text-primary hover:underline">
+            Forgot password?
+          </Link>
+        </div>
 
         {errors.root && (
           <p role="alert" className="text-sm text-destructive">

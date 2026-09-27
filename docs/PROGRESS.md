@@ -4,7 +4,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
 **Now:** M1 (Identity). M0 is done ✅.
-**Next up:** M1.11, the **activate account** page (the email link) and **forgot / reset password** pages.
+**Next up:** M1.12, **onboarding** (new students pick their school, programme and intake) and the **profile** page.
 
 ---
 
@@ -63,8 +63,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M1.8 | **"My profile"** at `/api/v1/auth/users/me/`: your name, role and whether your profile is complete. Students can set their school, programme, intake and student number; the programme must match the school. | Swagger → **auth** → `users/me/` (click **Authorize** first) | ✅ Done |
 | M1.9 | The website remembers who is logged in. The access token is kept only in memory, and the refresh token is in a **secure cookie** that page scripts can't read (nothing in `localStorage`). Pages are now **login-only**: visitors who aren't logged in go to `/login`. | http://localhost:5173 now redirects to `/login` | ✅ Done |
 | M1.10 | **Log in** and **Register** pages. Register only accepts `@student.aiu.edu.my` and shows "check your email"; login sends you where you were going. | http://localhost:5173/register and `/login` | ✅ Done |
-| **M1.11** | **Activate-account and forgot/reset-password pages** | – | ⏭️ **Next** |
-| M1.12 | Onboarding (pick school, programme, intake) and the profile page | – | ⏳ |
+| M1.11 | The **links in emails now work**: the activation page (activates your account, or sends a new link if it's broken), **Forgot password?** and the reset-password page | Click the activation link from the backend terminal | ✅ Done |
+| **M1.12** | **Onboarding (pick school, programme, intake) and the profile page** | – | ⏭️ **Next** |
 
 ---
 
@@ -89,7 +89,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `types/` | TypeScript shapes of API data: `auth.ts`, `health.ts` |
 | `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages), `FormField` (label + input + error), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `NotFound/`, `Placeholder/`, `RouteError/` |
 | `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the menu links) |
 | `index.css` | Colours and fonts |
 
