@@ -134,8 +134,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework (see docs/04-api.md)
 
 REST_FRAMEWORK = {
-    # "Authorization: Bearer <access token>" (SimpleJWT).
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
+    # "Authorization: Bearer <access token>" (SimpleJWT + a suspended-account check).
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.accounts.authentication.ActiveUserJWTAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardPagination",
@@ -160,6 +160,11 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Student information platform API (web now, mobile later).",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    # Two different role lists exist (all roles vs. roles a super admin can give).
+    "ENUM_NAME_OVERRIDES": {
+        "UserRoleEnum": "apps.accounts.models.UserRole",
+        "StaffRoleEnum": "apps.accounts.serializers.STAFF_ROLE_CHOICES",
+    },
 }
 
 
@@ -209,6 +214,8 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,  # every refresh gives a new refresh token...
     "BLACKLIST_AFTER_ROTATION": True,  # ...and the old one stops working
     "UPDATE_LAST_LOGIN": True,
+    # Activated and not suspended (apps/accounts/authentication.py).
+    "USER_AUTHENTICATION_RULE": "apps.accounts.authentication.can_log_in",
 }
 
 

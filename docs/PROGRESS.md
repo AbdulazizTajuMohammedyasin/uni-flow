@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M1 (Identity) is done ✅. Students can register, activate, log in, choose their studies and manage their profile.
-**Next up:** M2.2, staff user management: a super admin creates staff accounts, sets roles and schools, and can suspend users.
+**Now:** M2.2 is done ✅. A super admin can create staff accounts, change roles and schools, and suspend users (backend only; the page comes in M2.10).
+**Next up:** M2.3, reference data management: admins add, edit and switch off schools, programmes and intakes through the API.
 
 ---
 
@@ -73,8 +73,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M2.1 | **Who may manage what:** school staff manage their own school's content, university admins manage everything, and super admins can also manage users. "My profile" now lists these permissions and who you can publish as. | Swagger → `users/me/` (logged in) → `capabilities`, `publishers` | ✅ Done |
-| **M2.2** | **Staff user management:** create staff accounts, set roles and schools, suspend users (super admin) | – | ⏭️ **Next** |
-| M2.3 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
+| M2.2 | **Staff user management:** a super admin lists users, creates staff accounts (the person gets a "set your password" email), changes roles and schools, and suspends users. A suspended user can't log in, and is logged out at once. | Swagger → **manage: users** (log in as a super admin first) | ✅ Done |
+| **M2.3** | **Reference data management:** admins add, edit and switch off schools, programmes and intakes | – | ⏭️ **Next** |
+| M2.4 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
 
 ---
 
@@ -109,7 +110,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `config/settings/` | Settings (dev, test, prod) |
 | `config/api_v1.py` | The list of API addresses |
-| `apps/accounts/` | User accounts, login, profiles, and `capabilities.py` (who may manage what) |
+| `apps/accounts/` | User accounts, login, profiles, `capabilities.py` (who may manage what), `authentication.py` (blocks suspended users) and `manage_views.py` (staff user management) |
 | `apps/academics/` | University structure: schools, programmes and intakes |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
@@ -123,11 +124,11 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **Frontend folder layout:** `api/`, `components/`, `context/`, `hooks/`, `lib/`, `pages/<Name>/`, `types/` and `router.tsx`. It was restructured before M1.9.
 
-- **Login is kept simple:** UniFlow uses Djoser's own URLs, with no custom login code. Suspended-account blocking comes with staff management (M2.2).
+- **Login is kept simple:** UniFlow uses Djoser's own URLs, with no custom login code. Suspended accounts are blocked by one small check (`authentication.py`).
 
 - **AIU uses Schools, not departments.** Everything is called "school" (the role is `school_staff`). The Centre for Foundation and General Studies is stored as a school.
 
-- **Who can register:** only `@student.aiu.edu.my` emails, for example `abdulaziz.mohammedyasin@student.aiu.edu.my`. **Staff accounts** are created by a super admin inside UniFlow (M2.2), or in the Django admin until then.
+- **Who can register:** only `@student.aiu.edu.my` emails, for example `abdulaziz.mohammedyasin@student.aiu.edu.my`. **Staff accounts** are created by a super admin inside UniFlow (`manage/users/`, M2.2).
 
 ## Open decisions
 

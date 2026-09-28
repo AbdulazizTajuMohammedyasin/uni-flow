@@ -10,6 +10,8 @@ urlpatterns = [
     path("health/", health, name="health"),
     path("academics/", include("apps.academics.urls")),
     path("auth/", include("apps.accounts.urls")),
+    # Staff area (each address checks the matching capability).
+    path("manage/", include("apps.accounts.manage_urls")),
 ]
 
 # OpenAPI schema + Swagger UI: development only (DEBUG=True).

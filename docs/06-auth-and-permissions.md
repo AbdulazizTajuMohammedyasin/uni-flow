@@ -32,7 +32,7 @@ urlpatterns = [
 - A `super_admin` **creates staff accounts** in the staff dashboard (`POST /api/v1/manage/users/`, M2.2), and UniFlow emails a "set your password" link using Djoser's password-reset flow.
 - Until M2.2 exists, staff accounts can be created in the Django admin back-office. The first `super_admin` is created with `createsuperuser`.
 
-**Suspension** (`is_suspended`) is stored on the user, but in the MVP so far it is **not enforced at login**. Blocking suspended users is added together with staff user management (M2.2), where it is actually needed.
+**Suspension** (`is_suspended`) is set by a super admin in `manage/users/`. A suspended user **can't log in or refresh**, and an access token they already hold is refused at once (401 `account_suspended`). This is one small check in `apps/accounts/authentication.py`.
 
 ### Djoser configuration
 

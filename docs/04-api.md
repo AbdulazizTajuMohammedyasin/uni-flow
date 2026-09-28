@@ -73,7 +73,7 @@ Every manage endpoint:
 | Applications | `manage/applications/` for list and create, `{id}/`, plus `publish/` and `archive/` | `applications.manage` |
 | Communities | `manage/communities/` for list and create, `{slug}/` for PATCH and deactivation, and `{slug}/links/` for CRUD | `communities.manage` |
 | Timetable | `manage/timetable/terms/` for CRUD (university admin only); `manage/timetable/courses/` for CRUD; `manage/timetable/sections/` for CRUD with nested `meetings/`; `manage/timetable/import/` (POST with `dry_run`) *[with the first adapter]* | `timetable.manage` |
-| Users | `manage/users/` for a list filtered by `role`, `school` and `search`, and **POST to create a staff account** (email, full name, role, school; a "set your password" email is sent); `{id}/role/` to PATCH the role and staff school; `{id}/suspension/` to PATCH `is_suspended` | `users.manage` (super admin only) |
+| Users | `manage/users/` for a list filtered by `role`, `school` and `search`, and **POST to create a staff account** (email, full name, role, school; a "set your password" email is sent); `{id}/` to GET, or PATCH the name, role, school, job title and `is_suspended` (no deleting; you can't change your own role or suspend yourself) | `users.manage` (super admin only) |
 | Reference data | `manage/academics/schools/`, `programmes/` and `intakes/` for CRUD | `academics.manage` (university admin and super admin) |
 
 Every manage response includes `can_edit` and `can_publish`, so the dashboard never has to work out permissions itself.

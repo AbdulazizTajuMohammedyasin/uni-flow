@@ -10,7 +10,7 @@ from apps.academics.models import Intake, Programme, School
 from .capabilities import capabilities_for, publishers_for
 from .managers import normalize_email_address
 from .models import StaffProfile, StudentProfile, User, UserRole
-from .services import create_user
+from .services import STAFF_ROLES, create_staff_user, create_user, update_staff_details
 
 
 class UserCreateSerializer(UserCreatePasswordRetypeSerializer):
@@ -129,3 +129,94 @@ class MeSerializer(serializers.ModelSerializer):
             profile.save()
             instance.student_profile = profile
         return instance
+
+
+# --- Staff area: user management (super admins, /api/v1/manage/users/) ----------------
+
+STAFF_ROLE_CHOICES = [(role.value, role.label) for role in STAFF_ROLES]
+
+
+class ManagedUserSerializer(serializers.ModelSerializer):
+    """How a user is shown in the staff area."""
+
+    school = serializers.SerializerMethodField()
+    position_title = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "full_name",
+            "role",
+            "school",
+            "position_title",
+            "is_active",
+            "is_suspended",
+            "date_joined",
+            "last_login",
+        ]
+
+    def get_school(self, user) -> int | None:
+        profile = getattr(user, "staff_profile", None)
+        return profile.school_id if profile else None
+
+    def get_position_title(self, user) -> str:
+        profile = getattr(user, "staff_profile", None)
+        return profile.position_title if profile else ""
+
+
+class StaffDetailsSerializer(serializers.Serializer):
+    """Shared checks: staff roles only, and school staff must belong to a school."""
+
+    role = serializers.ChoiceField(choices=STAFF_ROLE_CHOICES)
+    school = serializers.PrimaryKeyRelatedField(
+        queryset=School.objects.filter(is_active=True), allow_null=True, required=False
+    )
+    position_title = serializers.CharField(max_length=150, allow_blank=True, required=False)
+
+    def validate(self, attrs):
+        profile = getattr(self.instance, "staff_profile", None)
+        role = attrs.get("role", getattr(self.instance, "role", None))
+        school = attrs.get("school", profile.school if profile else None)
+        if role == UserRole.SCHOOL_STAFF and school is None:
+            raise serializers.ValidationError({"school": "School staff must belong to a school."})
+        return attrs
+
+
+class CreateStaffUserSerializer(StaffDetailsSerializer):
+    """POST /api/v1/manage/users/ — creates a staff account and emails a password link."""
+
+    email = serializers.EmailField()
+    full_name = serializers.CharField(max_length=150)
+
+    def validate_email(self, value):
+        email = normalize_email_address(value)
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return email
+
+    def create(self, validated_data):
+        return create_staff_user(request=self.context.get("request"), **validated_data)
+
+
+class UpdateStaffUserSerializer(StaffDetailsSerializer):
+    """PATCH /api/v1/manage/users/{id}/ — change name, role, school, position, suspension."""
+
+    full_name = serializers.CharField(max_length=150, required=False)
+    role = serializers.ChoiceField(choices=STAFF_ROLE_CHOICES, required=False)
+    is_suspended = serializers.BooleanField(required=False)
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        if request is not None and request.user.pk == self.instance.pk:
+            if "role" in attrs or attrs.get("is_suspended"):
+                raise serializers.ValidationError(
+                    "You cannot change your own role or suspend yourself."
+                )
+        if self.instance.role == UserRole.STUDENT and "role" in attrs:
+            raise serializers.ValidationError({"role": "A student's role is not changed here."})
+        return super().validate(attrs)
+
+    def update(self, instance, validated_data):
+        return update_staff_details(instance, **validated_data)
