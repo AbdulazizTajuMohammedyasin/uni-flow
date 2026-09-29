@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # UniFlow apps
     "apps.accounts",
     "apps.academics",
+    "apps.audiences",
 ]
 
 # Email-based custom user. Must be set before the first migration.
