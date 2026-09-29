@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.academics",
     "apps.audiences",
+    "apps.publishing",
 ]
 
 # Email-based custom user. Must be set before the first migration.

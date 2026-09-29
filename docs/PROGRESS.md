@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M2.5 is done ✅. UniFlow can now work out which posts a student may see, and which students a post is for.
-**Next up:** M2.6, the shared base for posts: draft / published / archived, who published it, and when it expires.
+**Now:** M2.6 is done ✅. Every kind of post now has one shared base: draft / published / archived, who it's from, and an optional expiry date.
+**Next up:** M2.7, the publisher rules: which staff may post as which school, and edit which posts.
 
 ---
 
@@ -77,8 +77,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M2.3 | **Reference data management:** university admins and super admins add, edit and switch off schools, programmes and intakes. Switched-off items disappear from students' dropdowns. Nothing is deleted. | Swagger → **manage: academics** (log in as a super admin first) | ✅ Done |
 | M2.4 | **Audience:** a small record saying who a post is for: all students, or chosen schools, programmes and intakes. It can describe itself in a short line, e.g. "Computing · Intake October 2024". | `pipenv run python manage.py migrate` (new table); `pipenv run pytest apps/audiences` | ✅ Done |
 | M2.5 | **Who sees what:** two checks that follow the same rules: "which posts may this student see?" and "which students is this post for?". Staff see everything; students who haven't finished onboarding only see posts for all students; suspended students are never notified. | `pipenv run pytest apps/audiences` | ✅ Done |
-| **M2.6** | **Shared base for posts:** draft / published / archived, publisher, expiry date | – | ⏭️ **Next** |
-| M2.7 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
+| M2.6 | **Shared base for posts:** every post (announcement, event, document, application) gets the same details: draft / published / archived, from the university or a school, who created it, and an optional expiry date. Plus the **Publish** and **Archive** actions, and the "is it live now?" check. | `pipenv run pytest apps/publishing` | ✅ Done |
+| **M2.7** | **Publisher rules:** which staff may post as which school, and edit which posts | – | ⏭️ **Next** |
+| M2.8 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
 
 ---
 
@@ -116,6 +117,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `apps/accounts/` | User accounts, login, profiles, `capabilities.py` (who may manage what), `authentication.py` (blocks suspended users) and `manage_views.py` (staff user management) |
 | `apps/academics/` | University structure: schools, programmes and intakes, and `manage_views.py` (admins edit them) |
 | `apps/audiences/` | Who a post is for (`Audience`), and `selectors.py` (who sees what) |
+| `apps/publishing/` | The shared base for every post (status, publisher, expiry) and the publish / archive actions |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
 | `.env` | Your local passwords (never committed) |

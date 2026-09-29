@@ -124,8 +124,8 @@ The implementation is one selector, `audiences.selectors.visible_audience_q(user
 | published_at | datetime, null | Set by the publish service to **now**. There is no scheduling in the MVP. |
 | expires_at | datetime, null | Optional. After it passes, the item leaves feeds but a direct link still works, marked as expired. |
 | notified_at | datetime, null | Stops an item from notifying twice, for example after being archived and republished |
-| source_platform | varchar, null | `whatsapp`, `telegram`, `website`, `email`, `portal` or `other` |
-| source_url | varchar(500), null | |
+| source_platform | varchar, blank | `whatsapp`, `telegram`, `website`, `email`, `portal` or `other` |
+| source_url | varchar(500), blank | |
 
 `publishing.models.TargetedModel` is an abstract model that extends `PublishableModel` and adds `audience` (O2O → Audience). Announcements, events and applications use `TargetedModel`. **Documents use `PublishableModel` only**, because in the MVP any logged-in user can see them.
 
