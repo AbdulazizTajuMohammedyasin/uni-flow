@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as authApi from '@/api/auth'
 import { AuthProvider } from '@/context/AuthContext'
+import { capabilitiesOf, makeSchoolStaff } from '@/test/fixtures'
 import type { User } from '@/types/auth'
 
 import { createQueryClient } from './lib/queryClient'
@@ -36,6 +37,8 @@ const student: User = {
   profile_complete: true,
   student_profile: { student_number: null, school: 1, programme: 1, intake: 1 },
   staff_profile: null,
+  capabilities: capabilitiesOf([]),
+  publishers: [],
 }
 
 beforeEach(() => {
@@ -69,6 +72,7 @@ describe('student area (AppLayout)', () => {
 
     const bottom = screen.getByRole('navigation', { name: 'Bottom navigation' })
     expect(within(bottom).getAllByRole('link')).toHaveLength(5)
+    expect(screen.queryByRole('link', { name: 'Staff dashboard' })).toBeNull()
   })
 
   it('highlights the active link', async () => {
@@ -123,18 +127,69 @@ describe('other areas', () => {
     expect(router.state.location.pathname).toBe('/')
   })
 
-  it('renders the staff dashboard in the staff layout', async () => {
-    renderAt('/staff')
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Staff dashboard' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: '← Back to UniFlow' })).toBeTruthy()
-  })
-
   it('shows the 404 page for unknown addresses', async () => {
     renderAt('/this-page-does-not-exist')
 
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go to home' }).getAttribute('href')).toBe('/')
+  })
+})
+
+describe('staff dashboard (StaffLayout)', () => {
+  it('shows students a "No access" page and no staff menu', async () => {
+    renderAt('/staff')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'No access' })).toBeTruthy()
+    expect(screen.queryByRole('navigation', { name: 'Staff' })).toBeNull()
+  })
+
+  it('shows school staff only the sections they may manage', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeSchoolStaff())
+
+    renderAt('/staff')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Staff dashboard' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: '← Back to UniFlow' })).toBeTruthy()
+    const menu = screen.getByRole('navigation', { name: 'Staff' })
+    for (const label of ['Overview', 'Announcements', 'Events', 'Documents', 'Timetable']) {
+      expect(within(menu).getByRole('link', { name: label })).toBeTruthy()
+    }
+    expect(within(menu).queryByRole('link', { name: 'Users' })).toBeNull()
+    expect(within(menu).queryByRole('link', { name: 'Schools & programmes' })).toBeNull()
+  })
+
+  it('shows the Users section to a super admin', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue(
+      makeSchoolStaff({
+        role: 'super_admin',
+        capabilities: capabilitiesOf(['announcements.manage', 'academics.manage', 'users.manage']),
+      }),
+    )
+
+    renderAt('/staff/users')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Users' })).toBeTruthy()
+    const menu = screen.getByRole('navigation', { name: 'Staff' })
+    expect(within(menu).getByRole('link', { name: 'Schools & programmes' })).toBeTruthy()
+  })
+
+  it('shows "No access" inside the dashboard for a section they cannot manage', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeSchoolStaff())
+
+    renderAt('/staff/users')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'No access' })).toBeTruthy()
+    expect(screen.getByRole('navigation', { name: 'Staff' })).toBeTruthy()
+  })
+
+  it('links staff (not students) to the dashboard from the student area', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeSchoolStaff())
+
+    renderAt('/')
+
+    await screen.findByRole('heading', { level: 1, name: 'Home' })
+    const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
+    expect(within(sidebar).getByRole('link', { name: 'Staff dashboard' })).toBeTruthy()
   })
 })
 

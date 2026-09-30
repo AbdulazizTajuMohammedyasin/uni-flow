@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
+import { canUseStaffArea } from '@/lib/capabilities'
 import { studentNavItems } from '@/lib/navigation'
 
 import { HealthBadge } from './HealthBadge'
@@ -31,6 +32,7 @@ export default function AppLayout() {
               {item.label}
             </NavLink>
           ))}
+          <StaffDashboardLink className="mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100" />
         </nav>
         <div className="mt-auto space-y-3 px-6 py-4">
           {import.meta.env.DEV && <HealthBadge />}
@@ -43,6 +45,7 @@ export default function AppLayout() {
           <span className="text-lg font-bold text-brand-600">UniFlow</span>
           <div className="flex items-center gap-3">
             {import.meta.env.DEV && <HealthBadge />}
+            <StaffDashboardLink className="text-sm font-medium text-brand-700" />
             <Link to="/profile" className="text-sm font-medium text-brand-700">
               Profile
             </Link>
@@ -91,5 +94,18 @@ function UserMenu() {
         </Button>
       </div>
     </div>
+  )
+}
+
+/** Link to the staff dashboard, shown only to users who can use it. */
+function StaffDashboardLink({ className }: { className: string }) {
+  const { user } = useAuth()
+  if (!canUseStaffArea(user)) {
+    return null
+  }
+  return (
+    <Link to="/staff" className={className}>
+      Staff dashboard
+    </Link>
   )
 }

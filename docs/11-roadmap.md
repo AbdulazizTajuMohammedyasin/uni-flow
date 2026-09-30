@@ -302,7 +302,7 @@ UniFlow is built **one small task at a time**.
   - The three layouts are lazy, and the build emits a separate chunk for each.
   - `AppLayout` has a sidebar at `md` and wider, and a top bar plus a 5-item bottom navigation bar on phones. Both use one list, `studentNavItems`, which has short labels for mobile.
   - `AuthLayout` is a centred card with no navigation.
-  - `StaffLayout` has a dark sidebar, a "Back to UniFlow" link and an empty menu, which is filled from capabilities in M2.8.
+  - `StaffLayout` has a dark sidebar, a "Back to UniFlow" link and a menu built from the user's capabilities (done in M2.8).
   - Unknown paths show a 404 page.
   - A `Skeleton` component is deferred until data loading exists.
 - **Verification:**
@@ -409,7 +409,7 @@ Unless a task says otherwise, each one depends on the task before it.
 | M2.5 ✅ | Visibility selectors `visible_audience_q(user, via="audience")` and `students_matching(audience)` (active, non-suspended students only) | `apps/audiences/selectors.py`, `tests/test_selectors.py` | A matrix of 15 or more cases; the two functions agree; no duplicate rows | `feat(audiences): add audience visibility selectors` |
 | M2.6 ✅ | `PublishableModel` and `TargetedModel` (abstract; no migration), `published_q`, `is_expired`, and the `publish` / `archive` services. Tested through a test-only `SamplePost` model whose table `backend/conftest.py` creates. | `apps/publishing/{apps,models,selectors,services}.py`, `apps/publishing/tests/{models,test_publishing}.py`, `conftest.py`, `config/settings/base.py` | Constraint violations; expiry boundaries; publishing sets `published_at` | `feat(publishing): add publishable content base` |
 | M2.7 ✅ | Publisher policy: `manageable_queryset`, `can_manage`, `validate_publisher`, `validate_audience` and the `CanManageObject` permission (`publishers_for` is reused from M2.1) | `apps/publishing/policies.py`, `tests/test_policies.py` | Role × publisher × school matrix | `feat(publishing): add publisher policy` |
-| M2.8 | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, and a staff home placeholder | `shared/auth/*`, `app/layouts/StaffLayout.tsx` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
+| M2.8 ✅ | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, a staff home placeholder, a "No access" page and a "Staff dashboard" link for staff | `lib/capabilities.ts`, `components/{RequireCapability,Can,StaffLayout,AppLayout}.tsx`, `pages/NoAccess/`, `lib/navigation.ts`, `router.tsx`, `types/auth.ts` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
 | M2.9 | Shared form components: fields, `MarkdownField`, `PublisherSelect`, `AudienceFields`, `SourceLinkFields`, the `Markdown` renderer, `DataTable`, `Dialog` and `Toast` | `shared/forms/*`, `shared/ui/*` | Markdown strips HTML and `javascript:` links; the audience summary is correct | `feat(frontend): add shared form and table components` |
 | M2.10 | Staff users page, including a "create staff account" form | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
 | M2.11 | Staff reference data pages | `features/staff/academics/*` (or `features/academics/staff/*`) | Create, edit and deactivate each type | `feat(staff): add reference data management pages` |

@@ -1,6 +1,6 @@
 /** Shared fake data for page tests. */
 import type { Intake, Programme, School } from '@/types/academics'
-import type { User } from '@/types/auth'
+import type { Capability, User } from '@/types/auth'
 
 export const schools: School[] = [
   { id: 1, code: 'SCI', name: 'School of Computing and Informatics' },
@@ -27,6 +27,49 @@ export function makeStudent(overrides: Partial<User> = {}): User {
     profile_complete: false,
     student_profile: { student_number: null, school: null, programme: null, intake: null },
     staff_profile: null,
+    capabilities: capabilitiesOf([]),
+    publishers: [],
+    ...overrides,
+  }
+}
+
+/** Every capability false, except the ones listed. */
+export function capabilitiesOf(granted: Capability[]): Record<Capability, boolean> {
+  const all: Capability[] = [
+    'announcements.manage',
+    'events.manage',
+    'documents.manage',
+    'applications.manage',
+    'communities.manage',
+    'timetable.manage',
+    'academics.manage',
+    'users.manage',
+  ]
+  return Object.fromEntries(all.map((name) => [name, granted.includes(name)])) as Record<
+    Capability,
+    boolean
+  >
+}
+
+/** A school staff member of School 1 (content capabilities, no academics/users). */
+export function makeSchoolStaff(overrides: Partial<User> = {}): User {
+  return {
+    id: 2,
+    email: 'lee@aiu.edu.my',
+    full_name: 'Dr Lee',
+    role: 'school_staff',
+    profile_complete: true,
+    student_profile: null,
+    staff_profile: { school: 1, position_title: 'Lecturer' },
+    capabilities: capabilitiesOf([
+      'announcements.manage',
+      'events.manage',
+      'documents.manage',
+      'applications.manage',
+      'communities.manage',
+      'timetable.manage',
+    ]),
+    publishers: [{ type: 'school', id: 1, name: 'School of Computing and Informatics' }],
     ...overrides,
   }
 }

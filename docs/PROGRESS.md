@@ -3,8 +3,8 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M2.7 is done ✅. The server knows the school boundary: school staff only post as, to, and edit their own school; admins can do everything.
-**Next up:** M2.8, the staff dashboard frame on the website: the `/staff` menu shows only what you're allowed to use.
+**Now:** M2.8 is done ✅. The website's staff dashboard shows each person only the sections they may manage; students get a "No access" page.
+**Next up:** M2.9, shared form pieces for the staff pages (publisher picker, audience picker, Markdown text box, table, dialog).
 
 ---
 
@@ -79,8 +79,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M2.5 | **Who sees what:** two checks that follow the same rules: "which posts may this student see?" and "which students is this post for?". Staff see everything; students who haven't finished onboarding only see posts for all students; suspended students are never notified. | `pipenv run pytest apps/audiences` | ✅ Done |
 | M2.6 | **Shared base for posts:** every post (announcement, event, document, application) gets the same details: draft / published / archived, from the university or a school, who created it, and an optional expiry date. Plus the **Publish** and **Archive** actions, and the "is it live now?" check. | `pipenv run pytest apps/publishing` | ✅ Done |
 | M2.7 | **Publisher rules (the school boundary):** admins manage every post; school staff only post **as** their school, **to** their school's students, and only see and edit their school's posts; lecturers manage nothing. | `pipenv run pytest apps/publishing` | ✅ Done |
-| **M2.8** | **Staff dashboard frame:** the `/staff` menu shows only what you're allowed to use; students get a "no access" page | – | ⏭️ **Next** |
-| M2.9 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
+| M2.8 | **Staff dashboard frame:** the `/staff` menu shows only the sections you may manage (school staff don't see Users; super admins do). Students and lecturers get a **No access** page. Staff get a **Staff dashboard** link in the student sidebar. The section pages are still "Coming soon". | Log in as `a@gmail.com` → **Staff dashboard** link → http://localhost:5173/staff. Log in as a student and open `/staff` → **No access**. | ✅ Done |
+| **M2.9** | **Shared form pieces** for the staff pages: publisher picker, audience picker, Markdown text box, table, dialog | – | ⏭️ **Next** |
+| M2.10 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
 
 ---
 
@@ -103,10 +104,10 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
 | `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `useHealth.ts` |
 | `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `health.ts` |
-| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `ChangePasswordForm`, small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
+| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `NotFound/`, `Placeholder/`, `RouteError/` |
-| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the menu links) |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage) |
 | `index.css` | Colours and fonts |
 
 ### Backend files so far (`backend/`)

@@ -1,3 +1,21 @@
+/** What a user may manage (the backend decides; see apps/accounts/capabilities.py). */
+export type Capability =
+  | 'announcements.manage'
+  | 'events.manage'
+  | 'documents.manage'
+  | 'applications.manage'
+  | 'communities.manage'
+  | 'timetable.manage'
+  | 'academics.manage'
+  | 'users.manage'
+
+/** Who a user may publish as: the university, or one school. */
+export type Publisher = {
+  type: 'university' | 'school'
+  id: number | null
+  name: string
+}
+
 /** GET /api/v1/auth/users/me/ */
 export type User = {
   id: number
@@ -15,6 +33,8 @@ export type User = {
     school: number | null
     position_title: string
   } | null
+  capabilities: Record<Capability, boolean>
+  publishers: Publisher[]
 }
 
 export type LoginData = {

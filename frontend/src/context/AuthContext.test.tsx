@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as authApi from '@/api/auth'
+import { capabilitiesOf } from '@/test/fixtures'
 import type { User } from '@/types/auth'
 
 import { AuthProvider, useAuth } from './AuthContext'
@@ -21,6 +22,8 @@ const student: User = {
   profile_complete: false,
   student_profile: { student_number: null, school: null, programme: null, intake: null },
   staff_profile: null,
+  capabilities: capabilitiesOf([]),
+  publishers: [],
 }
 
 /** A tiny page that shows the auth state and has log in / log out buttons. */

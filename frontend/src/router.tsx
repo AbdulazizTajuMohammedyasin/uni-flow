@@ -2,6 +2,8 @@ import { createBrowserRouter, type RouteObject } from 'react-router'
 
 import { PageLoading } from '@/components/PageLoading'
 import { RequireAuth } from '@/components/RequireAuth'
+import { RequireCapability } from '@/components/RequireCapability'
+import { staffNavItems } from '@/lib/navigation'
 
 import { NotFoundPage } from './pages/NotFound/NotFound'
 import { PlaceholderPage } from './pages/Placeholder/Placeholder'
@@ -55,9 +57,27 @@ export function createAppRoutes(): RouteObject[] {
               ],
             },
             {
+              // Staff dashboard: only for users with at least one "*.manage" capability.
               path: '/staff',
-              lazy: { Component: async () => (await import('./components/StaffLayout')).default },
-              children: [{ index: true, element: <PlaceholderPage title="Staff dashboard" /> }],
+              element: <RequireCapability />,
+              children: [
+                {
+                  lazy: {
+                    Component: async () => (await import('./components/StaffLayout')).default,
+                  },
+                  children: [
+                    { index: true, element: <PlaceholderPage title="Staff dashboard" /> },
+                    // Each section checks its own capability ("No access" page otherwise).
+                    ...staffNavItems
+                      .filter((item) => item.cap)
+                      .map((item) => ({
+                        path: item.to.replace('/staff/', ''),
+                        element: <RequireCapability cap={item.cap} />,
+                        children: [{ index: true, element: <PlaceholderPage title={item.label} /> }],
+                      })),
+                  ],
+                },
+              ],
             },
           ],
         },
