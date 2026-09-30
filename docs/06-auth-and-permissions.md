@@ -117,7 +117,7 @@ In `publishing.policies`:
 ```python
 def manageable_queryset(user, model):      # used by every /manage/ list/detail
     # admins → all rows; school_staff → rows where publisher_school == their school
-def publishers_for(user) -> list[PublisherRef]:
+def publishers_for(user) -> list[PublisherRef]:   # lives in accounts/capabilities.py (M2.1)
     # admins → [university] + all active schools; school_staff → [their school]
 def can_manage(user, obj) -> bool          # object-level check, used by DRF permission + `can_edit` flag
 def validate_publisher(user, publisher)    # rejects a publisher outside publishers_for(user) → 403
