@@ -19,7 +19,10 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 | Manage API | Server-side enforcement | For every manage endpoint: a student gets 403, school staff get 404 on another school's item, and publishing as a school they don't belong to returns 403 |
 | Read API | Shape, filters, 404 for invisible items | |
 | Services | Side effects | Publishing an important announcement creates exactly N notifications, and publishing it again creates none |
-| Timetable | Time zone and import logic | Local "today" around midnight in Kuala Lumpur, plus the create, update and unchanged cases in an import dry run |
+| Timetable | Time zone, import logic, confirmed changes | Local "today" around midnight in Kuala Lumpur; import dry runs; a student's day = official meetings + only *their* confirmed changes |
+| Intelligence | The pipeline with a **fake provider** (never the real AI in tests) | Invalid model output is rejected; course codes resolve; ambiguous names are not mentions; duplicates merge without a second notification; relevance and tier rules per student |
+| AI evaluation | The real model against labelled, anonymized messages | `manage.py evaluate_intelligence` reports accuracy per kind. Run by hand when prompts or models change, **not in CI** (it costs money and needs the API key). |
+| Ingestion | Webhook and connector endpoints | Wrong secret → 403; the same message twice → stored once; chat-export parsing |
 
 - **Tests run against MySQL** (the local `test_uniflow` database), not SQLite, because collation and strict mode behave differently.
 - The coverage target is **at least 90% on `selectors`, `policies` and `services`**. There is no global target.
@@ -45,19 +48,20 @@ There is no Docker in the current plan. Containerization can be revisited if the
 | Environment | Setup |
 |---|---|
 | Local | Native MySQL 8.4, `python manage.py runserver`, `npm run dev` |
-| Staging and production | A single Linux VM, or the university's own server (*hosting still to be decided*) |
+| Staging and production | A single Linux VM, or the university's own server (*hosting still to be decided*). The WhatsApp connector needs a machine that stays online. |
 
 ### Recommended MVP topology
 
 ```
  HTTPS ─► nginx (or Caddy) ─┬─ uniflow.example.edu      → frontend/dist (static files from `npm run build`)
                             └─ api.uniflow.example.edu  → gunicorn (systemd service) → Django
-                                                         /media/posters/ served by nginx (public)
-                                                         documents streamed by Django (logged-in only)
+                                                         /api/v1/internal/ blocked from the internet
+        systemd services on the same VM:
+          gunicorn (Django)  ·  run_jobs (background jobs, digest, retention)  ·  whatsapp-connector
         MySQL 8.4 (same VM, native)   ·   nightly mysqldump + media backup → off-site
 ```
 
-- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M10.7 only if the final deployment design needs it.
+- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M10.5 only if the final deployment design needs it.
 - Release steps:
   1. `git pull`
   2. `pipenv sync` (installs exactly what `Pipfile.lock` pins, with no dev packages)
@@ -65,7 +69,8 @@ There is no Docker in the current plan. Containerization can be revisited if the
   4. `collectstatic`
   5. restart gunicorn
   6. `npm ci && npm run build`
-- There is **no cron** in the MVP. Cron arrives with scheduled publishing and reminders.
+- There is **no cron** in the MVP: `run_jobs` runs as a systemd service and queues its own daily work (the digest and retention clean-up).
+- The WhatsApp connector runs as its own systemd service and restarts automatically. Its login session files are kept outside the repository and backed up.
 - `manage.py check --deploy` must pass. A monitor watches `/api/v1/health/`.
 - **Backups:** a daily `mysqldump` plus media, kept for 30 days. Restoring is tested once per term.
 - The API domain and `/api/v1/` must stay stable once a mobile build ships.

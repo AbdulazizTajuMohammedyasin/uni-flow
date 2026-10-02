@@ -96,14 +96,17 @@ A capability is a named permission to manage one kind of resource. Every capabil
 
 | Capability | student | lecturer | school_staff | university_admin | super_admin |
 |---|:-:|:-:|:-:|:-:|:-:|
-| `announcements.manage` | – | – | ✔ own school | ✔ all | ✔ all |
-| `events.manage` | – | – | ✔ own school | ✔ all | ✔ all |
-| `documents.manage` | – | – | ✔ own school | ✔ all | ✔ all |
-| `applications.manage` | – | – | ✔ own school | ✔ all | ✔ all |
-| `communities.manage` | – | – | ✔ own-school communities | ✔ all | ✔ all |
+| `announcements.manage` (official posts) | – | – | ✔ own school | ✔ all | ✔ all |
+| `sources.manage` (review, scope, disconnect connected groups) | – | – | ✔ own-school sources | ✔ all | ✔ all |
+| `insights.review` (correct or retract AI insights) | – | – | ✔ insights from own-school sources | ✔ all | ✔ all |
+| *[Later]* `events.manage`, `documents.manage`, `applications.manage`, `communities.manage` | – | – | ✔ own school | ✔ all | ✔ all |
 | `timetable.manage` | – | – | ✔ sections of own-school courses | ✔ all, plus terms | ✔ all, plus terms |
 | `academics.manage` (reference data) | – | – | – | ✔ | ✔ |
 | `users.manage` (create staff accounts, roles, suspension) | – | – | – | – | ✔ |
+
+**Student actions are not capabilities.** Every logged-in student may connect groups, paste messages, confirm or reject their own timetable changes and set their preferences; these endpoints only ever touch the caller's own data.
+
+> The code from M2.1 still lists the four [Later] capabilities, and has no `sources.manage` or `insights.review` yet. They are added in the tasks that need them ([11](11-roadmap.md)).
 | Django admin (back-office) | – | – | – | – | ✔ |
 
 A `school_staff` user with no school on their `StaffProfile` gets **no** capabilities, so a half-configured account can do nothing.

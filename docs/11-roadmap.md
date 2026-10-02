@@ -1,5 +1,7 @@
 # 11 — Roadmap & Implementation Tasks (M0–M10)
 
+> **Re-planned after M2.8** when the product was redefined as an AI-powered information assistant ([01](01-product.md)). M0–M2 are unchanged and reused. From M3 the order proves the core idea early: academic context first, then messages, then an AI slice that detects timetable changes students confirm, then real connectors, then the full personal feed.
+
 ## Development workflow
 
 UniFlow is built **one small task at a time**.
@@ -30,17 +32,17 @@ UniFlow is built **one small task at a time**.
 
 | Milestone | Name | Outcome |
 |---|---|---|
-| **M0** | Foundations | An empty Django API and an empty React app, both running locally and in CI |
-| **M1** | Identity | Register, activate, log in, onboard and edit the profile |
-| **M2** | Permissions, publishing core and staff dashboard shell | Capabilities, audience visibility, the shared content base, the `/staff` layout and user and reference-data management |
-| **M3** | Announcements | The first full feature: student feed plus staff management |
-| **M4** | Documents | Document library, downloads and announcement attachments |
-| **M5** | Events | Event list, calendar and staff management |
-| **M6** | Communities | Directory, WhatsApp and Telegram links, follow and staff management |
-| **M7** | Timetable | Staff-maintained timetable data, the import service, section selection, and today and week views |
-| **M8** | Applications and forms | Listings with a derived status, plus staff management |
-| **M9** | Notifications | In-app notifications when content is published |
-| **M10** | Dashboard, search and release | The student dashboard, global search, staff home, production settings and deployment |
+| **M0** ✅ | Foundations | An empty Django API and an empty React app, both running locally and in CI |
+| **M1** ✅ | Identity | Register, activate, log in, onboard and edit the profile |
+| **M2** ✅ | Permissions and publishing core | Capabilities, audience visibility ("who is affected"), the shared content base, the school boundary and the `/staff` layout |
+| **M3** | Academic context and preferences | Courses, terms, sections and weekly classes; students choose sections, semester, interests and information types; the official timetable views |
+| **M4** | Sources and messages | Sources, messages, the background job runner, and manual input (paste and WhatsApp chat export) |
+| **M5** | Intelligence v1: timetable changes | The AI detects timetable changes in messages; the student sees the evidence and confirms; their timetable updates |
+| **M6** | Connectors | The Telegram bot and the WhatsApp connector; students connect groups |
+| **M7** | Intelligence v2: the personal feed | Every insight kind, direct mentions, duplicate merging, relevance and tiers, the "For you" feed |
+| **M8** | Notifications | Immediate alerts by tier, retractions and the daily digest |
+| **M9** | Staff and admin | Source and insight review, official staff posts, user and reference-data pages |
+| **M10** | Home, search and release | The home screen, search, privacy notice, production settings and deployment |
 | — | **MVP release** | |
 | Later | Post-MVP | See [Later backlog](#later-backlog) |
 
@@ -410,115 +412,113 @@ Unless a task says otherwise, each one depends on the task before it.
 | M2.6 ✅ | `PublishableModel` and `TargetedModel` (abstract; no migration), `published_q`, `is_expired`, and the `publish` / `archive` services. Tested through a test-only `SamplePost` model whose table `backend/conftest.py` creates. | `apps/publishing/{apps,models,selectors,services}.py`, `apps/publishing/tests/{models,test_publishing}.py`, `conftest.py`, `config/settings/base.py` | Constraint violations; expiry boundaries; publishing sets `published_at` | `feat(publishing): add publishable content base` |
 | M2.7 ✅ | Publisher policy: `manageable_queryset`, `can_manage`, `validate_publisher`, `validate_audience` and the `CanManageObject` permission (`publishers_for` is reused from M2.1) | `apps/publishing/policies.py`, `tests/test_policies.py` | Role × publisher × school matrix | `feat(publishing): add publisher policy` |
 | M2.8 ✅ | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, a staff home placeholder, a "No access" page and a "Staff dashboard" link for staff | `lib/capabilities.ts`, `components/{RequireCapability,Can,StaffLayout,AppLayout}.tsx`, `pages/NoAccess/`, `lib/navigation.ts`, `router.tsx`, `types/auth.ts` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
-| M2.9 | Shared form components: fields, `MarkdownField`, `PublisherSelect`, `AudienceFields`, `SourceLinkFields`, the `Markdown` renderer, `DataTable`, `Dialog` and `Toast` | `shared/forms/*`, `shared/ui/*` | Markdown strips HTML and `javascript:` links; the audience summary is correct | `feat(frontend): add shared form and table components` |
-| M2.10 | Staff users page, including a "create staff account" form | `features/staff/users/*` | Only super admins; a role change updates the list | `feat(staff): add user role management page` |
-| M2.11 | Staff reference data pages | `features/staff/academics/*` (or `features/academics/staff/*`) | Create, edit and deactivate each type | `feat(staff): add reference data management pages` |
+| ~~M2.9~~ | *Moved:* shared form components are built inside the first pages that need them (M3, M5, M9) instead of up front | – | – |
+| ~~M2.10~~ | *Moved to M9.4* (staff users page) | – | – |
+| ~~M2.11~~ | *Moved to M9.5* (reference data pages) | – | – |
 
-## M3 — Announcements
+## M3 — Academic context and preferences
 
-| # | Task | Verify | Commit |
-|---|---|---|---|
-| M3.1 | Model and back-office admin | Constraints and indexes | `feat(announcements): add announcement model` |
-| M3.2 | Read API: feed, detail and filters (django-filter) | 404 for invisible items; filters; ordering | `feat(announcements): add announcement feed endpoints` |
-| M3.3 | Manage API: CRUD, publish and archive | Every role × action; publishing as another school → 403 | `feat(announcements): add announcement management endpoints` |
-| M3.4 | Student feed page | Loading, error, empty and data states; filters kept in the URL | `feat(announcements): add announcement feed page` |
-| M3.5 | Student detail page | Markdown, source link, expired label | `feat(announcements): add announcement detail page` |
-| M3.6 | Staff list page | Status tabs; row actions follow `can_edit` | `feat(staff): add announcements management list` |
-| M3.7 | Staff form: create, edit, publish and archive | Validation; server errors shown; a successful publish updates the lists | `feat(staff): add announcement form` |
-
-## M4 — Documents
+The AI can only tell who is affected if UniFlow knows each student's courses and sections.
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M4.1 | Model and upload checks (`filetype`) | Spoofed type, oversized file and forbidden type are all rejected | `feat(documents): add document model with upload validation` |
-| M4.2 | Read API and streamed download | Login required; download headers correct | `feat(documents): add document library and download endpoints` |
-| M4.3 | Manage API (multipart) | Scope and capability checks | `feat(documents): add document management endpoints` |
-| M4.4 | Announcement attachments (`attachment_ids`) | Only documents the user can manage can be attached | `feat(announcements): support document attachments` |
-| M4.5 | Library and detail pages, and `FileLink` | Download through a blob | `feat(documents): add document library pages` |
-| M4.6 | Staff documents pages | Upload progress; client-side checks mirror the server | `feat(staff): add document management pages` |
-| M4.7 | Attachment field in the announcement form, and attachments on the detail page | Attach and remove | `feat(announcements): add attachments to form and detail` |
+| M3.1 | `Course` and `Term` models, read API and manage API | Only one current term; school staff manage their own school's courses | `feat(academics): add course and term models` |
+| M3.2 | `CourseSection`, `ClassMeeting` and `SectionEnrollment` models, and the manage API for sections with nested meetings | Constraints; `external_ref` unique per term; school scope | `feat(timetable): add section, meeting and enrolment models` |
+| M3.3 | `Audience` gains `courses` and `sections`; the visibility selectors and their test matrix are extended | The two selectors still agree; section students match | `feat(audiences): add course and section targeting` |
+| M3.4 | Student API: section catalogue and my sections | Only current-term sections can be added | `feat(timetable): add section selection endpoints` |
+| M3.5 | Profile gains `current_semester`, `interests`, `info_types`, `aliases`, `whatsapp_number`; `preferences/choices/` | Choices validated; WhatsApp number unique | `feat(accounts): add semester and preferences to profile` |
+| M3.6 | Onboarding and profile pages: semester, sections, interests and information types | New students complete every step; edits save | `feat(profile): add sections and preferences to onboarding` |
+| M3.7 | Student API: today and week (official meetings only for now) | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |
+| M3.8 | Timetable page: today and week views (FullCalendar `timegrid`) | Empty state links to the section picker | `feat(timetable): add timetable page` |
+| M3.9 | Staff timetable pages: terms, courses, sections and inline meetings | Create, edit and deactivate | `feat(staff): add timetable management pages` |
 
-## M5 — Events
-
-| # | Task | Verify | Commit |
-|---|---|---|---|
-| M5.1 | Model and poster (Pillow) | An end time before the start time is rejected | `feat(events): add event model` |
-| M5.2 | Read API: list, range and calendar | Events spanning several days overlap the range; the range is capped at 62 days | `feat(events): add event list and calendar endpoints` |
-| M5.3 | Manage API | Scope and capability checks | `feat(events): add event management endpoints` |
-| M5.4 | List and detail pages | Grouping by date; closed registration hides the button | `feat(events): add events list and detail pages` |
-| M5.5 | Calendar view (FullCalendar `daygrid` and `list`) | Changing the visible range fetches with the correct `from` and `to` | `feat(events): add events calendar view` |
-| M5.6 | Staff events pages | Poster preview; time validation | `feat(staff): add event management pages` |
-
-## M6 — Communities
+## M4 — Sources and messages
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M6.1 | Models and link host checks | Valid and invalid URLs for each platform | `feat(communities): add community models` |
-| M6.2 | Read API and follow | `for_me` and `following` filters; following is idempotent | `feat(communities): add community directory and follow endpoints` |
-| M6.3 | Manage API for communities and links | School scope; communities with no school are admin-only | `feat(communities): add community management endpoints` |
-| M6.4 | Directory and detail pages, and the follow button | Follow updates instantly and rolls back on error; links have the correct `href` and `rel` | `feat(communities): add community directory pages` |
-| M6.5 | Staff communities pages with a link editor | An invalid WhatsApp host is rejected | `feat(staff): add community management pages` |
+| M4.1 | `core.Job` model and `manage.py run_jobs` (claim with `SKIP LOCKED`, retries, daily scheduling); jobs run inline in tests | Two runners never take the same job; a failed job retries then stops | `feat(core): add database job runner` |
+| M4.2 | `Source`, `SourceSubscription` and `Message` models with admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(sources): add source and message models` |
+| M4.3 | Paste messages into a source (API) and WhatsApp chat-export parsing | Export lines parsed (multi-line messages, dates); re-upload stores nothing twice | `feat(sources): add message paste and chat export import` |
+| M4.4 | Retention job: clear raw text after `MESSAGE_RETENTION_DAYS` | Old text cleared, evidence quotes kept | `feat(sources): add message retention` |
+| M4.5 | Sources page: my sources, create a manual source, paste, upload export | Upload progress; errors shown | `feat(sources): add sources page` |
 
-## M7 — Timetable
+## M5 — Intelligence v1: timetable changes (the proof slice)
 
-| # | Task | Verify | Commit |
-|---|---|---|---|
-| M7.1 | `Course` and `Term` models and read API | Only one current term | `feat(academics): add course and term models` |
-| M7.2 | `Course` and `Term` manage API | Terms are admin-only; school staff manage their own school's courses | `feat(academics): add course and term management endpoints` |
-| M7.3 | `CourseSection`, `ClassMeeting` and `SectionEnrollment` models | Constraints; `external_ref` is unique per term | `feat(timetable): add section, meeting and enrolment models` |
-| M7.4 | Manage API for sections and nested meetings | School scope; `updated_by` is recorded | `feat(timetable): add timetable management endpoints` |
-| M7.5 | Import service that works with any file format (`apply_timetable_rows`, dry run and report) | Create, update and unchanged cases, and errors with row numbers; no adapter yet | `feat(timetable): add timetable import service` |
-| M7.6 | Student API: section catalogue and my sections | Only current-term sections can be added | `feat(timetable): add section selection endpoints` |
-| M7.7 | Student API: today and week | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |
-| M7.8 | Staff timetable pages: terms, courses, sections and inline meetings | Create, edit and deactivate | `feat(staff): add timetable management pages` |
-| M7.9 | Student section picker | Search, add and remove | `feat(timetable): add section picker` |
-| M7.10 | Today and week views (FullCalendar `timegrid` for the week) | Empty state links to the section picker | `feat(timetable): add today and weekly timetable views` |
-| M7.11 | *Blocked until the university's timetable format is known:* first import adapter and staff import screen | Dry run, review, then apply | `feat(timetable): add <format> timetable import` |
-
-## M8 — Applications and forms
+**Needs approval first:** the AI provider and its SDK ([12](12-intelligence.md#ai-provider)).
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M8.1 | Model and derived status | Every status boundary | `feat(applications): add application listing model` |
-| M8.2 | Read API | Status filter; default ordering | `feat(applications): add application listing endpoints` |
-| M8.3 | Manage API, including supporting documents | Scope and capability checks | `feat(applications): add application management endpoints` |
-| M8.4 | List and detail pages | Countdown; closed listings disable the button | `feat(applications): add applications pages` |
-| M8.5 | Staff applications pages | Checks that the closing date is after the opening date | `feat(staff): add application management pages` |
+| M5.1 | `providers.py` interface, the real provider, and the fake provider for tests; settings and spend limit | Tests never call the network; the spend limit stops calls | `feat(intelligence): add ai provider interface` |
+| M5.2 | Triage job: batches of new messages → `noise` or `relevant` | Fake provider results stored; noise stops the pipeline | `feat(intelligence): add message triage` |
+| M5.3 | `Insight` and `InsightEvidence` models; extraction job for the four timetable kinds with the conversation window; schema validation | Invalid output rejected; evidence linked | `feat(intelligence): add timetable change extraction` |
+| M5.4 | Resolve: course code, section and date → `ClassMeeting`; audience from the resolved sections | Unknown course → needs review; ambiguous section → all sections of the course | `feat(intelligence): resolve courses and class meetings` |
+| M5.5 | `ClassChange` and `ClassChangeConfirmation`; confirm and reject API; today and week include confirmed changes; retraction | A student sees only their own confirmed changes; retraction withdraws pending ones | `feat(timetable): add student-confirmed class changes` |
+| M5.6 | Timetable page: pending-change banner with evidence, Confirm and Reject, changed markers | Confirming updates the week view | `feat(timetable): add change confirmation to timetable page` |
+| M5.7 | Evaluation set and `manage.py evaluate_intelligence` | Runs against the labelled messages and prints accuracy per kind | `test(intelligence): add evaluation command and dataset` |
 
-## M9 — Notifications
+## M6 — Connectors
 
-| # | Task | Verify | Commit |
-|---|---|---|---|
-| M9.1 | Model and API: list, unread count, mark one read, mark all read | Users see only their own notifications | `feat(notifications): add in-app notification endpoints` |
-| M9.2 | `notify_audience` called when important announcements and new events are published | Only matching students; publishing twice sends nothing new; normal priority sends nothing | `feat(notifications): notify audience on publish` |
-| M9.3 | Bell, notification list page, and targets that link to the item | 60-second polling while the tab is visible; clicking marks the notification read and opens the item | `feat(notifications): add notification bell and list` |
-| M9.4 | System broadcast: super admin API and a small staff form | Every active user gets one | `feat(notifications): add system broadcast` |
-
-## M10 — Dashboard, search and release
+**Needs approval first:** the WhatsApp connector library ([08](08-messaging-integrations.md#how-it-is-built)).
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M10.1 | Dashboard API | 15 queries or fewer; visibility is the same as in the lists | `feat(dashboard): add dashboard endpoint` |
-| M10.2 | Student dashboard page | Each section has its own empty state | `feat(dashboard): add student dashboard page` |
-| M10.3 | Global search API | Items the user cannot see never appear | `feat(search): add global search endpoint` |
-| M10.4 | Search page and header search box | 300 ms debounce; a message for queries that are too short | `feat(search): add search page` |
-| M10.5 | Staff home: shortcuts and "my recent drafts" | Shows only granted shortcuts | `feat(staff): add staff home page` |
-| M10.6 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
-| M10.7 | Deployment guide and example nginx and systemd configuration (no Docker) | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
+| M6.1 | Telegram webhook: store group and channel messages; `setWebhook` command | Wrong secret → 403; duplicates stored once; channel posts get their link | `feat(sources): add telegram bot webhook` |
+| M6.2 | Internal connector API: `internal/messages/`, `internal/sources/pending/`, `internal/sources/joined/` with signed requests | Bad signature → 403; old timestamp rejected | `feat(sources): add internal connector endpoints` |
+| M6.3 | The WhatsApp connector process (`connectors/whatsapp/`): log in, join pending invite links, send the join notice, forward messages | Manual test on a test group; a restart resumes without duplicates | `feat(connectors): add whatsapp connector` |
+| M6.4 | Connect-a-group API and page (invite link, purpose/scope, subscribe to existing sources) | An already-connected group is not joined twice; wrong hosts refused | `feat(sources): add connect a group flow` |
+
+## M7 — Intelligence v2: the personal feed
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M7.1 | Extraction for every kind (opportunities, notices, `direct_request`) with importance, action, info type, topics and dates | Each kind extracted from sample messages via the fake provider | `feat(intelligence): extract all insight kinds` |
+| M7.2 | Direct mentions: names, aliases and WhatsApp numbers → `InsightMention` | Ambiguous names are not mentions | `feat(intelligence): detect direct student mentions` |
+| M7.3 | Duplicate merging (`merge_key`, extra evidence) | A forwarded copy adds evidence, not a new insight | `feat(intelligence): merge duplicate insights` |
+| M7.4 | `Delivery`: relevance scoring, tiers and reasons | The relevance and tier matrix for student profiles × insights | `feat(intelligence): add per-student relevance and tiers` |
+| M7.5 | Feed API: list by tier, detail with evidence, read, dismiss, "not relevant" | Only the caller's deliveries; 404 otherwise | `feat(feed): add personal feed endpoints` |
+| M7.6 | "For you" page and insight detail page | Four tiers in order; evidence and "open original" | `feat(feed): add for you and insight pages` |
+
+## M8 — Notifications
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M8.1 | `Notification` model and API: list, unread count, mark read, mark all read | Users see only their own | `feat(notifications): add in-app notification endpoints` |
+| M8.2 | `notify_deliveries`: immediate tiers, timetable proposals and retractions | Only immediate tiers notify; merged duplicates notify nobody; never twice | `feat(notifications): notify students by tier` |
+| M8.3 | Daily digest job and digest page | One digest per student per day, only if there is something new | `feat(notifications): add daily digest` |
+| M8.4 | Bell, notification list and links to the insight | 60-second polling while the tab is visible | `feat(notifications): add notification bell and list` |
+
+## M9 — Staff and admin
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M9.1 | `sources.manage` and `insights.review` capabilities; staff sources API and page (review, scope, disconnect) | School staff only see their school's sources | `feat(staff): add source management` |
+| M9.2 | Insights review API and page: correct or retract, low-confidence first; corrections saved for the evaluation set | A retraction notifies affected students | `feat(staff): add insight review` |
+| M9.3 | Official posts: `Announcement` model, manage API, publish creates the insight, staff pages | The school boundary (M2.7) applies; publish notifies by tier | `feat(announcements): add official staff posts` |
+| M9.4 | Staff users page, including "create staff account" (was M2.10) | Only super admins | `feat(staff): add user management page` |
+| M9.5 | Staff reference data pages (was M2.11) | Create, edit and deactivate | `feat(staff): add reference data pages` |
+| M9.6 | Admin AI usage page: jobs, failures, daily spend | Admins only | `feat(staff): add ai usage page` |
+
+## M10 — Home, search and release
+
+| # | Task | Verify | Commit |
+|---|---|---|---|
+| M10.1 | Home API and page: direct, action, important, today's classes, pending changes | Visibility the same as the feed; 15 queries or fewer | `feat(feed): add home screen` |
+| M10.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(feed): add search` |
+| M10.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
+| M10.4 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
+| M10.5 | Deployment guide: nginx, gunicorn, `run_jobs` and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
+| M10.6 | Launch checklist: university approval, WhatsApp number, Telegram bot, AI spend limit | Checklist signed off | `docs(release): add launch checklist` |
 
 ---
 
 ## Later backlog
 
-This work is kept documented so the MVP design leaves room for it.
-
 | Area | Items |
 |---|---|
-| Publishing | Community managers and a `community` publisher type, lecturer publishing to their sections, an approval workflow, scheduled publishing and the cron job it needs |
-| Targeting | Course, section, community-follower and semester targeting; document audiences |
-| Notifications | Closing and opening reminders, event and timetable change notifications, push via Expo with a `Device` model, email digests, preferences, retention |
-| Timetable | Additional import adapters, one-off class exceptions, lecturer edits, ICS export |
-| Content | Read tracking, event "interested" markers, ICS export, document versioning |
-| Platform | Anonymized self-service account deletion and data export, audit log, S3 storage, image resizing, cursor pagination and `updated_since`, full-text search, end-to-end tests with Playwright, SSO |
-| Integrations | Telegram bot inbox and outbound posting (see [08](08-messaging-integrations.md)); WhatsApp Cloud API outbound only, and only if justified |
-| Mobile | `packages/shared` extraction and an Expo app for the student side |
+| Notifications | Push via Expo with a `Device` model, email digests, per-tier preferences and quiet hours, deadline reminders |
+| Intelligence | Learning from "not relevant" feedback, "what did I miss?" summaries, attachments and images from messages (posters, PDFs), voice notes |
+| Timetable | Official import adapters (once the university's format is known), lecturer-confirmed changes for a whole section, ICS export |
+| Directories | Browsable announcements, documents, events (with calendar), applications and communities |
+| Publishing | Community managers, lecturer posts to their sections, scheduled posts |
+| Platform | Anonymized self-service account deletion and data export, audit log, S3 storage, full-text search, end-to-end tests with Playwright, SSO |
+| Mobile | `packages/shared` extraction and an Expo app for students |

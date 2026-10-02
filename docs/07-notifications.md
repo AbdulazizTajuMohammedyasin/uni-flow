@@ -1,41 +1,46 @@
 # 07 — Notification Architecture
 
-## MVP: in-app notifications, created when content is published
+Notifications follow the priority tiers from [01](01-product.md#priority-tiers). The goal is the opposite of a WhatsApp group: **interrupt only when it really matters to this student**.
+
+## MVP: in-app notifications from deliveries
 
 ```
-staff: POST /manage/announcements/{id}/publish/      (or events)
-        │ publishing.services.publish(obj)  → status=published, published_at=now
-        │ transaction.on_commit
+intelligence: Delivery rows created for an insight (one per affected student, with a tier)
+        │  same transaction → Job "notify" for that insight
         ▼
-notifications.services.notify_audience(kind, obj)
-        │ claim: UPDATE … SET notified_at=now WHERE id=? AND notified_at IS NULL  (only once per item)
-        │ recipients = audiences.selectors.students_matching(obj.audience)
+notifications.services.notify_deliveries(insight)
+        │  immediate tiers: direct / action / important  → Notification now
+        │  digest tier: nothing now; picked up by the daily digest
+        │  claim: Delivery.notified_at set once, so an insight never notifies twice
         ▼
 Notification.objects.bulk_create(batch_size=1000, ignore_conflicts=True)   ← unique(recipient, dedupe_key)
         ▼
 web client polls GET /notifications/unread-count/ every 60 s (tab visible) → bell badge
 ```
 
-| Trigger | Kind | Who is notified | Dedupe key |
-|---|---|---|---|
-| An announcement with `important` priority is published | `announcement_important` | The audience | `ann:{id}:pub` |
-| An announcement with `normal` priority is published | *No notification* | – | – |
-| An event is published | `event_new` | The audience | `evt:{id}:pub` |
-| An admin sends a broadcast (super admin) | `system` | Everyone | `sys:{id}` |
+| Trigger | Kind | Who | When | Dedupe key |
+|---|---|---|---|---|
+| A student is mentioned by name | `direct_attention` | That student | Immediately | `ins:{id}:u:{user}` |
+| Action-required insight, relevant to the student | `action_required` | Delivered students in the `action` tier | Immediately | `ins:{id}:u:{user}` |
+| Important insight (importance ≥ 70), relevant to the student | `important_update` | Delivered students in the `important` tier | Immediately | `ins:{id}:u:{user}` |
+| A timetable change is proposed for the student's section | `timetable_change_proposed` | Students with a pending confirmation | Immediately | `chg:{id}:u:{user}` |
+| A proposed or confirmed change is retracted | `timetable_change_retracted` | Students who had it pending or confirmed | Immediately | `chg:{id}:retract:u:{user}` |
+| Daily digest | `digest` | Students with undigested digest-tier deliveries | Once a day (default 19:00 Kuala Lumpur time) | `dig:{date}:u:{user}` |
+| Admin broadcast | `system` | Everyone | Immediately | `sys:{id}` |
 
-**Normal announcements do not notify anyone.** Students are leaving WhatsApp because of noise, so only important items interrupt them.
-
-There is **no cron, queue or reminder system** in the MVP. For about 10k students, `bulk_create` in batches finishes within the request in well under a second.
+- **Merged duplicates don't notify again.** When a forwarded copy is merged into an existing insight ([12](12-intelligence.md#5-merge-duplicates)), no new notification is sent.
+- **Every notification opens the insight**, and from there the original message.
+- The digest is one notification that opens a digest page listing the day's digest-tier insights, grouped by information type.
+- Notifications are created by `run_jobs` ([02](02-system-architecture.md#background-jobs)), never inside a web request. For about 10k students, `bulk_create` in batches finishes in well under a second.
 
 ## Later
 
 | Feature | Needs |
 |---|---|
-| "Application closing soon" reminders, application opened, scheduled publishing | A cron-driven management command, `run_scheduled_jobs`, protected by a MySQL `GET_LOCK` |
-| `event_updated` and `timetable_changed` | The update services compare meaningful fields (time, location, room) before and after an edit and notify only when those change |
-| `document_new` | The document audience feature |
-| Push notifications (React Native) | A `Device` model, `POST /notifications/devices/`, and a `PushChannel` using the Expo Push API. A queue becomes worth adding at this point because push needs retries and delivery receipts. |
-| Email digest and per-type preferences | A `NotificationPreference` model |
-| Retention | A monthly command that prunes read notifications older than 180 days |
+| Push notifications (React Native) | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run from `run_jobs` with retries |
+| Email digest | The SMTP settings (M10 release) and a per-user choice |
+| Per-tier preferences and quiet hours | A `NotificationPreference` model |
+| Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
+| Retention | A monthly job that prunes read notifications older than 180 days |
 
-`notify_audience(kind, obj)` stays the one entry point, so none of these additions change the code that calls it.
+`notify_deliveries(insight)` stays the one entry point, so none of these additions change the code that calls it.

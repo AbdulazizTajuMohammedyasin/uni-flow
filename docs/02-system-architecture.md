@@ -3,33 +3,47 @@
 ## 5. System architecture
 
 ```
-   Students (read)                    Authorized staff (manage)
-        │                                      │
- ┌──────┴────────────────── React web app ─────┴──────────────┐
- │  student area  (/ …)                staff dashboard (/staff/…)│   ← UI only; NOT a security boundary
- └──────────────────────────────┬─────────────────────────────┘
-                                │ JSON over HTTPS, JWT (Authorization: Bearer)
-                ┌───────────────┴────────────────────┐
-                │   Django + DRF   /api/v1/          │  ← single source of truth:
-                │   read APIs  +  /api/v1/manage/    │    visibility, permissions,
-                │   permission checks on every call  │    derived status, notifications
-                └──────┬───────────────┬─────────────┘
-                       │               │
-                 ┌─────┴────┐   ┌──────┴───────────┐        Django admin (/django-admin/)
-                 │ MySQL 8.4│   │ Local file storage│        back-office for developers and
-                 └──────────┘   └──────────────────┘        super admins only
-                                ▲
-                  [Later] React Native (Expo) app → same /api/v1/
+ WhatsApp groups        Telegram groups/channels          Staff            Pasted text / chat export
+       │                          │                         │                          │
+ ┌─────┴──────────────┐   Telegram webhook                  │                          │
+ │ WhatsApp connector │           │                         │                          │
+ │ (separate process) │           │                         │                          │
+ └─────┬──────────────┘           │                         │                          │
+       │ signed POST              │                         │                          │
+ ┌─────┴──────────────────────────┴─────────────────────────┴──────────────────────────┴────┐
+ │  Django + DRF  /api/v1/            sources → intelligence → deliveries → notifications    │
+ │  read APIs + /api/v1/manage/ + /api/v1/internal/     permission checks on every call     │
+ └──────┬──────────────────┬───────────────────────┬──────────────────────┬─────────────────┘
+        │                  │                       │                      │
+  ┌─────┴────┐   ┌─────────┴────────┐   ┌──────────┴──────────┐   ┌───────┴──────────┐
+  │ MySQL 8.4│   │ Local file store │   │ Job runner          │   │ AI provider API  │
+  │ (+ Job   │   │                  │   │ manage.py run_jobs  │──►│ (one module,     │
+  │  table)  │   └──────────────────┘   │ (systemd service)   │   │  providers.py)   │
+  └──────────┘                          └─────────────────────┘   └──────────────────┘
+        ▲
+ ┌──────┴─────────────── React web app ───────────────────────┐     Django admin (/django-admin/)
+ │  student area (/ …)            staff dashboard (/staff/…)   │     back-office for developers
+ └─────────────────────────────────────────────────────────────┘     and super admins only
+        [Later] React Native (Expo) app → same /api/v1/
 ```
 
 These are the key principles:
 
-1. **All business logic lives in the backend.** This covers who can see what, who can manage what, and derived statuses such as "closing soon".
-2. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
-3. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
-4. **A modular monolith.** There is one Django project and one app per feature.
-5. **No background infrastructure in the MVP.** There is no task queue, no cron and no Redis. Notifications are created by `transaction.on_commit` inside the publish request. Expiry is checked when content is loaded, so nothing has to run on a schedule. Scheduling and reminders are the first things that will need a cron job, and they come later.
-6. **Django admin is secondary.** It is enabled for developers and super admins as a back-office tool, to inspect data and fix mistakes. Staff never need it. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
+1. **All business logic lives in the backend.** This covers who can see what, who can manage what, relevance, tiers and every change to data.
+2. **The AI reads and proposes; code decides and acts.** Model calls happen in one module (`apps/intelligence/providers.py`). Their output is validated like user input and can only create insights and proposals. See [12](12-intelligence.md).
+3. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
+4. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
+5. **A modular monolith.** There is one Django project and one app per feature.
+6. **Background work without extra infrastructure.** AI calls are slow and can fail, so they never run inside a web request. They run as rows in a MySQL `Job` table, processed by one long-running management command (see [Background jobs](#background-jobs)). There is still **no Redis, Celery or message broker**.
+7. **Connectors are thin and replaceable.** The WhatsApp connector is a separate small process that only forwards messages; the Telegram bot is a webhook. Neither contains any understanding logic. See [08](08-messaging-integrations.md).
+8. **Django admin is secondary.** It is enabled for developers and super admins as a back-office tool, to inspect data and fix mistakes. Staff never need it. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
+
+### Background jobs
+
+- `core.Job` rows (kind, payload, status, attempts, `run_after`) are created inside the same transaction as the data that needs work (for example, a new `Message` queues a `triage` job).
+- `manage.py run_jobs` runs as a systemd service. It claims jobs with `SELECT … FOR UPDATE SKIP LOCKED` (MySQL 8), runs them, and retries failures with a growing delay up to a limit.
+- The daily digest and retention clean-up are scheduled by `run_jobs` itself (it queues them once a day), so no separate cron entry is needed.
+- In tests, jobs run immediately in the same process.
 
 ## 6. Backend architecture
 
@@ -52,9 +66,11 @@ Each library is added **in the task that first needs it**, never earlier.
 | CORS for the Vite dev server | `django-cors-headers` | Approved | M0.7 |
 | OpenAPI schema | `drf-spectacular` | Approved | M0.7 |
 | Filtering | `django-filter` | Approved | M2.2 |
-| File type checking | `filetype` (pure Python) | Deferred. Ask for approval at M4.1. | M4.1 |
-| Images (poster uploads) | Pillow (Django's `ImageField` requires it) | Deferred. Ask for approval at M5.1. | M5.1 |
-| Static files in production | `whitenoise` | Deferred. Only if the M10.7 deployment design needs it. | M10.7 |
+| File type checking | `filetype` (pure Python) | Deferred. Ask for approval when uploads of documents arrive. | Later |
+| Images (poster uploads) | Pillow (Django's `ImageField` requires it) | Deferred. Ask for approval when images are stored. | Later |
+| Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
+| AI provider SDK | `anthropic` (proposed) | **Needs approval** in the first AI task | Intelligence milestone |
+| WhatsApp connector | Baileys (Node.js) or neonize/whatsmeow (Python) | **Needs approval** in the connector task. Lives in `connectors/whatsapp/`, outside Django. | Connectors milestone |
 
 ### Layering inside each app
 
@@ -98,20 +114,23 @@ backend/
 │   └── wsgi.py / asgi.py
 ├── core/                       # TimeStampedModel, pagination, error envelope, base permissions, health
 └── apps/
-    ├── accounts/       [MVP]   User, profiles, Djoser/JWT wiring, capabilities, staff user management
-    ├── academics/      [MVP]   School, Programme, Intake (M1); Course, Term (M7)
-    ├── audiences/      [MVP]   Audience + visibility selector
+    ├── accounts/       [MVP]   User, profiles (incl. preferences), Djoser/JWT wiring, capabilities, staff users
+    ├── academics/      [MVP]   School, Programme, Intake; Course, Term
+    ├── audiences/      [MVP]   Audience + visibility selectors ("who is affected")
     ├── publishing/     [MVP]   PublishableModel base, publisher policy, publish/archive services
-    ├── announcements/  [MVP]
-    ├── documents/      [MVP]
-    ├── events/         [MVP]
-    ├── communities/    [MVP]   Community, CommunityLink, CommunityFollow  (CommunityManager [Later])
-    ├── timetable/      [MVP]   CourseSection, ClassMeeting, SectionEnrollment, import service
-    ├── applications/   [MVP]   ApplicationListing
-    ├── notifications/  [MVP]   Notification  (Device [Later])
-    ├── dashboard/      [MVP]   no models — aggregates selectors
-    ├── search/         [MVP]   no models — aggregates selectors
-    └── integrations/   [Later] Telegram bot inbox
+    ├── timetable/      [MVP]   CourseSection, ClassMeeting, SectionEnrollment, ClassChange, confirmations
+    ├── sources/        [MVP]   Source, SourceSubscription, Message; Telegram webhook, internal endpoint, paste/export
+    ├── intelligence/   [MVP]   providers.py (AI), triage, extraction, resolve, merge, Insight, Delivery
+    ├── announcements/  [MVP]   official staff posts (become insights when published)
+    ├── notifications/  [MVP]   Notification, immediate alerts, daily digest  (Device [Later])
+    ├── feed/           [MVP]   no models — the student's personal feed and search over deliveries
+    ├── documents/      [Later]
+    ├── events/         [Later] browsable event list and calendar
+    ├── communities/    [Later] browsable community directory
+    └── applications/   [Later] browsable applications directory
+
+connectors/                    # outside backend/ (not Django)
+└── whatsapp/           [MVP]   the WhatsApp connector process
 ```
 
 ### Allowed dependencies between apps
@@ -124,17 +143,15 @@ academics            → core
 accounts             → core, academics
 audiences            → core, academics            ([Later] + timetable, communities for extra dimensions)
 publishing           → core, academics, accounts, audiences
-documents            → publishing
-announcements        → publishing, documents
-events               → publishing, documents
-applications         → publishing, documents
-communities          → core, academics, accounts        ([Later] publishing, when communities become publishers)
 timetable            → core, academics, accounts
-notifications        → core, accounts, audiences
-dashboard, search    → read selectors of all content apps
+sources              → core, academics, accounts
+notifications        → core, accounts
+intelligence         → sources, audiences, timetable, notifications
+announcements        → publishing, intelligence
+feed                 → intelligence, timetable (read selectors only)
 ```
 
-Content apps call `notifications.services`, and `notifications` never imports content apps. It stores `target_type` and `target_id` instead.
+`intelligence` sits at the top of the pipeline: it calls the services of `timetable` and `notifications`, and those apps never import it. `notifications` stores `target_type` and `target_id` instead of importing content apps.
 
 ### Settings and environment variables
 
@@ -156,7 +173,11 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `TIME_ZONE` | `Asia/Kuala_Lumpur` | |
 | `MEDIA_ROOT` | `./media` | Local file storage |
 | `MAX_UPLOAD_MB` | `15` | |
-| *[Later]* `STORAGE_BACKEND`, `AWS_*`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | Not used in the MVP |
+| `AI_API_KEY`, `AI_TRIAGE_MODEL`, `AI_EXTRACT_MODEL`, `AI_DAILY_SPEND_LIMIT` | | The AI provider ([12](12-intelligence.md#ai-provider)) |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
+| `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
+| `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |
+| *[Later]* `STORAGE_BACKEND`, `AWS_*` | | Not used in the MVP |
 
 ### MySQL configuration (local, native install, no Docker)
 
@@ -167,7 +188,9 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 - **Time zone rule.** Code never uses MySQL-side date conversion (the `__date`, `__week_day` or `Trunc*` lookups with a local time zone). Local-day boundaries such as "today in Kuala Lumpur" are computed in Python and then queried as UTC ranges. This means the MySQL time zone tables, which are awkward to load on Windows, are never needed.
 - Production settings add `CONN_MAX_AGE = 60`.
 
-## 16. File and document strategy
+## 16. File and document strategy [Later]
+
+> In the MVP the only uploaded file is the WhatsApp chat export (`.txt`), which is parsed and not kept. The strategy below applies when documents, posters and message attachments arrive.
 
 | Aspect | MVP | Later |
 |---|---|---|

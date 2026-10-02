@@ -45,16 +45,16 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 
 | Resource | Endpoints | Filters and notes |
 |---|---|---|
-| Academics | `GET academics/schools/`, `programmes/` (`?school=<id>`), `intakes/`. M7 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters. Returns **active items only**, as a **plain list without pagination**, because the lists are short and dropdowns need every item. Programmes of an inactive school are hidden. A non-numeric `?school=` returns 400. |
-| Announcements | `GET announcements/`, `GET announcements/{id}/` | `category`, `priority`, `publisher_type`, `school`, `pinned`, `date_from`, `date_to`, `search`. Ordered by pinned first, then important first, then `-published_at`. Items the user cannot see return **404**. |
-| Documents | `GET documents/`, `GET documents/{id}/`, `GET documents/{id}/download/` | The list shows only items where `listed_in_library` is true. Filters: `category`, `school`, `search`. A download streams the file to any logged-in user. |
-| Events | `GET events/`, `GET events/{id}/`, `GET events/calendar/?from=&to=` | `from`, `to`, `category`, `school`, `upcoming=true`. The calendar endpoint returns a lighter shape and allows a range of at most 62 days. |
-| Communities | `GET communities/`, `GET communities/{slug}/`, `POST` or `DELETE communities/{slug}/follow/` | `category`, `school`, `programme`, `intake`, `following=true`, `for_me=true` (a simple filter by the user's profile, not a recommendation engine), `search` |
+| Academics | `GET academics/schools/`, `programmes/` (`?school=<id>`), `intakes/`. M3 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters. Returns **active items only**, as a **plain list without pagination**, because the lists are short and dropdowns need every item. Programmes of an inactive school are hidden. A non-numeric `?school=` returns 400. |
+| Feed | `GET feed/` (`?tier=`: direct, action, important or digest), `GET feed/{insight_id}/`, `POST feed/{insight_id}/read/`, `POST feed/{insight_id}/dismiss/`, `POST feed/{insight_id}/feedback/` (`not_relevant`) | The caller's own deliveries only, newest first within each tier. The detail includes the summary, structured fields, the **reason** it was shown, and the **evidence** (original message text, sender, group, time, and a link to open the original where the platform has one). Insights not delivered to the caller return **404**. |
+| Sources | `GET sources/` (connected groups the caller subscribes to), `POST sources/connect/` (`{invite_url, purpose/scope}`), `POST`/`DELETE sources/{id}/subscribe/`, `POST sources/{id}/paste/` (pasted messages), `POST sources/{id}/export/` (WhatsApp chat-export `.txt`, multipart) | Only academic groups; invite hosts are validated ([08](08-messaging-integrations.md)). |
+| Preferences | `GET`/`PATCH users/me/` gains `current_semester`, `interests`, `info_types`, `aliases`, `whatsapp_number`; `GET preferences/choices/` lists the interest and info-type choices | |
+| Timetable changes | `GET timetable/changes/` (the caller's pending and decided proposals, with evidence), `POST timetable/changes/{id}/confirm/`, `POST timetable/changes/{id}/reject/` | `today/` and `week/` include the caller's **confirmed** changes, and flag pending ones. |
 | Timetable | `GET timetable/sections/` (the current term's catalogue), `GET`/`POST timetable/my-sections/`, `DELETE timetable/my-sections/{section_id}/`, `GET timetable/today/`, `GET timetable/week/?date=` | The catalogue filters by `course`, `school` and `search`. Only students can add their own sections. |
-| Applications | `GET applications/`, `GET applications/{id}/` | `status` (upcoming, open, closing_soon, closed), `category`, `search`. By default it shows open and closing-soon listings, ordered by `closes_at`. |
-| Notifications | `GET notifications/`, `GET notifications/unread-count/`, `POST notifications/{id}/read/`, `POST notifications/read-all/` | Only the caller's own notifications |
-| Dashboard | `GET dashboard/` | `{important_announcements, recent_announcements, todays_classes, upcoming_events, closing_applications, recent_documents, followed_communities, unread_notifications}`, each limited to a few items |
-| Search | `GET search/?q=` | Needs at least 2 characters. Returns up to 5 results per type, with counts. Matches with `icontains` on title and body. |
+| *[Later]* Announcements, documents, events, communities, applications | Browsable lists of each kind | Their information already reaches students through `feed/`. |
+| Notifications | `GET notifications/`, `GET notifications/unread-count/`, `POST notifications/{id}/read/`, `POST notifications/read-all/` | Only the caller's own notifications. Each points to a feed item or a timetable change. |
+| Home | `GET feed/home/` | `{direct, action, important, todays_classes, pending_timetable_changes, digest_preview, unread_notifications}`, each limited to a few items |
+| Search | `GET feed/search/?q=` | Searches every insight delivered to the caller (including ones below the display threshold). Needs at least 2 characters. |
 
 ## Manage surface (staff dashboard) [MVP]
 
@@ -67,20 +67,27 @@ Every manage endpoint:
 
 | Resource | Endpoints | Capability |
 |---|---|---|
-| Announcements | `manage/announcements/` for list (all statuses) and create, `manage/announcements/{id}/` for GET, PATCH and DELETE (only drafts can be deleted), plus `…/{id}/publish/` and `…/{id}/archive/` | `announcements.manage` |
-| Documents | `manage/documents/` for list and multipart upload, `{id}/` for PATCH and DELETE, plus `publish/` and `archive/` | `documents.manage` |
-| Events | `manage/events/` for list and create (the poster is multipart), `{id}/`, plus `publish/` and `archive/` | `events.manage` |
-| Applications | `manage/applications/` for list and create, `{id}/`, plus `publish/` and `archive/` | `applications.manage` |
-| Communities | `manage/communities/` for list and create, `{slug}/` for PATCH and deactivation, and `{slug}/links/` for CRUD | `communities.manage` |
+| Official posts | `manage/announcements/` for list (all statuses) and create, `manage/announcements/{id}/` for GET, PATCH and DELETE (only drafts can be deleted), plus `…/{id}/publish/` (creates the insight) and `…/{id}/archive/` (retracts it) | `announcements.manage` |
+| Sources | `manage/sources/` for list (filters: platform, status, school), `{id}/` for PATCH (title, scope, trust, status) and `{id}/disconnect/` | `sources.manage` (university admin and super admin; school staff for their own school's sources) |
+| Insights | `manage/insights/` for list (filters: kind, source, status, confidence below a value), `{id}/` for GET and PATCH (correct the title, summary, kind, audience or importance), `{id}/retract/` | `insights.review` (school staff for insights from their school's sources; admins for all) |
+| AI usage | `manage/intelligence/usage/`: jobs, failures and spend for the current day | `insights.review` (admins) |
+| *[Later]* Documents, events, applications, communities | Management of the browsable lists | Their capabilities exist but are unused in the MVP |
 | Timetable | `manage/timetable/terms/` for CRUD (university admin only); `manage/timetable/courses/` for CRUD; `manage/timetable/sections/` for CRUD with nested `meetings/`; `manage/timetable/import/` (POST with `dry_run`) *[with the first adapter]* | `timetable.manage` |
 | Users | `manage/users/` for a list filtered by `role`, `school` and `search`, and **POST to create a staff account** (email, full name, role, school; a "set your password" email is sent); `{id}/` to GET, or PATCH the name, role, school, job title and `is_suspended` (no deleting; you can't change your own role or suspend yourself) | `users.manage` (super admin only) |
 | Reference data | `manage/academics/schools/`, `programmes/` (`?school=`) and `intakes/` for list (including inactive, `?search=`), create, GET and PATCH. **No delete:** PATCH `is_active: false` hides an item from the read lists | `academics.manage` (university admin and super admin) |
 
 Every manage response includes `can_edit` and `can_publish`, so the dashboard never has to work out permissions itself.
 
-## Integrations [Later]
+## Ingestion [MVP]
 
-`POST /api/v1/integrations/telegram/webhook/` checks the secret header. `manage/integrations/inbox/` lets staff review incoming posts and convert them into drafts.
+| Method | Path | Who | Purpose |
+|---|---|---|---|
+| POST | `integrations/telegram/webhook/` | Telegram | Checked with the `X-Telegram-Bot-Api-Secret-Token` header. Stores new group and channel messages. |
+| POST | `internal/messages/` | The WhatsApp connector | Signed with `CONNECTOR_SECRET`. Body: `{source_external_id, message_id, sender_ref, sender_name, text, sent_at, reply_to}`. Idempotent per `(source, message_id)`. |
+| POST | `internal/sources/joined/` | The WhatsApp connector | Reports that the connector joined a group (its id and title), so the pending `Source` becomes active. |
+| GET | `internal/sources/pending/` | The WhatsApp connector | Invite links waiting to be joined. |
+
+`internal/` endpoints are only reachable from the server itself (nginx does not expose them) and are excluded from the public API docs.
 
 ## Example: manage create
 
@@ -101,23 +108,36 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 }
 ```
 
-This creates a **draft**. A follow-up `POST …/{id}/publish/` publishes it immediately and, because the priority is important, notifies the audience.
+This creates a **draft**. A follow-up `POST …/{id}/publish/` publishes it immediately and creates the matching insight, which is then delivered and notified like any other.
 
-The read shape at `GET /api/v1/announcements/214/`:
+## Example: a feed item
+
+`GET /api/v1/feed/5512/` for a student in CDE2313 Section A:
 
 ```json
 {
-  "id": 214,
-  "title": "Hostel check-in schedule for new intake",
-  "body": "Check-in runs **5–7 October**...",
-  "category": "student_affairs",
-  "priority": "important",
-  "is_pinned": false,
-  "publisher": { "type": "school", "id": 3, "name": "Student Affairs" },
-  "audience_summary": "Intake Sept 2026",
-  "attachments": [{ "id": 88, "title": "Check-in map", "mime_type": "application/pdf", "size_bytes": 482133, "download_url": "https://api.../api/v1/documents/88/download/" }],
-  "source": { "platform": "whatsapp", "url": "https://whatsapp.com/channel/0029Va..." },
-  "published_at": "2026-09-23T06:00:00Z",
-  "expires_at": "2026-10-07T16:00:00Z"
+  "id": 5512,
+  "kind": "class_moved",
+  "tier": "important",
+  "title": "CDE2313 class moved to 2 PM tomorrow",
+  "summary": "Tomorrow's CDE2313 lecture moves from 10:00 to 14:00.",
+  "importance": 80,
+  "relevance": 95,
+  "reason": "You are in CDE2313 Section A",
+  "action_required": false,
+  "data": { "course": "CDE2313", "date": "2026-10-02", "old_start": "10:00", "new_start": "14:00" },
+  "timetable_change": { "id": 311, "my_status": "pending" },
+  "evidence": [
+    {
+      "source": { "id": 7, "platform": "whatsapp_group", "title": "CDE2313 Sec A" },
+      "sender_name": "Dr Lee",
+      "sent_at": "2026-10-01T09:12:00Z",
+      "quote": "Tomorrow's CDE2313 class has been moved from 10 AM to 2 PM.",
+      "open_url": "https://chat.whatsapp.com/…"
+    }
+  ],
+  "created_at": "2026-10-01T09:13:05Z"
 }
 ```
+
+The student confirms with `POST /api/v1/timetable/changes/311/confirm/`.

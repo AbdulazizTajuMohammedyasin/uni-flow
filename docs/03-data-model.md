@@ -1,5 +1,7 @@
 # 03 — Database & Entity Design (MySQL)
 
+> UniFlow is an AI-powered information assistant ([01](01-product.md)). The central tables are **sources and messages** (what comes in), **insights** (what the AI understood), **deliveries** (what each student receives) and the **timetable with confirmed changes**. Staff-published content is one source among several.
+
 ## Conventions
 
 - The primary key is `BIGINT AUTO_INCREMENT` (Django `BigAutoField`). Slugs appear only where a readable URL helps (communities).
@@ -26,14 +28,18 @@ erDiagram
     CourseSection ||--o{ ClassMeeting : meets
     CourseSection ||--o{ SectionEnrollment : ""
     User ||--o{ SectionEnrollment : ""
-    Community ||--o{ CommunityLink : has
-    Community ||--o{ CommunityFollow : ""
-    Audience ||--|| Announcement : targets
-    Audience ||--|| Event : targets
-    Audience ||--|| ApplicationListing : targets
-    Announcement }o--o{ Document : attachments
-    Event }o--o{ Document : attachments
-    ApplicationListing }o--o{ Document : "supporting docs"
+    Source ||--o{ Message : receives
+    Source ||--o{ SourceSubscription : ""
+    User ||--o{ SourceSubscription : ""
+    Insight }o--o{ Message : "evidence"
+    Audience ||--|| Insight : targets
+    Insight ||--o{ Delivery : "per student"
+    User ||--o{ Delivery : receives
+    Insight ||--o| ClassChange : "timetable kinds"
+    ClassChange }o--|| CourseSection : changes
+    ClassChange ||--o{ ClassChangeConfirmation : ""
+    User ||--o{ ClassChangeConfirmation : confirms
+    Announcement ||--o| Insight : "staff post becomes"
     User ||--o{ Notification : receives
 ```
 
@@ -61,7 +67,11 @@ erDiagram
 | school | FK → School, null, PROTECT | Chosen during onboarding |
 | programme | FK → Programme, null, PROTECT | Must belong to the chosen school |
 | intake | FK → Intake, null, PROTECT | |
-| *[Later]* current_semester | smallint, null | Only needed for semester targeting |
+| current_semester | smallint, null | Chosen at onboarding; used for targeting ("Year 2") |
+| interests | JSON list of `Interest` choices | For example `["ai", "data_science"]`. Choices: `ai`, `data_science`, `software_engineering`, `cybersecurity`, `networking`, `business`, `education`, … (a `TextChoices` list, extended as needed) |
+| info_types | JSON list of `InfoType` choices | Which kinds of information the student wants: `internship`, `bootcamp`, `industry_visit`, `competition`, `scholarship`, `academic_notice`, `student_affairs`. Empty means "all". |
+| aliases | varchar(200), blank | Comma-separated nicknames, used only for direct-mention matching |
+| whatsapp_number | varchar(20), null, unique | Optional, entered by the student; used only to recognise @-mentions and messages that name them |
 
 `profile_complete` is true when the school, programme and intake are all set. Until then, the student sees only "all students" content.
 
@@ -76,8 +86,8 @@ erDiagram
 | `School` | code, name, is_active | `code` is unique | M1 |
 | `Programme` | school FK, code, name, level (foundation, diploma, bachelor, master, phd), is_active | `code` is unique | M1 |
 | `Intake` | code (for example `2024-SEP`), name, start_date, is_active | `code` is unique | M1 |
-| `Course` | school FK, code, name, is_active | `code` is unique | M7 |
-| `Term` | name ("2025/26 Semester 1"), academic_session, number, starts_on, ends_on, is_current | `unique(academic_session, number)`, `ends_on > starts_on`, and only one row can be current (enforced in `save()` inside a transaction) | M7 |
+| `Course` | school FK, code, name, is_active | `code` is unique | M3 |
+| `Term` | name ("2025/26 Semester 1"), academic_session, number, starts_on, ends_on, is_current | `unique(academic_session, number)`, `ends_on > starts_on`, and only one row can be current (enforced in `save()` inside a transaction) | M3 |
 
 > **Terminology (confirmed):**
 > - **Programme:** the student's degree or programme of study, for example Bachelor of Computer Science.
@@ -88,15 +98,15 @@ erDiagram
 
 ### `Audience`
 
-Announcements, events and application listings each own one `Audience` row through a one-to-one link. Audience rows are never shared between items.
+Every insight and every staff post owns one `Audience` row through a one-to-one link. Audience rows are never shared between items. For insights, the audience is the **hard filter** of who can receive it; relevance scoring then happens per student ([12](12-intelligence.md)).
 
 | Field | Type | Status |
 |---|---|---|
 | schools | M2M → School | **MVP** |
 | programmes | M2M → Programme | **MVP** |
 | intakes | M2M → Intake | **MVP** |
-| courses | M2M → Course | *[Later]* |
-| sections | M2M → CourseSection | *[Later]* |
+| courses | M2M → Course | **MVP** (added with courses, M3) |
+| sections | M2M → CourseSection | **MVP** (added with sections, M3) |
 | communities | M2M → Community (followers) | *[Later]* |
 | semester_min, semester_max | smallint, null | *[Later]* |
 
@@ -139,7 +149,9 @@ An item is **visible now** when `status = published AND (expires_at IS NULL OR e
 
 *[Later]* adds `publish_at` for scheduling (and the cron job it needs) and `publisher_community`.
 
-## announcements [MVP]
+## announcements [MVP] — official staff posts
+
+Staff posts are the **official source**. When an announcement is published, the publish service creates an `Insight` for it (kind from its category, importance from its priority, the same audience), so it reaches students through the same feed and notifications as everything else.
 
 `Announcement(TargetedModel)`:
 
@@ -150,13 +162,13 @@ An item is **visible now** when `status = published AND (expires_at IS NULL OR e
 | category | `university`, `school`, `student_affairs`, `club`, `event`, `registration`, `academic_info` or `general` |
 | priority | `normal` or `important` |
 | is_pinned | bool |
-| attachments | M2M → Document |
+| *[Later]* attachments | M2M → Document |
 
 Indexes: `(status, published_at)`, `(is_pinned, priority)` and `category`.
 
 *[Later]*: `AnnouncementRead(user, announcement, read_at)` for read tracking, an `urgent` priority, and `pinned_until`.
 
-## documents [MVP]
+## documents [Later]
 
 `Document(PublishableModel)`:
 
@@ -170,7 +182,9 @@ Indexes: `(status, published_at)`, `(is_pinned, priority)` and `category`.
 
 **Access in the MVP:** any logged-in user may download any published document. *[Later]*: an audience field, `related_course`, and versioning.
 
-## events [MVP]
+## events [Later]
+
+> Event information reaches students as insights (`mandatory_event`, `industry_visit`, …) with `starts_at`, `location` and `link`. A separate browsable event list with a calendar comes later.
 
 `Event(TargetedModel)`:
 
@@ -188,7 +202,7 @@ Indexes: `(status, published_at)`, `(is_pinned, priority)` and `category`.
 
 Index: `starts_at`. *[Later]*: event "interested" markers and ICS export. RSVP and ticketing are out of scope.
 
-## timetable [MVP] — university-provided, staff-maintained
+## timetable [MVP] — official baseline + confirmed changes
 
 ### How timetable data flows
 
@@ -202,7 +216,7 @@ Index: `starts_at`. *[Later]*: event "interested" markers and ICS export. RSVP a
  4. Students pick their sections → see today / this week                                            [MVP]
 ```
 
-Students **never** create the university's timetable. They only choose which of the existing sections apply to them.
+Students **never** create the university's timetable. They choose which sections apply to them, and they **confirm or reject changes** the AI detects in messages ([12](12-intelligence.md#timetable-intelligence)). A student's timetable for a day = official meetings + their confirmed changes.
 
 ### Models
 
@@ -211,6 +225,15 @@ Students **never** create the university's timetable. They only choose which of 
 | `CourseSection` | course FK, term FK, code ("A", "01"), lecturer_name (text), is_active, **source** (`manual` or `import`), **external_ref** (varchar, null: the identifier from the university's data, if it has one), updated_by | `unique(course, term, code)` and `unique(term, external_ref)`. A section belongs to the school of its course. |
 | `ClassMeeting` | section FK, weekday (0 is Monday, 6 is Sunday), start_time, end_time, meeting_type (`lecture`, `tutorial`, `lab`, `other`), building, room, updated_by | `end_time > start_time`, and an index on `(section, weekday)` |
 | `SectionEnrollment` | user FK, section FK | `unique(user, section)` and an index on `user` |
+
+### Changes detected from messages [MVP]
+
+| Model | Fields | Notes |
+|---|---|---|
+| `ClassChange` | insight O2O, section FK, meeting FK null (null for an extra session), date, kind (`moved`, `cancelled`, `room_changed`, `extra_session`), new_start, new_end, new_room (all null when unchanged), status (`proposed`, `retracted`) | One proposal per detected change. Never edits `ClassMeeting`. Index on `(section, date)`. |
+| `ClassChangeConfirmation` | change FK, user FK, status (`pending`, `confirmed`, `rejected`, `withdrawn`), decided_at | `unique(change, user)`. Created for every affected student. `withdrawn` when the change is retracted. |
+
+*[Later]*: lecturer-confirmed changes that apply to everyone in the section without individual confirmation.
 
 ### Import service (MVP), independent of the file format
 
@@ -223,11 +246,11 @@ The report lists what would be created, updated or left unchanged, plus errors w
 *[Later]*:
 
 - The first import adapter, and an `ImportRun` model to record who imported which file.
-- `ClassMeetingException(meeting, date, kind, new_room, new_start, new_end, note)` for one-off cancellations and room changes.
 - A `lecturer` FK on `CourseSection`, for lecturer edits.
-- Notifications when the timetable changes.
 
-## communities [MVP]
+## communities [Later]
+
+> Replaced in the MVP by **sources** (connected groups). A browsable community directory comes later.
 
 | Model | Fields | Constraints | Status |
 |---|---|---|---|
@@ -238,7 +261,9 @@ The report lists what would be created, updated or left unchanged, plus errors w
 
 **Who manages communities:** `school_staff` manage communities whose `school` is their own. Only a `university_admin` can manage communities that have no school, such as university-wide clubs. Community managers come later.
 
-## applications [MVP]
+## applications [Later]
+
+> Opportunities with deadlines reach students as insights (`internship`, `scholarship`, `deadline`, with `deadline_at` and `link`). A browsable applications directory comes later.
 
 `ApplicationListing(TargetedModel)`:
 
@@ -256,6 +281,29 @@ The report lists what would be created, updated or left unchanged, plus errors w
 
 The **status is derived and never stored**. It is one of `upcoming`, `open`, `closing_soon` (within 3 days of closing), `closed` or `cancelled`. It is computed in Python by `status_at(now)` and annotated in querysets with `Case`/`When` so lists can filter by it. A check requires `closes_at > opens_at`. There are indexes on `opens_at` and `closes_at`.
 
+## sources [MVP] — where messages come from
+
+| Model | Fields | Constraints and notes |
+|---|---|---|
+| `Source` | platform (`whatsapp_group`, `telegram_group`, `telegram_channel`, `staff`, `manual`), external_id (the platform's chat id, null for manual), title, invite_url, scope fields: school FK, programme FK, intake FK, course FK, section FK (all null), trust (`normal`, `official`), status (`pending`, `active`, `disconnected`), connected_by FK User, joined_at, notice_sent_at | `unique(platform, external_id)`. The scope helps resolve who is affected. See [08](08-messaging-integrations.md). |
+| `SourceSubscription` | user FK, source FK | `unique(user, source)`. "I am in this group"; a relevance signal. |
+| `Message` | source FK, external_id, sender_name, sender_ref (a hash of the sender's platform id), sender_user FK null (if the sender is a known UniFlow user), text, sent_at, reply_to FK self null, raw (JSON, platform payload), triage (`pending`, `noise`, `relevant`), processed_at, text_deleted_at | `unique(source, external_id)`, index `(source, sent_at)`. `text` and `raw` are cleared after the retention period; `text_deleted_at` records when. |
+
+## intelligence [MVP] — what the AI understood
+
+| Model | Fields | Constraints and notes |
+|---|---|---|
+| `Insight` | kind (see [12](12-intelligence.md#3-understand-conversation-aware)), title, summary, importance (0–100), action_required, action_text, info_type, topics (JSON list of `Interest` choices), starts_at, deadline_at, location, link (all null), data (JSON: the validated structured output), audience O2O → Audience, confidence (0–1), origin (`ai`, `staff`), status (`active`, `corrected`, `retracted`), model_version, prompt_version, merge_key | Index on `(status, created_at)`, `kind`, `merge_key`. |
+| `InsightEvidence` | insight FK, message FK, quote (the relevant sentence, kept after the raw text is deleted) | `unique(insight, message)`. Links every insight to its original messages. |
+| `InsightMention` | insight FK, user FK, matched_text | `unique(insight, user)` |
+| `Delivery` | insight FK, user FK, relevance (0–100), tier (`direct`, `action`, `important`, `digest`), reason (varchar 200), notified_at, digested_at, read_at, dismissed_at, feedback (`not_relevant`, null) | `unique(insight, user)`, index `(user, tier, created_at)`. The student's feed is a query on this table. |
+
+## core — background jobs [MVP]
+
+| Model | Fields | Notes |
+|---|---|---|
+| `Job` | kind (`triage`, `extract`, `deliver`, `send_digest`, …), payload (JSON), status (`queued`, `running`, `done`, `failed`), attempts, run_after, locked_at, last_error | Index on `(status, run_after)`. Processed by `manage.py run_jobs` ([02](02-system-architecture.md#background-jobs)). |
+
 ## notifications [MVP]
 
 `Notification`:
@@ -263,9 +311,9 @@ The **status is derived and never stored**. It is one of `upcoming`, `open`, `cl
 | Field | Type |
 |---|---|
 | recipient | FK → User |
-| kind | MVP: `announcement_important`, `event_new`, `system`. *[Later]*: `event_updated`, `timetable_changed`, `application_opened`, `application_closing`, `document_new`. |
+| kind | `direct_attention`, `action_required`, `important_update`, `timetable_change_proposed`, `timetable_change_retracted`, `digest`, `system` |
 | title, body | varchar(200), varchar(500) |
-| target_type, target_id | varchar, bigint, null (for example `("event", 42)`, which each client turns into its own route) |
+| target_type, target_id | varchar, bigint, null (for example `("insight", 42)`, which each client turns into its own route) |
 | dedupe_key | varchar(100), null |
 | read_at | datetime, null |
 
@@ -279,5 +327,5 @@ Constraints: `unique(recipient, dedupe_key)`, and an index on `(recipient, read_
 |---|---|
 | Category tables, a Faculty level, `Room` and `Building` | Not needed yet |
 | `Assignment`, `Deadline`, `Grade`, `Submission` | Out of scope |
-| `EventRSVP`, ticketing, `Message` and `Chat` | Out of scope |
+| `EventRSVP`, ticketing, chat or reply features | Out of scope. `Message` stores incoming group messages only; UniFlow never sends chat. |
 | `Tag` | Not needed |

@@ -1,8 +1,10 @@
 # UniFlow
 
-UniFlow is a student communication and campus-information platform. It brings together the announcements, events, class timetables, student communities, applications and forms, and documents that are currently scattered across WhatsApp groups and channels, Telegram, and university notices.
+UniFlow is an **AI-powered student information assistant**. It processes the university's academic WhatsApp and Telegram groups, understands what matters to each student, and brings only that into one personalized place: timetable changes, class cancellations, internships, mandatory events, notices, and messages that mention them by name.
 
-UniFlow is an **information layer**. It is not an LMS, it is not an assignment or deadline manager, and it does not replace the Student Hub. WhatsApp and Telegram remain the places where students talk, and UniFlow links students to them.
+> "No fluff. No information overload. Just the information that matters to you."
+
+Students keep talking in WhatsApp and Telegram. UniFlow removes the need to monitor dozens of groups every day. See [docs/01-product.md](docs/01-product.md).
 
 ## Repository layout
 

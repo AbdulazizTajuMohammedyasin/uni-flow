@@ -6,7 +6,7 @@ One React app contains two areas:
 
 | Area | Routes | Users |
 |---|---|---|
-| **Student area** | `/`, `/announcements`, `/events`, `/timetable`, … | Everyone who is logged in |
+| **Student area** | `/` (For you), `/timetable`, `/sources`, `/search`, `/profile`, … | Everyone who is logged in |
 | **Staff dashboard** | `/staff/*` | Users with at least one `*.manage` capability |
 
 They share authentication, the API client, the UI components and the build. Splitting them into two apps would duplicate all of that for no benefit.
@@ -24,7 +24,7 @@ They share authentication, the API client, the UI components and the build. Spli
 | Forms | React Hook Form + Zod (through `@hookform/resolvers`, which connects the two) | Approved |
 | Dates | date-fns (formats times in Asia/Kuala_Lumpur) | Approved |
 | Markdown | react-markdown (raw HTML turned off) | Approved |
-| Calendar | FullCalendar React: the `daygrid` plugin for the event month view, `timegrid` for the timetable week view, and `list` for small screens | Approved, used only in M5 and M7 |
+| Calendar | FullCalendar React: `timegrid` for the timetable week view and `list` for small screens (`daygrid` for an event calendar later) | Approved, used from M3.8 |
 | Lint | **oxlint**. The current Vite template ships oxlint instead of ESLint. It is configured in `.oxlintrc.json`. | Approved as part of the template |
 | Tests | Vitest + React Testing Library, with `jsdom` as the test environment | Approved |
 | API types | `openapi-typescript` (generates TypeScript types from the OpenAPI schema) | **Deferred.** Reconsider after the frontend foundation works (M0.15). Until then, types are written by hand in each feature's `types.ts`. |
@@ -56,6 +56,18 @@ Rules:
 - API calls live **only** in `api/`. Pages and components use them through `hooks/`.
 - `api/*.ts` files contain **plain typed functions with no React code**, so a future React Native app can reuse them.
 
+### Student area [MVP]
+
+The student area is built around **one personal feed**, not separate content sections.
+
+- **For you (`/`)**: four blocks in this order: **Direct attention**, **Action required**, **Important updates**, then **Digest**. Empty blocks are hidden. Today's classes and pending timetable changes appear at the top.
+- **Insight card**: title, one-line summary, tier badge, deadline or date if any, the **reason** ("You are in CDE2313 Section A"), and the source ("CDE2313 Sec A · WhatsApp · 9:12"). Actions: open, dismiss, "not relevant".
+- **Insight detail (`/insights/:id`)**: the summary, the structured details (date, time, location, link, action), and the **evidence**: the original message(s) with sender, group and time, plus "Open in WhatsApp/Telegram".
+- **Timetable (`/timetable`)**: today and week views (FullCalendar `timegrid`). Pending changes show as a banner with the evidence and **Confirm / Reject** buttons; confirmed changes are drawn on the calendar with a "changed" marker.
+- **Sources (`/sources`)**: the groups the student is linked to, and **Connect a group** (paste an invite link, choose what the group is for). Also "Paste messages" and "Upload WhatsApp chat export".
+- **Onboarding and profile**: school, programme, intake (done), plus semester, sections, interests, information types, and optional aliases and WhatsApp number (explained as "only used to notice when someone mentions you").
+- **Notifications (`/notifications`)** and the bell.
+
 ### Staff dashboard [MVP]
 
 - **Only capabilities matter.** `GET /auth/users/me/` returns something like `capabilities: {"announcements.manage": true, "timetable.manage": true, "users.manage": false, ...}` plus `publishers: [{type, id, name}]`. The frontend never checks role names.
@@ -73,8 +85,8 @@ Rules:
   - `AudienceFields`, with multi-selects for school, programme and intake, and a live summary such as "Computing students, 2024-SEP intake". Leaving all of them empty means all students. That option is offered only to university admins. For school staff, the school is preselected and locked, and the programme list is limited to their school. This is only a convenience, because the API enforces the same rule.
   - `MarkdownField`, a textarea with a preview tab rendered by react-markdown.
   - `FileField`, which uploads to `manage/documents/` and returns an id.
-- **Timetable management:** term selector, then courses, then sections, then weekly meetings. Meetings are edited inline. The import screen is added with the first import adapter.
-- **Staff home** (`/staff`): shortcuts to create each content type, plus the user's recent drafts.
+- **Pages in the MVP:** Sources (review, scope, disconnect), Insights review (correct or retract what the AI produced, low-confidence first), Official posts (announcements), Timetable (terms, courses, sections, weekly meetings, edited inline), Users, and Schools & programmes. Documents, events, applications and communities pages are [Later].
+- **Staff home** (`/staff`): items waiting for review, recent official posts, and AI usage for admins.
 
 ### API layer
 
@@ -94,22 +106,21 @@ export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, withCre
 
 ### React Query usage
 
-- Each feature has query key factories, such as `announcementKeys` and `manageAnnouncementKeys`.
+- Each feature has query key factories, such as `feedKeys`, `timetableKeys` and `manageInsightKeys`.
 - Defaults: `staleTime: 30s` and `retry: 1`, with no retries for 4xx errors.
-- Manage mutations invalidate the manage lists, the read lists and `['dashboard']`.
+- Mutations invalidate the lists they affect; confirming a timetable change invalidates `timetableKeys` and `feedKeys`.
 - The notification count refetches every 60 seconds while the tab is visible.
 
 ### Routing
 
 ```
 /login  /register  /verify-email/:uid/:token  /forgot-password  /reset-password/:uid/:token   (AuthLayout)
-/                          student dashboard              (AppLayout, RequireAuth)
+/                          For you: the personal feed       (AppLayout, RequireAuth)
 /onboarding                profile completion (students with !profile_complete are redirected here)
-/announcements[/:id]  /events[/:id] (?view=list|calendar)  /timetable (?view=today|week)  /timetable/sections
-/communities[/:slug]  /applications[/:id]  /documents[/:id]  /notifications  /search?q=  /profile
-/staff                     staff home                     (StaffLayout, RequireAuth + any *.manage capability)
-/staff/announcements[/new|/:id]   /staff/events[...]   /staff/documents[...]   /staff/applications[...]
-/staff/communities[...]   /staff/timetable[...]   /staff/academics[...]   /staff/users
+/insights/:id  /timetable (?view=today|week)  /timetable/sections  /sources  /notifications  /search?q=  /profile
+/staff                     staff home                       (StaffLayout, RequireAuth + any capability)
+/staff/sources  /staff/insights  /staff/announcements[/new|/:id]  /staff/timetable[...]  /staff/academics[...]  /staff/users
+[Later] /announcements  /events  /documents  /applications  /communities  (browsable lists)
 ```
 
 Routes are lazy-loaded, so the staff dashboard code never downloads for students.

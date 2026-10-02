@@ -3,8 +3,10 @@
 This is the **simple overview** of where UniFlow is. It is updated after every task.
 (The detailed plan is [11-roadmap.md](11-roadmap.md). You do not need to read it to follow progress.)
 
-**Now:** M2.8 is done ✅. The website's staff dashboard shows each person only the sections they may manage; students get a "No access" page.
-**Next up:** M2.9, shared form pieces for the staff pages (publisher picker, audience picker, Markdown text box, table, dialog).
+**What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
+
+**Now:** M0–M2 are done ✅, and the plan has been re-written around the AI idea (docs only, no code changed).
+**Next up:** M3.1, courses and terms: so UniFlow knows which classes exist, which it needs to tell who a message affects.
 
 ---
 
@@ -14,15 +16,15 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|---|
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
-| **M2** Permissions and staff area | Who is allowed to do what, and the staff dashboard frame | 🔄 In progress |
-| **M3** Announcements | Staff post announcements, and students see the ones meant for them | ⏳ |
-| **M4** Documents | Upload and download documents, and attach them to announcements | ⏳ |
-| **M5** Events | Events list and calendar | ⏳ |
-| **M6** Communities | Clubs and groups with WhatsApp and Telegram links | ⏳ |
-| **M7** Timetable | Students see today's and this week's classes | ⏳ |
-| **M8** Applications and forms | What students can apply for, and until when | ⏳ |
-| **M9** Notifications | The bell icon for important news | ⏳ |
-| **M10** Dashboard, search and launch | Home page, search, and putting it online | ⏳ |
+| **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
+| **M3** Classes and preferences | UniFlow learns each student's courses, sections, semester and interests; students see their timetable | ⏭️ Next |
+| **M4** Messages | UniFlow can store messages from groups (pasted, or uploaded from WhatsApp's "Export chat") | ⏳ |
+| **M5** AI, first version | The AI spots "class moved / cancelled / room changed" in messages; the student sees the proof and confirms; their timetable updates | ⏳ |
+| **M6** Connectors | UniFlow joins WhatsApp and Telegram groups by itself; students connect their groups | ⏳ |
+| **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
+| **M8** Notifications | Alerts only for what matters to you, plus a daily summary | ⏳ |
+| **M9** Staff and admin | Staff check sources and fix AI mistakes, post official news, manage users | ⏳ |
+| **M10** Home, search and launch | Home screen, search, privacy notice, and putting it online | ⏳ |
 
 ---
 
@@ -80,8 +82,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M2.6 | **Shared base for posts:** every post (announcement, event, document, application) gets the same details: draft / published / archived, from the university or a school, who created it, and an optional expiry date. Plus the **Publish** and **Archive** actions, and the "is it live now?" check. | `pipenv run pytest apps/publishing` | ✅ Done |
 | M2.7 | **Publisher rules (the school boundary):** admins manage every post; school staff only post **as** their school, **to** their school's students, and only see and edit their school's posts; lecturers manage nothing. | `pipenv run pytest apps/publishing` | ✅ Done |
 | M2.8 | **Staff dashboard frame:** the `/staff` menu shows only the sections you may manage (school staff don't see Users; super admins do). Students and lecturers get a **No access** page. Staff get a **Staff dashboard** link in the student sidebar. The section pages are still "Coming soon". | Log in as `a@gmail.com` → **Staff dashboard** link → http://localhost:5173/staff. Log in as a student and open `/staff` → **No access**. | ✅ Done |
-| **M2.9** | **Shared form pieces** for the staff pages: publisher picker, audience picker, Markdown text box, table, dialog | – | ⏭️ **Next** |
-| M2.10 – M2.11 | Audience targeting, the shared content base, the staff dashboard frame and its first pages | – | ⏳ |
+| M2.9 – M2.11 | *Moved.* Shared form pieces are built with the first pages that need them; the users and schools pages moved to M9 | – | ↪️ Moved |
 
 ---
 
@@ -93,6 +94,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Run the backend | [backend/README.md](../backend/README.md) |
 | Run the website | [frontend/README.md](../frontend/README.md) |
 | Understand the whole design | [docs/README.md](README.md) |
+| Understand how the AI works | [12-intelligence.md](12-intelligence.md) |
 
 ### Website files so far (`frontend/src/`)
 
@@ -128,6 +130,11 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ## Decided recently
 
+- **UniFlow is an AI information assistant**, not a notice board. Messages from academic WhatsApp and Telegram groups are the main input. The AI **proposes**; normal code decides; the student **confirms** timetable changes.
+- **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
+- **Staff posts stay** as one official source. The M2 code is kept and reused.
+- **Background work** uses a simple database job table, still no Redis or Celery.
+
 - **Where login tokens live:** the refresh token is in a secure httpOnly cookie, and the access token is in memory. **Never in `localStorage`.**
 
 - **Frontend folder layout:** `api/`, `components/`, `context/`, `hooks/`, `lib/`, `pages/<Name>/`, `types/` and `router.tsx`. It was restructured before M1.9.
@@ -142,5 +149,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **Real email sending** (for example Gmail with an app password, or a university mailbox). For now emails are printed in the backend terminal. Set up before launch (M10); it needs 5 SMTP settings in `.env`.
 
-- The university's timetable format. This is needed before M7.11.
-- Hosting. This is needed before M10.7.
+- **AI provider** (proposed: Anthropic Claude). Needed before M5.1.
+- **WhatsApp connector library and a dedicated WhatsApp number.** Needed before M6.3.
+- **University approval** for reading academic groups. Needed before launch (M10.6).
+- The university's official timetable format (optional import). Not blocking.
+- Hosting (must keep the WhatsApp connector online). Needed before M10.5.
