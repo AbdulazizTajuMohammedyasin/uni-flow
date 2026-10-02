@@ -106,8 +106,9 @@ A capability is a named permission to manage one kind of resource. Every capabil
 
 **Student actions are not capabilities.** Every logged-in student may connect groups, paste messages, confirm or reject their own timetable changes and set their preferences; these endpoints only ever touch the caller's own data.
 
-> The code from M2.1 still lists the four [Later] capabilities, and has no `sources.manage` or `insights.review` yet. They are added in the tasks that need them ([11](11-roadmap.md)).
-| Django admin (back-office) | – | – | – | – | ✔ |
+| Django admin (back-office; the operator's tool in the pilot) | – | – | – | – | ✔ |
+
+> The code from M2.1 still lists the four [Later] capabilities, and has no `sources.manage` or `insights.review` yet. They are added in the tasks that need them ([11](11-roadmap.md)). In the pilot, sources and insights are handled by the super admin in the Django admin.
 
 A `school_staff` user with no school on their `StaffProfile` gets **no** capabilities, so a half-configured account can do nothing.
 
@@ -140,14 +141,14 @@ For a `school_staff` user, "belongs to and targeted within" means all of the fol
 - **Publisher:** `publisher_type = school` and `publisher_school` is their school. They can never publish as the university or as another school.
 - **Audience:** `schools` must be exactly their own school. Their audience can never be "all students" or include another school. Any `programmes` must belong to their school. `intakes` may be added to narrow the audience further, since they are combined with the school using AND.
 - **Items they can manage:** the list and detail views show only items whose `publisher_school` is their school. Other schools' items return 404.
-- **Documents** have no audience in the MVP, so the rule applies through the publisher only. Every logged-in user can still read published documents, as decided.
-- **Communities and timetable:** the same boundary, applied through `community.school` and `section.course.school`.
+- **Sources and AI insights:** the same boundary, applied through `source.school` (insights through their source). Sources with no school (university-wide groups) are handled by university admins.
+- **Timetable:** the same boundary through `section.course.school`.
 
 The server enforces every one of these rules through `validate_publisher`, `validate_audience` and `manageable_queryset`. The staff dashboard shows the school preselected and locked, but that is only a convenience.
 
 **Cross-school content** (for example, a school event open to all students) is published by a **university admin** in the MVP. *[Later]*: a university admin can explicitly grant a school staff member wider reach, for example through a per-user "may target all students" grant or by approving a request. Nothing is granted implicitly.
 
-Equivalent functions exist for communities (scoped by `community.school`) and the timetable (scoped by `section.course.school`).
+Equivalent functions exist for sources (scoped by `source.school`) and the timetable (scoped by `section.course.school`).
 
 **How the pieces connect:**
 
@@ -162,6 +163,6 @@ Because the UI and the API use the same functions, the UI can never show an acti
 
 ### Later
 
-- **Community managers:** a new `community` publisher type, and a `CommunityManager` model granting management of one community only.
-- **Approval workflow** for community posts addressed to all students.
+- **Class representatives:** a student allowed to confirm a timetable change for their whole section.
+- **Community managers** (with browsable communities): a `community` publisher type.
 - **Lecturer permissions**, as described above.

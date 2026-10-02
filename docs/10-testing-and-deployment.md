@@ -13,16 +13,17 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 | Layer | What is tested | Example |
 |---|---|---|
-| Models | Constraints and derived values | A mismatched publisher raises `IntegrityError`, and `ApplicationListing.status_at()` behaves correctly at every boundary |
-| Selectors | **Visibility**, the most important suite | A table-driven matrix of student profile × audience → visible or not, covering empty audiences, AND and OR, incomplete profiles, drafts and expired items |
+| Models | Constraints and derived values | A mismatched publisher raises `IntegrityError`; the worked-out semester is correct for each intake and date |
+| Selectors | **Who is affected**, the most important suite | A table-driven matrix of student profile × audience (including courses, sections, semesters and group members) → reached or not, covering empty audiences, AND and OR, incomplete profiles, drafts and expired insights |
 | Policies and capabilities | `capabilities_for`, `manageable_queryset`, `can_manage` | Every role × resource × school |
 | Manage API | Server-side enforcement | For every manage endpoint: a student gets 403, school staff get 404 on another school's item, and publishing as a school they don't belong to returns 403 |
 | Read API | Shape, filters, 404 for invisible items | |
-| Services | Side effects | Publishing an important announcement creates exactly N notifications, and publishing it again creates none |
+| Services | Side effects | Publishing an important insight creates exactly N notifications, and publishing it again creates none; confidence below 0.5 creates a draft and no deliveries |
 | Timetable | Time zone, import logic, confirmed changes | Local "today" around midnight in Kuala Lumpur; import dry runs; a student's day = official meetings + only *their* confirmed changes |
 | Intelligence | The pipeline with a **fake provider** (never the real AI in tests) | Invalid model output is rejected; course codes resolve; ambiguous names are not mentions; duplicates merge without a second notification; relevance and tier rules per student |
 | AI evaluation | The real model against labelled, anonymized messages | `manage.py evaluate_intelligence` reports accuracy per kind. Run by hand when prompts or models change, **not in CI** (it costs money and needs the API key). |
-| Ingestion | Webhook and connector endpoints | Wrong secret → 403; the same message twice → stored once; chat-export parsing |
+| Ingestion | Webhook and connector endpoints | Wrong secret → 403; the same message twice → stored once; chat-export parsing; private messages to the connector are ignored |
+| Timetable imports | Reading and applying | With a fake provider: rows are shown, nothing is saved before confirm, confirm creates missing classes and enrols, existing classes are never overwritten; Google Drive links outside the allowed hosts are refused |
 
 - **Tests run against MySQL** (the local `test_uniflow` database), not SQLite, because collation and strict mode behave differently.
 - The coverage target is **at least 90% on `selectors`, `policies` and `services`**. There is no global target.
@@ -61,7 +62,7 @@ There is no Docker in the current plan. Containerization can be revisited if the
         MySQL 8.4 (same VM, native)   ·   nightly mysqldump + media backup → off-site
 ```
 
-- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M10.5 only if the final deployment design needs it.
+- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M9.6 only if the final deployment design needs it.
 - Release steps:
   1. `git pull`
   2. `pipenv sync` (installs exactly what `Pipfile.lock` pins, with no dev packages)

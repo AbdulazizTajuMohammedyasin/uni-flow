@@ -17,21 +17,26 @@ Messaging platforms are UniFlow's **primary information sources**. This document
 | **WhatsApp group** | The UniFlow WhatsApp connector (a dedicated UniFlow number) | **No**, see below | Yes | Normal |
 | **Telegram group** | The UniFlow bot, added by a group admin, privacy mode off | Yes (Bot API) | Yes | Normal |
 | **Telegram channel** | The UniFlow bot, added as a channel admin | Yes (Bot API) | Yes | Normal, or Official for university channels |
-| **Staff post** | Staff dashboard form | — | Yes | Official |
+| **Staff post** | The Django admin in the pilot; a staff form later | — | Yes | Official |
 | **Manual paste** | A form: paste one or more messages and choose the group they came from | — | — | Normal |
 | **WhatsApp chat export** | Upload the `.txt` file from WhatsApp's own "Export chat" | Yes (a WhatsApp feature) | No | Normal |
+| **Timetable file or link** | A student uploads a timetable image, PDF or spreadsheet, or pastes a Google Drive link, on the Timetable page | — | — | Normal |
 
 Trust is stored on the `Source` and affects importance, never who is allowed to change a timetable: timetable changes always need the student's confirmation.
 
 ## Connecting a group (students)
 
-1. The student opens **Sources → Connect a group** and pastes the group's invite link (`https://chat.whatsapp.com/…` or `https://t.me/…`).
-2. The student chooses what the group is for (for example "CDE2313 Section A", "SCI 2024 October intake", "University announcements"). This sets the source's **scope**, which helps the AI resolve who is affected.
-3. **WhatsApp:** the connector joins through the invite link. **Telegram:** the student is shown how to ask the group admin to add the UniFlow bot (a bot cannot join by link).
+1. The student opens **Sources → Add a group** and pastes the group's invite link (`https://chat.whatsapp.com/…` or `https://t.me/…`). Students never give UniFlow their phone number or access to their WhatsApp; their registered `@student.aiu.edu.my` email is the only verification.
+2. The student chooses what the group is for (for example "CDE2313 Section A", "SCI 2024 October intake", "University announcements"). This is a **suggested scope**: it becomes confirmed when messages in the group or the students who added it match it, or when an admin confirms it. Until then it only lightly affects who is reached.
+3. **WhatsApp:** in the background, the connector (UniFlow's own number) joins through the invite link. If the group requires admin approval, the source stays **pending** until the group's admin accepts the UniFlow number. Many groups only let admins share the link; then the student asks the group admin to connect it. **Telegram:** the student is shown how to ask the group admin to add the UniFlow bot (a bot cannot join by link).
 4. The connector posts the notice from principle 4.
 5. An admin can review new sources, fix their scope, or disconnect them.
 
-A group that is already connected is not joined twice; the student is simply linked to it (`SourceSubscription`), which also counts as a relevance signal.
+A group that is already connected is not joined again; the student is simply added to its members.
+
+## Who is in each group
+
+UniFlow knows a group's members from the **students who added that group in the app** (`SourceMember`). It does not read WhatsApp's member list and never asks students for their phone numbers. Every student who adds a group they are in helps UniFlow tell who a message affects and who "Abdulaziz" is, so the app encourages students to add all their academic groups.
 
 ## The WhatsApp connector
 
@@ -61,7 +66,7 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 ### How it is built
 
 - A **separate small process** (`connectors/whatsapp/`, outside Django), because WhatsApp libraries keep a long-lived connection. Candidate libraries: Baileys (Node.js) or whatsmeow through neonize (Python). **The library is chosen and approved in the connector task** (see [11](11-roadmap.md)).
-- It does three things: join a group from an invite link, receive new group messages, and send each message to the backend.
+- It does three things: join a group from an invite link, receive new group messages (with image, PDF and spreadsheet attachments), and send them to the backend. It ignores private messages and never reads members' phone numbers.
 - It sends messages to `POST /api/v1/internal/messages/`, signed with a shared secret (`CONNECTOR_SECRET`). It has no database of its own.
 - It is run as a systemd service next to Django ([10](10-testing-and-deployment.md)).
 
@@ -75,12 +80,18 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 
 ## Staff posts
 
-Staff with the matching capability post official information in the staff dashboard (the `announcements` app, built on the `publishing` base from M2.6 and the school boundary from M2.7). When published, a staff post becomes an insight directly: staff already supply the kind, audience and importance, so no AI extraction is needed. It then goes through the same delivery and notification steps as every other insight.
+A staff post is an `Insight` with `origin = staff` (built on the `publishing` base from M2.6, with the school boundary from M2.7). Staff supply the kind, title, summary, importance and audience, so no AI extraction is needed. Publishing it delivers it through the same steps as every other insight. In the pilot staff posts are created in the Django admin; a staff form comes later.
 
 ## Manual paste and chat-export upload
 
 - **Paste:** a form where a student or staff member pastes messages and chooses the source. Useful before the connectors exist, and for groups the connectors can't reach.
 - **Chat export:** WhatsApp's "Export chat" produces a `.txt` file. UniFlow parses it into `Message` rows (sender, time, text) for the chosen source. Only messages newer than the last one already stored are processed.
+
+## Timetable files and Google Drive links
+
+- Images, PDFs and spreadsheets attached to messages in connected groups are kept as `MessageFile` rows (WhatsApp: downloaded by the connector; Telegram: fetched with `getFile`).
+- Google Drive links in messages, or pasted by a student, are fetched only if public, from `drive.google.com` or `docs.google.com` only, as PDF or XLSX.
+- The AI decides whether a file is a timetable; if so, it is read into classes for students to confirm ([12](12-intelligence.md#reading-timetables)).
 
 ## Linking back to the original
 

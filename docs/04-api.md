@@ -5,7 +5,7 @@
 | Topic | Decision |
 |---|---|
 | Base path | `/api/v1/`. The version is in the URL. A released mobile app cannot be upgraded instantly, so breaking changes will go to `/api/v2/` while v1 keeps working. Adding fields or endpoints does not need a new version. |
-| Two surfaces | **Read:** `/api/v1/<resource>/` serves published, visible content to any logged-in user. **Manage:** `/api/v1/manage/<resource>/` serves the staff dashboard. Every call on the manage surface is checked against the caller's capabilities (see [06](06-auth-and-permissions.md)). |
+| Two surfaces | **Read:** `/api/v1/<resource>/` serves the caller's own feed, timetable, sources and imports. **Manage:** `/api/v1/manage/<resource>/` serves the staff dashboard. Every call on the manage surface is checked against the caller's capabilities (see [06](06-auth-and-permissions.md)). |
 | Format | JSON in `snake_case`. Datetimes are ISO 8601 in UTC. Class times are local `HH:MM`. |
 | Auth | `Authorization: Bearer <access JWT>` on every endpoint except the ones marked *public*. |
 | Pagination | Page numbers: `?page=` and `?page_size=` (default 20, maximum 100). *[Later]*: cursor pagination and `?updated_since=` for mobile sync. |
@@ -47,8 +47,10 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 |---|---|---|
 | Academics | `GET academics/schools/`, `programmes/` (`?school=<id>`), `intakes/`. M3 adds `courses/`, `terms/` and `terms/current/`. | Used for onboarding and filters. Returns **active items only**, as a **plain list without pagination**, because the lists are short and dropdowns need every item. Programmes of an inactive school are hidden. A non-numeric `?school=` returns 400. |
 | Feed | `GET feed/` (`?tier=`: direct, action, important or digest), `GET feed/{insight_id}/`, `POST feed/{insight_id}/read/`, `POST feed/{insight_id}/dismiss/`, `POST feed/{insight_id}/feedback/` (`not_relevant`) | The caller's own deliveries only, newest first within each tier. The detail includes the summary, structured fields, the **reason** it was shown, and the **evidence** (original message text, sender, group, time, and a link to open the original where the platform has one). Insights not delivered to the caller return **404**. |
-| Sources | `GET sources/` (connected groups the caller subscribes to), `POST sources/connect/` (`{invite_url, purpose/scope}`), `POST`/`DELETE sources/{id}/subscribe/`, `POST sources/{id}/paste/` (pasted messages), `POST sources/{id}/export/` (WhatsApp chat-export `.txt`, multipart) | Only academic groups; invite hosts are validated ([08](08-messaging-integrations.md)). |
-| Preferences | `GET`/`PATCH users/me/` gains `current_semester`, `interests`, `info_types`, `aliases`, `whatsapp_number`; `GET preferences/choices/` lists the interest and info-type choices | |
+| Sources | `GET sources/` (the groups the caller added), `POST sources/connect/` (`{invite_url, purpose/scope}`: adds the group; UniFlow's number joins it if it isn't connected yet), `DELETE sources/{id}/membership/` (remove the group from my list), `POST sources/{id}/paste/` (pasted messages), `POST sources/{id}/export/` (WhatsApp chat-export `.txt`, multipart) | Only academic groups; invite hosts are validated ([08](08-messaging-integrations.md)). |
+| Preferences | `GET`/`PATCH users/me/` gains `current_semester` (read-only, worked out from the intake), `semester_override`, `interests`, `info_types`, `aliases`; `GET preferences/choices/` lists the interest and info-type choices | |
+| Timetable imports | `POST timetable/imports/` (multipart image, PDF or XLSX, **or** `{link}` for a public Google Drive file), `GET timetable/imports/` (the caller's imports, including ones created from timetables shared in their groups), `GET timetable/imports/{id}/` (the rows the AI read), `PATCH timetable/imports/{id}/` (fix or remove rows), `POST timetable/imports/{id}/confirm/`, `POST timetable/imports/{id}/discard/` | Nothing is saved until confirm. Confirm runs the import service and enrols the caller. |
+| Add a class by hand | `POST timetable/sections/` (`{course_code, course_name, section, meetings: [...]}`) | Creates the course and section if missing; enrols the caller |
 | Timetable changes | `GET timetable/changes/` (the caller's pending and decided proposals, with evidence), `POST timetable/changes/{id}/confirm/`, `POST timetable/changes/{id}/reject/` | `today/` and `week/` include the caller's **confirmed** changes, and flag pending ones. |
 | Timetable | `GET timetable/sections/` (the current term's catalogue), `GET`/`POST timetable/my-sections/`, `DELETE timetable/my-sections/{section_id}/`, `GET timetable/today/`, `GET timetable/week/?date=` | The catalogue filters by `course`, `school` and `search`. Only students can add their own sections. |
 | *[Later]* Announcements, documents, events, communities, applications | Browsable lists of each kind | Their information already reaches students through `feed/`. |
@@ -67,10 +69,10 @@ Every manage endpoint:
 
 | Resource | Endpoints | Capability |
 |---|---|---|
-| Official posts | `manage/announcements/` for list (all statuses) and create, `manage/announcements/{id}/` for GET, PATCH and DELETE (only drafts can be deleted), plus `…/{id}/publish/` (creates the insight) and `…/{id}/archive/` (retracts it) | `announcements.manage` |
-| Sources | `manage/sources/` for list (filters: platform, status, school), `{id}/` for PATCH (title, scope, trust, status) and `{id}/disconnect/` | `sources.manage` (university admin and super admin; school staff for their own school's sources) |
-| Insights | `manage/insights/` for list (filters: kind, source, status, confidence below a value), `{id}/` for GET and PATCH (correct the title, summary, kind, audience or importance), `{id}/retract/` | `insights.review` (school staff for insights from their school's sources; admins for all) |
-| AI usage | `manage/intelligence/usage/`: jobs, failures and spend for the current day | `insights.review` (admins) |
+| Official posts *[after the pilot]* | `manage/insights/` with `origin = staff`: create, PATCH, `{id}/publish/` and `{id}/archive/`. **In the pilot, staff posts are created in the Django admin.** | `announcements.manage` (the name is kept; it means "official posts") |
+| Sources *[after the pilot]* | `manage/sources/` for list (filters: platform, status, school), `{id}/` for PATCH (title, scope, trust, status) and `{id}/disconnect/` | `sources.manage` (university admin and super admin; school staff for their own school's sources) |
+| Insights *[after the pilot]* | `manage/insights/` for list (filters: kind, source, status, confidence below a value), `{id}/` for GET and PATCH (correct the title, summary, kind, audience or importance), `{id}/retract/` | `insights.review` (school staff for insights from their school's sources; admins for all) |
+| AI usage *[after the pilot]* | `manage/intelligence/usage/`: jobs, failures and spend for the current day | `insights.review` (admins) |
 | *[Later]* Documents, events, applications, communities | Management of the browsable lists | Their capabilities exist but are unused in the MVP |
 | Timetable | `manage/timetable/terms/` for CRUD (university admin only); `manage/timetable/courses/` for CRUD; `manage/timetable/sections/` for CRUD with nested `meetings/`; `manage/timetable/import/` (POST with `dry_run`) *[with the first adapter]* | `timetable.manage` |
 | Users | `manage/users/` for a list filtered by `role`, `school` and `search`, and **POST to create a staff account** (email, full name, role, school; a "set your password" email is sent); `{id}/` to GET, or PATCH the name, role, school, job title and `is_suspended` (no deleting; you can't change your own role or suspend yourself) | `users.manage` (super admin only) |
@@ -86,12 +88,13 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 | POST | `internal/messages/` | The WhatsApp connector | Signed with `CONNECTOR_SECRET`. Body: `{source_external_id, message_id, sender_ref, sender_name, text, sent_at, reply_to}`. Idempotent per `(source, message_id)`. |
 | POST | `internal/sources/joined/` | The WhatsApp connector | Reports that the connector joined a group (its id and title), so the pending `Source` becomes active. |
 | GET | `internal/sources/pending/` | The WhatsApp connector | Invite links waiting to be joined. |
+| POST | `internal/messages/{id}/files/` | The WhatsApp connector | Uploads an image, PDF or spreadsheet attached to a group message. |
 
 `internal/` endpoints are only reachable from the server itself (nginx does not expose them) and are excluded from the public API docs.
 
-## Example: manage create
+## Example: an official staff post (after the pilot)
 
-`POST /api/v1/manage/announcements/`
+`POST /api/v1/manage/insights/` (in the pilot the same fields are filled in the Django admin)
 
 ```json
 {
@@ -108,7 +111,7 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 }
 ```
 
-This creates a **draft**. A follow-up `POST …/{id}/publish/` publishes it immediately and creates the matching insight, which is then delivered and notified like any other.
+This creates a **draft** insight with `origin = staff`. A follow-up `POST …/{id}/publish/` publishes it immediately, and it is delivered and notified like any other insight.
 
 ## Example: a feed item
 

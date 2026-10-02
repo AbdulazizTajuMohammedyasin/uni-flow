@@ -103,11 +103,23 @@ Every insight a student receives is placed in one tier:
 
 Anything below the student's relevance threshold is not surfaced, but stays searchable.
 
+"Immediate" means the alert appears at once in UniFlow's bell. In the MVP alerts are shown **inside UniFlow only**; phone notifications arrive with the mobile app (Later).
+
+### When the AI is not sure
+
+| How sure the AI is | What the student sees |
+|---|---|
+| Sure | The insight, normally |
+| Unsure | The insight only in the daily digest, marked **"Not confirmed"** |
+| Very unsure | Nothing, until someone checks it |
+
+Details in [12](12-intelligence.md#how-sure-must-the-ai-be).
+
 ### Timetable intelligence
 
 The timetable represents **the student's current reality**, not only the original university timetable.
 
-1. The official timetable (terms, courses, sections, weekly classes) is the baseline.
+1. **The normal weekly timetable is read by the AI.** At the start of a semester timetables are shared in groups as images, PDFs, spreadsheets or Google Drive links, and students can upload one too. The AI turns it into classes, and the student checks and **confirms** it before anything is saved. Classes confirmed once are shared, so classmates only pick them. A student can also add a missing class by hand.
 2. When a message says a class moved, was cancelled, changed room, or that a mandatory academic session was added, the AI **proposes** a change.
 3. UniFlow shows the student **the evidence** (the original message, its group and time).
 4. **The student confirms or rejects.** The AI never changes a timetable by itself.
@@ -115,7 +127,7 @@ The timetable represents **the student's current reality**, not only the origina
 
 ### Direct mentions
 
-When a message names a specific student (by name, known nickname or phone number), UniFlow notifies that student **immediately**, with access to the original message.
+When a message names a specific student (by name or a nickname they added in their profile), UniFlow notifies that student **immediately**, with access to the original message. Names are matched among the students who **added that group in UniFlow** first, so "Abdulaziz, please come to the dean's office" is recognised when that group has one Abdulaziz.
 
 ### Every insight links to its source
 
@@ -131,8 +143,9 @@ Messaging platforms are **primary information sources**, not just links in a dir
 | **Telegram groups and channels** | The official **UniFlow Telegram bot**, added by the group or channel admin | Official Bot API |
 | **Staff posts** | Authorized staff post directly in the staff dashboard | An **official** source with the highest trust |
 | **Manual input** | Pasting a message, or uploading a WhatsApp "Export chat" file | Useful before connectors exist, and as a fallback |
+| **Files and links in messages** | Timetable images, PDFs, spreadsheets and public Google Drive links shared in connected groups, or uploaded by a student | Read by the AI, mainly for timetables |
 
-Students **connect** a group by submitting its invite link. A group is connected once and shared: every student in it benefits.
+Students **add** a group in the app (by its invite link); in the background UniFlow's own WhatsApp number joins the group. Students never give UniFlow their phone number or access to their WhatsApp: registering with their `@student.aiu.edu.my` email is the only verification. A group is connected once and shared: every student in it benefits. Some groups only let admins share links or approve new members; then the group's admin has to accept UniFlow, and the source waits as "pending". The purpose the student gives the group (for example "CDE2313 Section A") is a suggestion until messages, members or an admin confirm it.
 
 ## 4. Scope
 
@@ -149,16 +162,21 @@ Internships, bootcamps, industry visits, competitions, academic announcements, s
 | Preferences | Interests and information types, chosen at onboarding and editable |
 | Sources | Connecting WhatsApp and Telegram groups, staff posts, manual paste and chat-export upload |
 | Intelligence | Understanding messages in context, insights with importance, per-student relevance and tiers, action detection, timetable detection, direct mentions, summaries, source links, duplicate merging |
-| Timetable | Official baseline plus AI-proposed changes the student confirms; today and week views |
+| Timetable | The AI reads shared or uploaded timetables (images, PDFs, spreadsheets, Google Drive links) and the student confirms them; AI-proposed changes the student confirms; manual "add a class"; today and week views |
 | Personal feed | One home screen with the four tiers, plus search |
-| Notifications | In-app: immediate for direct attention, action required and important updates; a daily digest |
-| Staff and admin | User management, reference data, source management, reviewing and correcting insights, official staff posts |
+| Notifications | **Inside UniFlow only** (bell and list): immediate for direct attention, action required and important updates; a daily digest |
+| Staff and admin | **In the pilot, the Django admin** is used to review sources, check drafts, correct or retract insights, fix timetable data and create official staff posts. Staff accounts and reference data APIs already exist (M2). |
+
+### Pilot first
+
+The MVP is first released as a **pilot**: one intake and a handful of real groups, operated by the developer through the Django admin. What the pilot shows decides the order of the remaining work.
 
 ### Later
 
 | Area | Later |
 |---|---|
-| Notifications | Push notifications (React Native app), email digests, per-tier quiet hours |
+| Notifications | Phone push notifications with the React Native app, email digests, per-tier quiet hours |
+| Staff pages | React staff pages for sources, insight review and official posts, after the pilot shows what staff need |
 | Sources | Attachments and images from messages (posters, PDFs), voice notes, more platforms |
 | Intelligence | Learning from student feedback ("not relevant"), per-student summaries on demand ("what did I miss this week?") |
 | Timetable | Official import adapters (once the university's format is known), lecturer-confirmed changes, ICS export |
@@ -185,7 +203,7 @@ Every user has exactly **one role**.
 |---|---|
 | `student` | Receives the personal feed, confirms timetable changes, sets preferences, connects groups, chooses sections |
 | `lecturer` | Read-only in the MVP. *[Later]*: confirm changes for the sections they teach, post to them. |
-| `school_staff` | Posts official information for their own school, and reviews and corrects insights from their school's sources |
+| `school_staff` | Posts official information for their own school, and reviews and corrects insights from their school's sources (React pages after the pilot) |
 | `university_admin` | Everything school staff do, for every school; manages sources and reference data |
 | `super_admin` | Everything, plus staff accounts, roles, suspension and the Django admin |
 
@@ -199,10 +217,10 @@ Every user has exactly **one role**.
 | F4 | Sources and connectors | WhatsApp connector, Telegram bot, staff posts, manual paste and chat-export upload; connecting a group |
 | F5 | Intelligence pipeline | Triage, conversation-aware extraction, insights, duplicate merging, direct mentions ([12](12-intelligence.md)) |
 | F6 | Relevance and tiers | Per-student relevance, the four tiers, reasons ("because you are in CDE2313 section A") |
-| F7 | Timetable intelligence | Proposed changes with evidence, student confirmation, the student's current timetable |
+| F7 | Timetable intelligence | Reading shared timetables into classes the student confirms; proposed changes with evidence and student confirmation; the student's current timetable |
 | F8 | Personal feed | Home feed by tier, insight detail with source, "not relevant" feedback, search |
-| F9 | Notifications | Immediate in-app alerts and the daily digest |
-| F10 | Staff and admin | Users, reference data, sources, insight review, official posts |
+| F9 | Notifications | Immediate alerts inside UniFlow (bell) and the daily digest |
+| F10 | Staff and admin | Django admin in the pilot: sources, drafts, corrections, official posts; React staff pages later |
 
 ## 7. Decisions already made that stay
 

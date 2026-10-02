@@ -5,7 +5,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M0–M2 are done ✅, and the plan has been re-written around the AI idea (docs only, no code changed).
+**Now:** M0–M2 are done ✅, and the plan has been re-written and re-checked around the AI idea (docs only, no code changed).
 **Next up:** M3.1, courses and terms: so UniFlow knows which classes exist, which it needs to tell who a message affects.
 
 ---
@@ -17,14 +17,14 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
-| **M3** Classes and preferences | UniFlow learns each student's courses, sections, semester and interests; students see their timetable | ⏭️ Next |
-| **M4** Messages | UniFlow can store messages from groups (pasted, or uploaded from WhatsApp's "Export chat") | ⏳ |
-| **M5** AI, first version | The AI spots "class moved / cancelled / room changed" in messages; the student sees the proof and confirms; their timetable updates | ⏳ |
-| **M6** Connectors | UniFlow joins WhatsApp and Telegram groups by itself; students connect their groups | ⏳ |
+| **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ⏭️ Next |
+| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ⏳ |
+| **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏳ |
+| **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
-| **M8** Notifications | Alerts only for what matters to you, plus a daily summary | ⏳ |
-| **M9** Staff and admin | Staff check sources and fix AI mistakes, post official news, manage users | ⏳ |
-| **M10** Home, search and launch | Home screen, search, privacy notice, and putting it online | ⏳ |
+| **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
+| **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
+| **M10** Staff pages | After the pilot: pages for staff to check groups, fix AI mistakes and post official news | ⏳ |
 
 ---
 
@@ -134,6 +134,12 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
 - **Staff posts stay** as one official source. The M2 code is kept and reused.
 - **Background work** uses a simple database job table, still no Redis or Celery.
+- **When the AI isn't sure:** sure → shown; unsure → daily summary marked "Not confirmed"; very unsure → hidden until you check it.
+- **Staff posts and AI findings are one thing** in the code (no separate announcements part).
+- **The normal timetable comes from the groups too:** the AI reads timetable images, PDFs and Google Drive links, and the student confirms before anything is saved.
+- **Alerts stay inside UniFlow** for now; the mobile app will add phone notifications.
+- **No phone numbers:** students just add their groups in the app and UniFlow's number joins them. Registering with the student email is the only verification.
+- **Start small:** a pilot with a few real students, using the Django admin page to check things, before building staff pages.
 
 - **Where login tokens live:** the refresh token is in a secure httpOnly cookie, and the access token is in memory. **Never in `localStorage`.**
 
@@ -151,6 +157,6 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **AI provider** (proposed: Anthropic Claude). Needed before M5.1.
 - **WhatsApp connector library and a dedicated WhatsApp number.** Needed before M6.3.
-- **University approval** for reading academic groups. Needed before launch (M10.6).
+- **University approval** for reading academic groups. Needed before the pilot (M9.7).
 - The university's official timetable format (optional import). Not blocking.
-- Hosting (must keep the WhatsApp connector online). Needed before M10.5.
+- Hosting (must keep the WhatsApp connector online). Needed before M9.6.

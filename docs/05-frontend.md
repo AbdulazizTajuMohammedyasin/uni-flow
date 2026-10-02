@@ -40,7 +40,7 @@ frontend/src/
 ├── router.tsx          # createAppRoutes() and the app router
 ├── index.css           # Tailwind + shadcn theme + UniFlow colours
 ├── api/                # backend calls, one file per area: client.ts, errors.ts, health.ts, auth.ts (M1.9) ...
-├── hooks/              # React Query hooks per area: useHealth.ts, useAnnouncements.ts ...
+├── hooks/              # React Query hooks per area: useHealth.ts, useFeed.ts ...
 ├── context/            # AuthContext.tsx (M1.9)
 ├── types/              # TypeScript shapes of API data: health.ts, auth.ts ...
 ├── components/         # layouts (AppLayout, AuthLayout, StaffLayout) and shared pieces
@@ -63,20 +63,22 @@ The student area is built around **one personal feed**, not separate content sec
 - **For you (`/`)**: four blocks in this order: **Direct attention**, **Action required**, **Important updates**, then **Digest**. Empty blocks are hidden. Today's classes and pending timetable changes appear at the top.
 - **Insight card**: title, one-line summary, tier badge, deadline or date if any, the **reason** ("You are in CDE2313 Section A"), and the source ("CDE2313 Sec A · WhatsApp · 9:12"). Actions: open, dismiss, "not relevant".
 - **Insight detail (`/insights/:id`)**: the summary, the structured details (date, time, location, link, action), and the **evidence**: the original message(s) with sender, group and time, plus "Open in WhatsApp/Telegram".
-- **Timetable (`/timetable`)**: today and week views (FullCalendar `timegrid`). Pending changes show as a banner with the evidence and **Confirm / Reject** buttons; confirmed changes are drawn on the calendar with a "changed" marker.
-- **Sources (`/sources`)**: the groups the student is linked to, and **Connect a group** (paste an invite link, choose what the group is for). Also "Paste messages" and "Upload WhatsApp chat export".
-- **Onboarding and profile**: school, programme, intake (done), plus semester, sections, interests, information types, and optional aliases and WhatsApp number (explained as "only used to notice when someone mentions you").
-- **Notifications (`/notifications`)** and the bell.
+- **Timetable (`/timetable`)**: if the student has no classes yet, **"Add my timetable"**: upload a timetable image, PDF or spreadsheet, or paste a Google Drive link; or confirm a timetable already found in one of their groups. The AI's rows are shown as an editable list ("Is this your timetable?") with **Confirm**. A small "add a class" form is the fallback. Then today and week views (FullCalendar `timegrid`). Pending changes show as a banner with the evidence and **Confirm / Reject** buttons; confirmed changes are drawn on the calendar with a "changed" marker.
+- **Sources (`/sources`)**: the groups the student added, and **Add a group** (paste the group's invite link, choose what the group is for; UniFlow's number joins it in the background). Also "Paste messages" and "Upload WhatsApp chat export".
+- **Onboarding and profile**: school, programme, intake (done), plus interests, information types, "Add my timetable", and optional nicknames (explained as "only used to notice when someone mentions you"). The semester is worked out from the intake and shown, with a "change" link.
+- **Notifications (`/notifications`)** and the bell. Alerts are shown inside UniFlow only; phone notifications come with the mobile app.
 
-### Staff dashboard [MVP]
+### Staff dashboard [after the pilot]
+
+> **In the pilot the developer uses the Django admin** for sources, drafts, corrections, timetable data and official posts. The existing `/staff` frame (M2.8) stays; the pages below are built after the pilot.
 
 - **Only capabilities matter.** `GET /auth/users/me/` returns something like `capabilities: {"announcements.manage": true, "timetable.manage": true, "users.manage": false, ...}` plus `publishers: [{type, id, name}]`. The frontend never checks role names.
   - `StaffLayout` builds its side navigation from the capabilities.
-  - `<RequireCapability cap="events.manage">` guards each route and shows a 403 page if the capability is missing.
+  - `<RequireCapability cap="insights.review">` guards each route and shows a 403 page if the capability is missing.
   - `<Can cap=… >` hides buttons.
   - Per-item `can_edit` and `can_publish` flags from the API control the row actions.
 - **Security.** Hiding things in the UI is for convenience only. The backend checks every manage request (see [06](06-auth-and-permissions.md)).
-- **Standard page pattern** for each content type:
+- **Standard page pattern** for review lists (sources, insights) and official posts:
   1. A list page: a `DataTable` with status tabs (Draft, Published, Archived), filters, search and pagination.
   2. A form page for create and edit: React Hook Form with Zod, then Save draft, Publish or Archive.
   3. Actions confirmed with a dialog, with the result shown in a toast.
@@ -84,8 +86,7 @@ The student area is built around **one personal feed**, not separate content sec
   - `PublisherSelect`, with options from `me.publishers`. It is hidden when there is only one option, which is the case for school staff.
   - `AudienceFields`, with multi-selects for school, programme and intake, and a live summary such as "Computing students, 2024-SEP intake". Leaving all of them empty means all students. That option is offered only to university admins. For school staff, the school is preselected and locked, and the programme list is limited to their school. This is only a convenience, because the API enforces the same rule.
   - `MarkdownField`, a textarea with a preview tab rendered by react-markdown.
-  - `FileField`, which uploads to `manage/documents/` and returns an id.
-- **Pages in the MVP:** Sources (review, scope, disconnect), Insights review (correct or retract what the AI produced, low-confidence first), Official posts (announcements), Timetable (terms, courses, sections, weekly meetings, edited inline), Users, and Schools & programmes. Documents, events, applications and communities pages are [Later].
+- **Pages after the pilot (M10):** Sources (review, scope, disconnect), Insights review (drafts first; correct or retract), Official posts (staff insights), Timetable (terms, courses, sections, weekly meetings, edited inline), Users, and Schools & programmes. Documents, events, applications and communities pages are [Later].
 - **Staff home** (`/staff`): items waiting for review, recent official posts, and AI usage for admins.
 
 ### API layer
@@ -146,7 +147,7 @@ UniFlow/  (later additions, subject to approval then)
 | Tokens | Access token in memory, refresh token in an httpOnly cookie | `expo-secure-store`, with `{refresh}` sent in the body | The same endpoints |
 | Navigation and UI | React Router, Tailwind | Expo Router, RN components | No |
 | Notifications | In-app polling | Expo push through a new `Device` endpoint | The same `Notification` rows |
-| Deep links | `/events/42` | `uniflow://events/42` | Both built from `(target_type, target_id)` |
+| Deep links | `/insights/42` | `uniflow://insights/42` | Both built from `(target_type, target_id)` |
 
 The mobile app will cover the student side. Staff management stays on the web.
 
@@ -155,5 +156,5 @@ The backend already supports mobile:
 - No endpoint depends on cookies.
 - Media URLs are absolute.
 - The API is versioned.
-- The dashboard is a single endpoint.
+- The home screen is a single endpoint (`feed/home/`).
 - Notification targets are type and id pairs rather than web URLs.

@@ -36,7 +36,7 @@ These are the key principles:
 5. **A modular monolith.** There is one Django project and one app per feature.
 6. **Background work without extra infrastructure.** AI calls are slow and can fail, so they never run inside a web request. They run as rows in a MySQL `Job` table, processed by one long-running management command (see [Background jobs](#background-jobs)). There is still **no Redis, Celery or message broker**.
 7. **Connectors are thin and replaceable.** The WhatsApp connector is a separate small process that only forwards messages; the Telegram bot is a webhook. Neither contains any understanding logic. See [08](08-messaging-integrations.md).
-8. **Django admin is secondary.** It is enabled for developers and super admins as a back-office tool, to inspect data and fix mistakes. Staff never need it. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
+8. **The Django admin is the operator's tool in the pilot.** It is used by the developer (super admin) to review new sources, check AI drafts, correct or retract insights, fix timetable data and create official staff posts. React staff pages are built after the pilot. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
 
 ### Background jobs
 
@@ -66,8 +66,9 @@ Each library is added **in the task that first needs it**, never earlier.
 | CORS for the Vite dev server | `django-cors-headers` | Approved | M0.7 |
 | OpenAPI schema | `drf-spectacular` | Approved | M0.7 |
 | Filtering | `django-filter` | Approved | M2.2 |
-| File type checking | `filetype` (pure Python) | Deferred. Ask for approval when uploads of documents arrive. | Later |
-| Images (poster uploads) | Pillow (Django's `ImageField` requires it) | Deferred. Ask for approval when images are stored. | Later |
+| File type checking | `filetype` (pure Python) | **Needs approval** when timetable files are first stored | M4 |
+| Images | Pillow | Not needed: timetable images are stored with `FileField` and sent to the model as they are | Later, only for resizing |
+| Spreadsheets | `openpyxl` | **Needs approval**, only if timetables arrive as `.xlsx` (turns them into text for the model) | M5 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `anthropic` (proposed) | **Needs approval** in the first AI task | Intelligence milestone |
 | WhatsApp connector | Baileys (Node.js) or neonize/whatsmeow (Python) | **Needs approval** in the connector task. Lives in `connectors/whatsapp/`, outside Django. | Connectors milestone |
@@ -86,14 +87,14 @@ filters.py      django-filter FilterSets
 tests/
 ```
 
-The rule is simple. **Views never contain visibility or permission logic.** Student views call `selectors.*_visible_to(user)`, and staff views call `policies.*`. The dashboard, search and notification code reuse those same functions.
+The rule is simple. **Views never contain visibility or permission logic.** Student views read only the caller's own data (their deliveries, timetable, sources and imports) through selectors, and staff views call `policies.*`. The feed, search and notification code reuse those same functions.
 
 ### Two API surfaces from the same apps
 
 | Surface | Prefix | Who uses it | Querysets |
 |---|---|---|---|
-| Read (student-facing) | `/api/v1/<resource>/` | Everyone who is logged in, and the mobile app later | Published, visible, unexpired content |
-| Manage (staff dashboard) | `/api/v1/manage/<resource>/` | Users with a matching capability | Everything the user may manage, including drafts and archived items |
+| Read (student-facing) | `/api/v1/<resource>/` | Everyone who is logged in, and the mobile app later | The caller's own feed (deliveries), timetable, sources and imports |
+| Manage (staff dashboard) | `/api/v1/manage/<resource>/` | Users with a matching capability | Everything the user may manage, including drafts and archived items. In the pilot only users and reference data (M2); the rest is done in the Django admin. |
 
 Each app has both a `views.py` (read) and a `manage_views.py` (manage). Keeping them separate means the read serializers never expose drafts or internal fields, and every manage view carries its permission class.
 
@@ -118,10 +119,9 @@ backend/
     ├── academics/      [MVP]   School, Programme, Intake; Course, Term
     ├── audiences/      [MVP]   Audience + visibility selectors ("who is affected")
     ├── publishing/     [MVP]   PublishableModel base, publisher policy, publish/archive services
-    ├── timetable/      [MVP]   CourseSection, ClassMeeting, SectionEnrollment, ClassChange, confirmations
-    ├── sources/        [MVP]   Source, SourceSubscription, Message; Telegram webhook, internal endpoint, paste/export
-    ├── intelligence/   [MVP]   providers.py (AI), triage, extraction, resolve, merge, Insight, Delivery
-    ├── announcements/  [MVP]   official staff posts (become insights when published)
+    ├── timetable/      [MVP]   CourseSection, ClassMeeting, SectionEnrollment, TimetableImport, ClassChange, confirmations
+    ├── sources/        [MVP]   Source, SourceMember, Message, MessageFile; Telegram webhook, internal endpoint, paste/export, Drive links
+    ├── intelligence/   [MVP]   providers.py (AI), triage, extraction, timetable reading, resolve, merge, Insight (incl. staff posts), Delivery
     ├── notifications/  [MVP]   Notification, immediate alerts, daily digest  (Device [Later])
     ├── feed/           [MVP]   no models — the student's personal feed and search over deliveries
     ├── documents/      [Later]
@@ -141,13 +141,12 @@ An app may only import from the apps listed below it. Cycles are not allowed.
 core
 academics            → core
 accounts             → core, academics
-audiences            → core, academics            ([Later] + timetable, communities for extra dimensions)
+audiences            → core, academics, timetable  (courses, sections; [Later] communities)
 publishing           → core, academics, accounts, audiences
-timetable            → core, academics, accounts
+timetable            → core, academics, accounts   (audiences imports timetable, so timetable never imports audiences)
 sources              → core, academics, accounts
 notifications        → core, accounts
-intelligence         → sources, audiences, timetable, notifications
-announcements        → publishing, intelligence
+intelligence         → publishing, sources, audiences, timetable, notifications
 feed                 → intelligence, timetable (read selectors only)
 ```
 
@@ -172,7 +171,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `DEFAULT_FROM_EMAIL` | `UniFlow <no-reply@…>` | |
 | `TIME_ZONE` | `Asia/Kuala_Lumpur` | |
 | `MEDIA_ROOT` | `./media` | Local file storage |
-| `MAX_UPLOAD_MB` | `15` | |
+| `MAX_UPLOAD_MB` | `10` | Timetable files and uploads |
 | `AI_API_KEY`, `AI_TRIAGE_MODEL`, `AI_EXTRACT_MODEL`, `AI_DAILY_SPEND_LIMIT` | | The AI provider ([12](12-intelligence.md#ai-provider)) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
@@ -188,11 +187,21 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 - **Time zone rule.** Code never uses MySQL-side date conversion (the `__date`, `__week_day` or `Trunc*` lookups with a local time zone). Local-day boundaries such as "today in Kuala Lumpur" are computed in Python and then queried as UTC ranges. This means the MySQL time zone tables, which are awkward to load on Windows, are never needed.
 - Production settings add `CONN_MAX_AGE = 60`.
 
-## 16. File and document strategy [Later]
+## 16. Files
 
-> In the MVP the only uploaded file is the WhatsApp chat export (`.txt`), which is parsed and not kept. The strategy below applies when documents, posters and message attachments arrive.
+### MVP: timetable files and chat exports
 
-| Aspect | MVP | Later |
+| Aspect | Rule |
+|---|---|
+| What is stored | `MessageFile` rows: images (PNG, JPG, WEBP), PDFs and spreadsheets (XLSX) from connected groups or uploaded on the Timetable page. Other attachments from groups are ignored. WhatsApp chat exports (`.txt`) are parsed and **not** kept. |
+| Checks | Extension **and** real contents (magic bytes, `filetype`); 10 MB per file; chat exports 5 MB |
+| Storage | Private local storage (`MEDIA_ROOT/message_files/{yyyy}/{mm}/{uuid4}.{ext}`), never public; only the student who uploaded it, or the members of the group it came from, can open it through the API |
+| Google Drive links | Only `drive.google.com` and `docs.google.com` hosts, public files only, downloaded as PDF or XLSX, same size limit |
+| Retention | Deleted with the message text after `MESSAGE_RETENTION_DAYS`; the classes read from them stay |
+
+### Later: documents and posters
+
+| Aspect | Rule | Even later |
 |---|---|---|
 | Model | Every uploaded file is a `Document` row: library items and attachments go through one model, one set of checks and one download path. Event posters are the exception and are stored directly on `Event`. | |
 | Storage | Local `MEDIA_ROOT` (`backend/media/`, git-ignored), using Django's storage API | S3-compatible storage through `django-storages`, with no model changes |

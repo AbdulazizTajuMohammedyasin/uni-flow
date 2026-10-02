@@ -1,6 +1,6 @@
 # 11 — Roadmap & Implementation Tasks (M0–M10)
 
-> **Re-planned after M2.8** when the product was redefined as an AI-powered information assistant ([01](01-product.md)). M0–M2 are unchanged and reused. From M3 the order proves the core idea early: academic context first, then messages, then an AI slice that detects timetable changes students confirm, then real connectors, then the full personal feed.
+> **Re-planned after M2.8** when the product was redefined as an AI-powered information assistant ([01](01-product.md)). M0–M2 are unchanged and reused. From M3 the order proves the core idea early: academic context first, then messages, then an AI slice that **reads timetables and detects timetable changes** students confirm, then real connectors, then the full personal feed, then a **pilot** with real students operated through the Django admin. React staff pages come after the pilot.
 
 ## Development workflow
 
@@ -35,14 +35,15 @@ UniFlow is built **one small task at a time**.
 | **M0** ✅ | Foundations | An empty Django API and an empty React app, both running locally and in CI |
 | **M1** ✅ | Identity | Register, activate, log in, onboard and edit the profile |
 | **M2** ✅ | Permissions and publishing core | Capabilities, audience visibility ("who is affected"), the shared content base, the school boundary and the `/staff` layout |
-| **M3** | Academic context and preferences | Courses, terms, sections and weekly classes; students choose sections, semester, interests and information types; the official timetable views |
-| **M4** | Sources and messages | Sources, messages, the background job runner, and manual input (paste and WhatsApp chat export) |
-| **M5** | Intelligence v1: timetable changes | The AI detects timetable changes in messages; the student sees the evidence and confirms; their timetable updates |
-| **M6** | Connectors | The Telegram bot and the WhatsApp connector; students connect groups |
-| **M7** | Intelligence v2: the personal feed | Every insight kind, direct mentions, duplicate merging, relevance and tiers, the "For you" feed |
-| **M8** | Notifications | Immediate alerts by tier, retractions and the daily digest |
-| **M9** | Staff and admin | Source and insight review, official staff posts, user and reference-data pages |
-| **M10** | Home, search and release | The home screen, search, privacy notice, production settings and deployment |
+| **M3** | Classes and preferences | Courses, terms, sections and weekly classes; who-is-affected by course, section and semester; the semester worked out from the intake; interests and information types; the timetable page with "add a class" |
+| **M4** | Sources and messages | The background job runner; sources, group members, messages and files; paste, chat export, timetable uploads and Google Drive links |
+| **M5** | AI v1: timetables | The AI reads shared timetables into classes the student confirms, and detects timetable changes the student confirms; the confidence rule; staff posts as insights |
+| **M6** | Connectors | The Telegram bot and the WhatsApp connector; students add groups in the app and UniFlow's number joins them |
+| **M7** | AI v2: the personal feed | Every insight kind, direct mentions, duplicate merging, relevance and tiers, the "For you" feed |
+| **M8** | Notifications | Alerts inside UniFlow by tier, retractions and the daily digest |
+| **M9** | Pilot release | Home and search, privacy notice, Django admin set-up for the operator, production settings, deployment, pilot checklist |
+| — | **Pilot with real students** | |
+| **M10** | Staff pages (after the pilot) | React pages for sources, insight review, official posts, users and reference data |
 | — | **MVP release** | |
 | Later | Post-MVP | See [Later backlog](#later-backlog) |
 
@@ -412,73 +413,76 @@ Unless a task says otherwise, each one depends on the task before it.
 | M2.6 ✅ | `PublishableModel` and `TargetedModel` (abstract; no migration), `published_q`, `is_expired`, and the `publish` / `archive` services. Tested through a test-only `SamplePost` model whose table `backend/conftest.py` creates. | `apps/publishing/{apps,models,selectors,services}.py`, `apps/publishing/tests/{models,test_publishing}.py`, `conftest.py`, `config/settings/base.py` | Constraint violations; expiry boundaries; publishing sets `published_at` | `feat(publishing): add publishable content base` |
 | M2.7 ✅ | Publisher policy: `manageable_queryset`, `can_manage`, `validate_publisher`, `validate_audience` and the `CanManageObject` permission (`publishers_for` is reused from M2.1) | `apps/publishing/policies.py`, `tests/test_policies.py` | Role × publisher × school matrix | `feat(publishing): add publisher policy` |
 | M2.8 ✅ | Frontend capability helpers, `RequireCapability` and `Can`, capability-driven `StaffLayout` nav, a staff home placeholder, a "No access" page and a "Staff dashboard" link for staff | `lib/capabilities.ts`, `components/{RequireCapability,Can,StaffLayout,AppLayout}.tsx`, `pages/NoAccess/`, `lib/navigation.ts`, `router.tsx`, `types/auth.ts` | A student gets a 403 page at `/staff`; the nav shows only granted items | `feat(staff): add staff dashboard layout and capability guards` |
-| ~~M2.9~~ | *Moved:* shared form components are built inside the first pages that need them (M3, M5, M9) instead of up front | – | – |
-| ~~M2.10~~ | *Moved to M9.4* (staff users page) | – | – |
-| ~~M2.11~~ | *Moved to M9.5* (reference data pages) | – | – |
+| ~~M2.9~~ | *Moved:* shared form components are built inside the first pages that need them (M3, M5, M10) instead of up front | – | – |
+| ~~M2.10~~ | *Moved to M10.5* (staff users page) | – | – |
+| ~~M2.11~~ | *Moved to M10.6* (reference data pages) | – | – |
 
-## M3 — Academic context and preferences
+## M3 — Classes and preferences
 
-The AI can only tell who is affected if UniFlow knows each student's courses and sections.
+The AI can only tell who is affected if UniFlow knows each student's classes. Every model gets a Django admin page, which is how the operator fixes data in the pilot.
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M3.1 | `Course` and `Term` models, read API and manage API | Only one current term; school staff manage their own school's courses | `feat(academics): add course and term models` |
-| M3.2 | `CourseSection`, `ClassMeeting` and `SectionEnrollment` models, and the manage API for sections with nested meetings | Constraints; `external_ref` unique per term; school scope | `feat(timetable): add section, meeting and enrolment models` |
-| M3.3 | `Audience` gains `courses` and `sections`; the visibility selectors and their test matrix are extended | The two selectors still agree; section students match | `feat(audiences): add course and section targeting` |
-| M3.4 | Student API: section catalogue and my sections | Only current-term sections can be added | `feat(timetable): add section selection endpoints` |
-| M3.5 | Profile gains `current_semester`, `interests`, `info_types`, `aliases`, `whatsapp_number`; `preferences/choices/` | Choices validated; WhatsApp number unique | `feat(accounts): add semester and preferences to profile` |
-| M3.6 | Onboarding and profile pages: semester, sections, interests and information types | New students complete every step; edits save | `feat(profile): add sections and preferences to onboarding` |
-| M3.7 | Student API: today and week (official meetings only for now) | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |
-| M3.8 | Timetable page: today and week views (FullCalendar `timegrid`) | Empty state links to the section picker | `feat(timetable): add timetable page` |
-| M3.9 | Staff timetable pages: terms, courses, sections and inline meetings | Create, edit and deactivate | `feat(staff): add timetable management pages` |
+| M3.1 | `Course` and `Term` models, read API and Django admin | Only one current term | `feat(academics): add course and term models` |
+| M3.2 | `CourseSection` (with `source`), `ClassMeeting` and `SectionEnrollment` models and Django admin | Constraints; `external_ref` unique per term | `feat(timetable): add section, meeting and enrolment models` |
+| M3.3 | `Audience` gains `courses`, `sections`, `semester_min` and `semester_max`; selectors and their test matrix extended | The two selectors still agree | `feat(audiences): add course, section and semester targeting` |
+| M3.4 | Semester worked out from the intake (`semester_override`), `interests`, `info_types`, `aliases`; `preferences/choices/` | Semester correct for each intake and date; choices validated | `feat(accounts): add semester and preferences to profile` |
+| M3.5 | Student API: section catalogue, my sections, add a class by hand | A hand-added class creates the course and section once; the caller is enrolled | `feat(timetable): add section selection endpoints` |
+| M3.6 | Student API: today and week | Around midnight in Kuala Lumpur; outside the term returns empty | `feat(timetable): add today and weekly timetable endpoints` |
+| M3.7 | Onboarding and profile: interests, information types, semester shown | New students complete every step; edits save | `feat(profile): add preferences to onboarding` |
+| M3.8 | Timetable page: today and week (FullCalendar `timegrid`), section picker, "add a class" form | Empty state offers "Add my timetable" (enabled in M5) and "add a class" | `feat(timetable): add timetable page` |
 
 ## M4 — Sources and messages
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M4.1 | `core.Job` model and `manage.py run_jobs` (claim with `SKIP LOCKED`, retries, daily scheduling); jobs run inline in tests | Two runners never take the same job; a failed job retries then stops | `feat(core): add database job runner` |
-| M4.2 | `Source`, `SourceSubscription` and `Message` models with admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(sources): add source and message models` |
-| M4.3 | Paste messages into a source (API) and WhatsApp chat-export parsing | Export lines parsed (multi-line messages, dates); re-upload stores nothing twice | `feat(sources): add message paste and chat export import` |
-| M4.4 | Retention job: clear raw text after `MESSAGE_RETENTION_DAYS` | Old text cleared, evidence quotes kept | `feat(sources): add message retention` |
-| M4.5 | Sources page: my sources, create a manual source, paste, upload export | Upload progress; errors shown | `feat(sources): add sources page` |
+| M4.2 | `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(sources): add source and message models` |
+| M4.3 | Paste messages into a source and WhatsApp chat-export parsing | Multi-line messages and dates parsed; re-upload stores nothing twice | `feat(sources): add message paste and chat export import` |
+| M4.4 | `MessageFile`: timetable uploads (image, PDF, XLSX) with `filetype` checks (**needs approval**), private storage, and safe Google Drive link fetching | Fake types and other hosts refused; private files only for their owner | `feat(sources): add message files and drive links` |
+| M4.5 | Retention job: clear raw text and files after `MESSAGE_RETENTION_DAYS` | Old text and files cleared; evidence quotes kept | `feat(sources): add message retention` |
+| M4.6 | Sources page: my sources, create a manual source, paste, upload export | Upload progress; errors shown | `feat(sources): add sources page` |
 
-## M5 — Intelligence v1: timetable changes (the proof slice)
+## M5 — AI v1: timetables (the proof slice)
 
-**Needs approval first:** the AI provider and its SDK ([12](12-intelligence.md#ai-provider)).
+**Needs approval first:** the AI provider and its SDK ([12](12-intelligence.md#ai-provider)); `openpyxl` only if spreadsheets are needed.
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M5.1 | `providers.py` interface, the real provider, and the fake provider for tests; settings and spend limit | Tests never call the network; the spend limit stops calls | `feat(intelligence): add ai provider interface` |
-| M5.2 | Triage job: batches of new messages → `noise` or `relevant` | Fake provider results stored; noise stops the pipeline | `feat(intelligence): add message triage` |
-| M5.3 | `Insight` and `InsightEvidence` models; extraction job for the four timetable kinds with the conversation window; schema validation | Invalid output rejected; evidence linked | `feat(intelligence): add timetable change extraction` |
-| M5.4 | Resolve: course code, section and date → `ClassMeeting`; audience from the resolved sections | Unknown course → needs review; ambiguous section → all sections of the course | `feat(intelligence): resolve courses and class meetings` |
-| M5.5 | `ClassChange` and `ClassChangeConfirmation`; confirm and reject API; today and week include confirmed changes; retraction | A student sees only their own confirmed changes; retraction withdraws pending ones | `feat(timetable): add student-confirmed class changes` |
-| M5.6 | Timetable page: pending-change banner with evidence, Confirm and Reject, changed markers | Confirming updates the week view | `feat(timetable): add change confirmation to timetable page` |
-| M5.7 | Evaluation set and `manage.py evaluate_intelligence` | Runs against the labelled messages and prints accuracy per kind | `test(intelligence): add evaluation command and dataset` |
+| M5.1 | `providers.py` interface, the real provider and the fake provider for tests; settings and spend limit | Tests never call the network; the spend limit stops calls | `feat(intelligence): add ai provider interface` |
+| M5.2 | `Insight(TargetedModel)` with publisher type `source`, `InsightEvidence`, the confidence rule, and staff posts created in the Django admin | Confidence below 0.5 → draft; 0.5–0.8 → digest-only and "Not confirmed"; staff posts publish normally | `feat(intelligence): add insight model` |
+| M5.3 | Triage job: batches of new messages → `noise` or `relevant` | Noise stops the pipeline | `feat(intelligence): add message triage` |
+| M5.4 | Reading timetables: `TimetableImport`, the AI reads an image, PDF or spreadsheet into rows; confirm applies them with the import service (never overwriting existing classes) | Nothing saved before confirm; confirm creates missing classes and enrols | `feat(timetable): read timetables with ai` |
+| M5.5 | Timetable imports API and "Add my timetable" on the Timetable page (upload, link, review rows, confirm) | Editing a row before confirm is respected | `feat(timetable): add timetable import page` |
+| M5.6 | Change extraction for the four timetable kinds with the conversation window; resolve course, section and date to a class | Unknown course → draft for review; invalid output rejected | `feat(intelligence): detect timetable changes` |
+| M5.7 | `ClassChange` and `ClassChangeConfirmation`; confirm and reject API; today and week include confirmed changes; retraction | A student sees only their own confirmed changes | `feat(timetable): add student-confirmed class changes` |
+| M5.8 | Timetable page: pending-change banner with evidence, Confirm and Reject, changed markers | Confirming updates the week view | `feat(timetable): add change confirmation to timetable page` |
+| M5.9 | Evaluation set and `manage.py evaluate_intelligence` (timetable reading and changes) | Prints accuracy per kind | `test(intelligence): add evaluation command and dataset` |
 
 ## M6 — Connectors
 
-**Needs approval first:** the WhatsApp connector library ([08](08-messaging-integrations.md#how-it-is-built)).
+**Needs approval first:** the WhatsApp connector library and a dedicated number ([08](08-messaging-integrations.md#how-it-is-built)).
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M6.1 | Telegram webhook: store group and channel messages; `setWebhook` command | Wrong secret → 403; duplicates stored once; channel posts get their link | `feat(sources): add telegram bot webhook` |
-| M6.2 | Internal connector API: `internal/messages/`, `internal/sources/pending/`, `internal/sources/joined/` with signed requests | Bad signature → 403; old timestamp rejected | `feat(sources): add internal connector endpoints` |
-| M6.3 | The WhatsApp connector process (`connectors/whatsapp/`): log in, join pending invite links, send the join notice, forward messages | Manual test on a test group; a restart resumes without duplicates | `feat(connectors): add whatsapp connector` |
-| M6.4 | Connect-a-group API and page (invite link, purpose/scope, subscribe to existing sources) | An already-connected group is not joined twice; wrong hosts refused | `feat(sources): add connect a group flow` |
+| M6.1 | Telegram webhook: group and channel messages and their files; `setWebhook` command | Wrong secret → 403; duplicates stored once | `feat(sources): add telegram bot webhook` |
+| M6.2 | Internal connector API: messages, files, pending invites, joined; signed requests | Bad signature → 403; old timestamp rejected | `feat(sources): add internal connector endpoints` |
+| M6.3 | The WhatsApp connector process (`connectors/whatsapp/`): join by invite (or wait for admin approval), join notice, messages and files | Manual test on a test group; a restart resumes without duplicates | `feat(connectors): add whatsapp connector` |
+| M6.4 | Add-a-group API and page (invite link, suggested scope, joining an already-connected group, pending state) | Already-connected groups are not joined twice; wrong hosts refused | `feat(sources): add a group flow` |
+| M6.5 | A timetable shared in a group creates a ready import for each member without classes | Members get "Is this your timetable?"; others don't | `feat(timetable): offer group timetables to members` |
 
-## M7 — Intelligence v2: the personal feed
+## M7 — AI v2: the personal feed
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M7.1 | Extraction for every kind (opportunities, notices, `direct_request`) with importance, action, info type, topics and dates | Each kind extracted from sample messages via the fake provider | `feat(intelligence): extract all insight kinds` |
-| M7.2 | Direct mentions: names, aliases and WhatsApp numbers → `InsightMention` | Ambiguous names are not mentions | `feat(intelligence): detect direct student mentions` |
+| M7.2 | Direct mentions: among the students who added the group first, full names and nicknames | A name shared by two members is not a mention | `feat(intelligence): detect direct student mentions` |
 | M7.3 | Duplicate merging (`merge_key`, extra evidence) | A forwarded copy adds evidence, not a new insight | `feat(intelligence): merge duplicate insights` |
-| M7.4 | `Delivery`: relevance scoring, tiers and reasons | The relevance and tier matrix for student profiles × insights | `feat(intelligence): add per-student relevance and tiers` |
+| M7.4 | `Delivery`: relevance (including group membership), tiers and reasons | The relevance and tier matrix | `feat(intelligence): add per-student relevance and tiers` |
 | M7.5 | Feed API: list by tier, detail with evidence, read, dismiss, "not relevant" | Only the caller's deliveries; 404 otherwise | `feat(feed): add personal feed endpoints` |
-| M7.6 | "For you" page and insight detail page | Four tiers in order; evidence and "open original" | `feat(feed): add for you and insight pages` |
+| M7.6 | "For you" page and insight detail page; the student menu becomes For you, Timetable, Sources, Notifications, Profile | Four tiers in order; evidence and "open original"; old menu items gone | `feat(feed): add for you and insight pages` |
 
-## M8 — Notifications
+## M8 — Notifications (inside UniFlow)
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
@@ -487,27 +491,31 @@ The AI can only tell who is affected if UniFlow knows each student's courses and
 | M8.3 | Daily digest job and digest page | One digest per student per day, only if there is something new | `feat(notifications): add daily digest` |
 | M8.4 | Bell, notification list and links to the insight | 60-second polling while the tab is visible | `feat(notifications): add notification bell and list` |
 
-## M9 — Staff and admin
+## M9 — Pilot release
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M9.1 | `sources.manage` and `insights.review` capabilities; staff sources API and page (review, scope, disconnect) | School staff only see their school's sources | `feat(staff): add source management` |
-| M9.2 | Insights review API and page: correct or retract, low-confidence first; corrections saved for the evaluation set | A retraction notifies affected students | `feat(staff): add insight review` |
-| M9.3 | Official posts: `Announcement` model, manage API, publish creates the insight, staff pages | The school boundary (M2.7) applies; publish notifies by tier | `feat(announcements): add official staff posts` |
-| M9.4 | Staff users page, including "create staff account" (was M2.10) | Only super admins | `feat(staff): add user management page` |
-| M9.5 | Staff reference data pages (was M2.11) | Create, edit and deactivate | `feat(staff): add reference data pages` |
-| M9.6 | Admin AI usage page: jobs, failures, daily spend | Admins only | `feat(staff): add ai usage page` |
+| M9.1 | Home API and page: direct, action, important, today's classes, pending changes | Same visibility as the feed; 15 queries or fewer | `feat(feed): add home screen` |
+| M9.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(feed): add search` |
+| M9.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
+| M9.4 | Django admin for the operator: draft queue, publish and retract actions, source review, AI usage list | Actions do the same as the services | `feat(intelligence): add operator admin actions` |
+| M9.5 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
+| M9.6 | Deployment guide: nginx, gunicorn, `run_jobs` and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
+| M9.7 | Pilot checklist: university approval, WhatsApp number, Telegram bot, AI spend limit, the pilot intake and groups | Checklist signed off | `docs(release): add pilot checklist` |
 
-## M10 — Home, search and release
+## M10 — Staff pages (after the pilot)
+
+Built in the order the pilot shows is needed.
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M10.1 | Home API and page: direct, action, important, today's classes, pending changes | Visibility the same as the feed; 15 queries or fewer | `feat(feed): add home screen` |
-| M10.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(feed): add search` |
-| M10.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
-| M10.4 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
-| M10.5 | Deployment guide: nginx, gunicorn, `run_jobs` and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
-| M10.6 | Launch checklist: university approval, WhatsApp number, Telegram bot, AI spend limit | Checklist signed off | `docs(release): add launch checklist` |
+| M10.1 | Capabilities `sources.manage` and `insights.review`; the four unused capabilities and their staff menu items removed | `me.capabilities` and the staff menu match the new list | `refactor(accounts): update capabilities for sources and insights` |
+| M10.2 | Staff sources page (review, scope, disconnect) | School staff only see their school's sources | `feat(staff): add source management` |
+| M10.3 | Insight review page: drafts first, correct or retract | A retraction notifies affected students | `feat(staff): add insight review` |
+| M10.4 | Official post form (`origin = staff` insights) | The school boundary (M2.7) applies | `feat(staff): add official post form` |
+| M10.5 | Staff users page, including "create staff account" (was M2.10) | Only super admins | `feat(staff): add user management page` |
+| M10.6 | Staff reference data pages (was M2.11) | Create, edit and deactivate | `feat(staff): add reference data pages` |
+| M10.7 | AI usage page | Admins only | `feat(staff): add ai usage page` |
 
 ---
 
@@ -515,9 +523,9 @@ The AI can only tell who is affected if UniFlow knows each student's courses and
 
 | Area | Items |
 |---|---|
-| Notifications | Push via Expo with a `Device` model, email digests, per-tier preferences and quiet hours, deadline reminders |
+| Notifications | Push via Expo with a `Device` model (with the mobile app), email digests, per-tier preferences and quiet hours, deadline reminders |
 | Intelligence | Learning from "not relevant" feedback, "what did I miss?" summaries, attachments and images from messages (posters, PDFs), voice notes |
-| Timetable | Official import adapters (once the university's format is known), lecturer-confirmed changes for a whole section, ICS export |
+| Timetable | Adapters for the university's own timetable export, class representatives or lecturers confirming changes for a whole section, ICS export |
 | Directories | Browsable announcements, documents, events (with calendar), applications and communities |
 | Publishing | Community managers, lecturer posts to their sections, scheduled posts |
 | Platform | Anonymized self-service account deletion and data export, audit log, S3 storage, full-text search, end-to-end tests with Playwright, SSO |

@@ -9,17 +9,18 @@ All controls below are **[MVP]** unless marked otherwise.
 | Credentials | Brute force or credential stuffing | An `auth` throttle of 10/min per IP, Django password validators (minimum 10 characters), and generic 401 errors |
 | Account changes | Changing an email to bypass the domain rule, or hard-deleting accounts | Djoser's email-change and delete endpoints are restricted to super admins |
 | Suspension | A blocked user reactivates themselves | `is_suspended` is separate from `is_active` and is checked at login and on every authenticated request |
-| Tokens | Stolen tokens | The access token expires in 15 minutes. Refresh tokens rotate, and a used one stops working. Where the website stores tokens is decided in M1.9. |
+| Tokens | Stolen tokens | The access token expires in 15 minutes and lives only in memory. The refresh token is in an httpOnly cookie, rotates, and a used one stops working. |
 | CSRF | Cross-site requests | Not applicable to the API: it uses `Authorization: Bearer` headers, not cookies, so another site cannot make requests as the user. |
-| Read authorization | Seeing content aimed at another group | Every read endpoint queries through the visibility selector, and items the user cannot see return 404. There are tests for "a school A student cannot fetch a school B item". Documents are available to every logged-in user, by decision. |
+| Read authorization | Seeing information meant for others | The feed reads only the caller's own deliveries; anything not delivered to them returns 404. Timetable imports, changes and uploaded files are only visible to their owner (and files from a group only to its members). Tests check "student A cannot open student B's insight, import or file". |
 | Privilege escalation | A user changes their own role | `role`, `is_staff` and `is_suspended` are read-only everywhere except `manage/users/`, which is super admin only |
-| Mass assignment | A client sets `created_by`, `status` or `notified_at` | Serializers list their writable fields explicitly. Status changes only through `publish/` and `archive/`. |
+| Mass assignment | A client sets `created_by`, `status`, `confidence` or `notified_at` | Serializers list their writable fields explicitly. Status changes only through `publish/`, `archive/` and the confidence rule. |
 | XSS through content | Malicious Markdown | react-markdown runs with raw HTML turned off. Links get `rel="noopener noreferrer nofollow"`. Only the `http`, `https`, `mailto` and `tel` URL schemes are allowed. |
-| File upload | Malware, fake content types, path traversal | An extension allow-list, a check of the file's real contents (magic bytes), size limits, and UUID filenames. Downloads are sent with `Content-Disposition: attachment` and `nosniff`. HTML and SVG uploads are never accepted. |
-| Phishing links | Fake WhatsApp or Telegram links | The link's host must match its platform. Communities can be marked verified. |
+| File upload | Malware, fake content types, path traversal | Timetable files only (PNG, JPG, WEBP, PDF, XLSX) and chat exports (`.txt`); an extension allow-list plus a check of the real contents (magic bytes); size limits; UUID filenames; private storage. HTML and SVG are never accepted. |
+| **Fetching Google Drive links** | Using UniFlow to reach internal servers (SSRF) or download huge files | Only `drive.google.com` and `docs.google.com` over HTTPS, no redirects to other hosts, size and time limits, public files only |
+| Phishing links | Fake WhatsApp or Telegram invite links | The link's host must match its platform. Sources can be marked official by an admin. |
 | Transport and headers | Eavesdropping, clickjacking | In production: HTTPS only, HSTS, secure cookies, `X-Frame-Options: DENY`, a CSP on the frontend host, and `Referrer-Policy` |
 | CORS | Other sites calling the API with credentials | An exact `CORS_ALLOWED_ORIGINS` list |
-| Back-office | Misuse of the Django admin | Only super admins have access, at `/django-admin/`. Staff never need it. |
+| Back-office | Misuse of the Django admin | Only super admins have access, at `/django-admin/`. It is the operator's tool in the pilot, so it uses a strong password and is reachable over HTTPS only. |
 | Secrets | Leaked keys | `backend/.env` is git-ignored and only `.env.example` is committed |
 | Dependencies | Vulnerable packages | `npm audit` in CI, which needs no extra install. `pip-audit` is optional and needs approval. GitHub Dependabot alerts can be switched on in the repository settings. |
 | Webhooks | Forged Telegram updates | Check the `secret_token` header |
@@ -30,5 +31,5 @@ All controls below are **[MVP]** unless marked otherwise.
 | **Group members' privacy** | Messages from people who never signed up for UniFlow are stored and processed | Groups only (never personal chats); raw text and payload deleted after `MESSAGE_RETENTION_DAYS` (default 60), keeping only the short evidence quote; sender ids stored as hashes; a person can ask for their messages to be excluded (sender block list); only academic groups |
 | **AI provider data** | Message text is sent to an outside AI service | Use an API tier whose terms exclude training on submitted data, send only the text window needed, never send students' profile data to the model (relevance is computed locally), and record which provider is used in the privacy notice |
 | Cost abuse | Someone connects many busy groups to run up AI costs | Academic groups only, admin review of new sources, triage before the expensive model, and a daily spend limit that pauses processing |
-| Personal data | Data protection (Malaysia's PDPA 2010) | A privacy notice at registration and in every group join notice; the retention rules above; students' optional aliases and WhatsApp number are used only for mention matching. *[Later]*: data export and anonymized account deletion. |
+| Personal data | Data protection (Malaysia's PDPA 2010) | A privacy notice at registration and in every group join notice; the retention rules above; students' optional nicknames are used only for mention matching; students never give their phone number. *[Later]*: data export and anonymized account deletion. |
 | Audit *[Later]* | Nobody knows who changed something | The MVP records `created_by`, `updated_by` and timestamps. A `ContentAuditLog` of publish and archive actions comes later. |

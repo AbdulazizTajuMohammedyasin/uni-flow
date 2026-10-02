@@ -10,8 +10,8 @@ Students keep talking in WhatsApp and Telegram. UniFlow removes the need to moni
 
 ```
 UniFlow/
-├── frontend/   React + TypeScript + Vite: student area and staff dashboard (not scaffolded yet)
-├── backend/    Django + Django REST Framework API on MySQL (not scaffolded yet)
+├── frontend/   React + TypeScript + Vite: student area and staff dashboard
+├── backend/    Django + Django REST Framework API on MySQL
 ├── docs/       Architecture, API design and roadmap
 └── README.md
 ```

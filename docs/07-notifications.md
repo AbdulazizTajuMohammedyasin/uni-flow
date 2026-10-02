@@ -4,6 +4,8 @@ Notifications follow the priority tiers from [01](01-product.md#priority-tiers).
 
 ## MVP: in-app notifications from deliveries
 
+In the MVP, alerts appear **inside UniFlow only** (the bell and the notifications page). A student who is not using UniFlow sees them the next time they open it. Phone push notifications arrive with the mobile app (Later).
+
 ```
 intelligence: Delivery rows created for an insight (one per affected student, with a tier)
         │  same transaction → Job "notify" for that insight
@@ -37,7 +39,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native) | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run from `run_jobs` with retries |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run from `run_jobs` with retries |
 | Email digest | The SMTP settings (M10 release) and a per-user choice |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
