@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from .models import Intake, Programme, School
+from .models import Course, Intake, Programme, School, Term
 
 
 class SchoolSerializer(serializers.ModelSerializer):
@@ -23,6 +23,18 @@ class IntakeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Intake
         fields = ["id", "code", "name", "start_date"]
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["id", "code", "name", "school"]
+
+
+class TermSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Term
+        fields = ["id", "name", "academic_session", "number", "starts_on", "ends_on", "is_current"]
 
 
 # --- Staff area: manage the lists (/api/v1/manage/academics/) -------------------------

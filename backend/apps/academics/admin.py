@@ -1,11 +1,11 @@
 """Back-office pages (/django-admin/) for developers and super admins.
 
-Staff manage this data in the React staff dashboard later (M2.3 / M2.11).
+In the pilot this is where courses and terms are added and fixed (React pages come after the pilot).
 """
 
 from django.contrib import admin
 
-from .models import Intake, Programme, School
+from .models import Course, Intake, Programme, School, Term
 
 
 @admin.register(School)
@@ -28,3 +28,17 @@ class IntakeAdmin(admin.ModelAdmin):
     list_display = ("name", "code", "start_date", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name", "code")
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ("code", "name", "school", "is_active")
+    list_filter = ("is_active", "school")
+    search_fields = ("code", "name")
+    list_select_related = ("school",)
+
+
+@admin.register(Term)
+class TermAdmin(admin.ModelAdmin):
+    list_display = ("name", "academic_session", "number", "starts_on", "ends_on", "is_current")
+    list_filter = ("is_current", "academic_session")

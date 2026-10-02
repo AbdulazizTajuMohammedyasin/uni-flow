@@ -423,7 +423,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M3.1 | `Course` and `Term` models, read API and Django admin | Only one current term | `feat(academics): add course and term models` |
+| M3.1 ✅ | `Course` and `Term` models (one current term, kept in `save()`), read API `courses/` (`?school=`, `?search=`), `terms/`, `terms/current/`, and Django admin | Only one current term | `feat(academics): add course and term models` |
 | M3.2 | `CourseSection` (with `source`), `ClassMeeting` and `SectionEnrollment` models and Django admin | Constraints; `external_ref` unique per term | `feat(timetable): add section, meeting and enrolment models` |
 | M3.3 | `Audience` gains `courses`, `sections`, `semester_min` and `semester_max`; selectors and their test matrix extended | The two selectors still agree | `feat(audiences): add course, section and semester targeting` |
 | M3.4 | Semester worked out from the intake (`semester_override`), `interests`, `info_types`, `aliases`; `preferences/choices/` | Semester correct for each intake and date; choices validated | `feat(accounts): add semester and preferences to profile` |

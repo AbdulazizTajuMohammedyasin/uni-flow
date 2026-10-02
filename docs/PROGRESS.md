@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M0–M2 are done ✅, and the plan has been re-written and re-checked around the AI idea (docs only, no code changed).
-**Next up:** M3.1, courses and terms: so UniFlow knows which classes exist, which it needs to tell who a message affects.
+**Now:** M3.1 is done ✅. UniFlow now has **courses** (like CDE2313) and **terms** (semesters, with one marked as current).
+**Next up:** M3.2, sections and weekly classes: "CDE2313 Section A meets Monday 10:00 in B2", and which students are in which section.
 
 ---
 
@@ -17,7 +17,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
-| **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ⏭️ Next |
+| **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | 🔄 In progress |
 | **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ⏳ |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏳ |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
@@ -83,6 +83,15 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M2.7 | **Publisher rules (the school boundary):** admins manage every post; school staff only post **as** their school, **to** their school's students, and only see and edit their school's posts; lecturers manage nothing. | `pipenv run pytest apps/publishing` | ✅ Done |
 | M2.8 | **Staff dashboard frame:** the `/staff` menu shows only the sections you may manage (school staff don't see Users; super admins do). Students and lecturers get a **No access** page. Staff get a **Staff dashboard** link in the student sidebar. The section pages are still "Coming soon". | Log in as `a@gmail.com` → **Staff dashboard** link → http://localhost:5173/staff. Log in as a student and open `/staff` → **No access**. | ✅ Done |
 | M2.9 – M2.11 | *Moved.* Shared form pieces are built with the first pages that need them; the users and schools pages moved to M9 | – | ↪️ Moved |
+
+---
+
+## M3 Classes and preferences: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M3.1 | **Courses and terms.** A course is a subject (CDE2313) that belongs to a school. A term is a semester ("2025/26 Semester 1"); only one can be the current one, so ticking "current" on one un-ticks the others. The website can read them. | `pipenv run python manage.py migrate`, then `/django-admin/` → Academics → Courses / Terms. Swagger → **academics** → `courses/`, `terms/`, `terms/current/` | ✅ Done |
+| **M3.2** | **Sections and weekly classes**, and which students are in which section | – | ⏭️ **Next** |
 
 ---
 
