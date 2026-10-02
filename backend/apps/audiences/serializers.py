@@ -1,12 +1,14 @@
 """The "audience" part of a post, as sent and received by the API.
 
-Example: {"schools": [], "programmes": [], "intakes": [12], "summary": "Intake October 2024"}
-Content serializers (announcements, events, ...) use this as a nested field.
+Example: {"schools": [], "programmes": [], "intakes": [12], "courses": [], "sections": [],
+          "summary": "Intake October 2024"}
+Insight serializers use this as a nested field.
 """
 
 from rest_framework import serializers
 
-from apps.academics.models import Intake, Programme, School
+from apps.academics.models import Course, Intake, Programme, School
+from apps.timetable.models import CourseSection
 
 from .models import Audience
 
@@ -22,8 +24,14 @@ class AudienceSerializer(serializers.ModelSerializer):
     intakes = serializers.PrimaryKeyRelatedField(
         many=True, required=False, queryset=Intake.objects.filter(is_active=True)
     )
+    courses = serializers.PrimaryKeyRelatedField(
+        many=True, required=False, queryset=Course.objects.filter(is_active=True)
+    )
+    sections = serializers.PrimaryKeyRelatedField(
+        many=True, required=False, queryset=CourseSection.objects.filter(is_active=True)
+    )
     summary = serializers.CharField(read_only=True)
 
     class Meta:
         model = Audience
-        fields = ["schools", "programmes", "intakes", "summary"]
+        fields = ["schools", "programmes", "intakes", "courses", "sections", "summary"]

@@ -6,7 +6,7 @@ import pytest
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.test import APIRequestFactory
 
-from apps.academics.models import Intake, Programme, School
+from apps.academics.models import Course, Intake, Programme, School, Term
 from apps.accounts.services import create_user
 from apps.audiences.models import Audience
 from apps.publishing.policies import (
@@ -16,12 +16,32 @@ from apps.publishing.policies import (
     validate_audience,
     validate_publisher,
 )
+from apps.timetable.models import CourseSection
 
 from .models import SamplePost
 
 pytestmark = pytest.mark.django_db
 
 PASSWORD = "Str0ng-pass-99"
+
+
+def courses_and_sections(sci, sbss):
+    term = Term.objects.create(
+        name="T1",
+        academic_session="2025/26",
+        number=1,
+        starts_on=date(2025, 9, 1),
+        ends_on=date(2026, 1, 31),
+        is_current=True,
+    )
+    cde = Course.objects.create(school=sci, code="CDE2313", name="DS")
+    mgt = Course.objects.create(school=sbss, code="MGT1001", name="Management")
+    return {
+        "cde": cde,
+        "mgt": mgt,
+        "cde_a": CourseSection.objects.create(course=cde, term=term, code="A"),
+        "mgt_a": CourseSection.objects.create(course=mgt, term=term, code="A"),
+    }
 
 
 @pytest.fixture
@@ -51,6 +71,7 @@ def world():
         "oct24": Intake.objects.create(
             code="2024-OCT", name="Oct 24", start_date=date(2024, 10, 1)
         ),
+        **courses_and_sections(sci, sbss),
         "users": {
             "super_admin": staff("super_admin", "sa@aiu.edu.my"),
             "university_admin": staff("university_admin", "ua@aiu.edu.my"),
@@ -127,6 +148,10 @@ def test_university_publisher_with_a_school_is_refused(world):
         ({"schools": ["sci", "sbss"]}, False),
         ({"schools": ["sci"], "programmes": ["bba"]}, False),  # another school's programme
         ({"programmes": ["bcs"]}, False),  # school missing
+        ({"schools": ["sci"], "courses": ["cde"]}, True),
+        ({"schools": ["sci"], "sections": ["cde_a"]}, True),
+        ({"schools": ["sci"], "courses": ["mgt"]}, False),  # another school's course
+        ({"schools": ["sci"], "sections": ["mgt_a"]}, False),  # another school's section
     ],
 )
 def test_school_staff_audience_stays_in_their_school(world, audience, allowed):

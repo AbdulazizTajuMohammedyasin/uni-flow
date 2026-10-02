@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M3.2 is done ✅. UniFlow can now store **sections** (CDE2313 Section A), their **weekly classes** (Monday 10:00–12:00, B2) and **which students are in each section**.
-**Next up:** M3.3, "who is affected" by course, section and semester: so a message for "CDE2313 Section A" or "Year 2" reaches exactly those students.
+**Now:** M3.3 is done ✅. A message can now be aimed at a **course** ("everyone taking CDE2313 this term") or a **section** ("CDE2313 Section A").
+**Next up:** M3.4, the student's **semester** (worked out from their intake, so "Year 2" messages reach the right students) and their **interests**.
 
 ---
 
@@ -92,7 +92,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|---|---|
 | M3.1 | **Courses and terms.** A course is a subject (CDE2313) that belongs to a school. A term is a semester ("2025/26 Semester 1"); only one can be the current one, so ticking "current" on one un-ticks the others. The website can read them. | `pipenv run python manage.py migrate`, then `/django-admin/` → Academics → Courses / Terms. Swagger → **academics** → `courses/`, `terms/`, `terms/current/` | ✅ Done |
 | M3.2 | **Sections and weekly classes.** A section is one group of a course in one term (CDE2313 Section A). Each section has weekly classes (day, start, end, room). A student can be in a section once. Each section remembers how it was added (by the AI, a student, an admin or a file). | `pipenv run python manage.py migrate`, then `/django-admin/` → **Timetable** → Course sections (add classes at the bottom of a section) | ✅ Done |
-| **M3.3** | **"Who is affected" by course, section and semester** | – | ⏭️ **Next** |
+| M3.3 | **"Who is affected" by course and section.** A message for CDE2313 reaches students in a CDE2313 section **this term** (not last term's). A message for Section A reaches only Section A. School staff can only pick their own school's courses and sections. *Semester ("Year 2") moved to M3.4.* | `pipenv run python manage.py migrate`, then `pipenv run pytest apps/audiences` | ✅ Done |
+| **M3.4** | **Semester and interests:** the semester worked out from the intake, "Year 2" targeting, interests and information types | – | ⏭️ **Next** |
 
 ---
 

@@ -139,7 +139,7 @@ def validate_audience(user, audience)      # school_staff: audience must stay in
 For a `school_staff` user, "belongs to and targeted within" means all of the following:
 
 - **Publisher:** `publisher_type = school` and `publisher_school` is their school. They can never publish as the university or as another school.
-- **Audience:** `schools` must be exactly their own school. Their audience can never be "all students" or include another school. Any `programmes` must belong to their school. `intakes` may be added to narrow the audience further, since they are combined with the school using AND.
+- **Audience:** `schools` must be exactly their own school. Their audience can never be "all students" or include another school. Any `programmes`, `courses` and `sections` must belong to their school. `intakes` may be added to narrow the audience further, since they are combined with the school using AND.
 - **Items they can manage:** the list and detail views show only items whose `publisher_school` is their school. Other schools' items return 404.
 - **Sources and AI insights:** the same boundary, applied through `source.school` (insights through their source). Sources with no school (university-wide groups) are handled by university admins.
 - **Timetable:** the same boundary through `section.course.school`.

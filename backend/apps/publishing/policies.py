@@ -65,18 +65,18 @@ def validate_audience(user, audience: dict) -> None:
     """School staff may only target students of their own school (403 otherwise).
 
     `audience` is the checked data from AudienceSerializer, e.g.
-    {"schools": [School], "programmes": [Programme, ...], "intakes": [...]}.
+    {"schools": [School], "programmes": [Programme, ...], "intakes": [...],
+     "courses": [Course, ...], "sections": [CourseSection, ...]}.
     """
     if _is_admin(user):
         return
     school_id = _own_school_id(user)
     school_ids = [school.id for school in audience.get("schools", [])]
-    programmes = audience.get("programmes", [])
-    if (
-        not school_id
-        or school_ids != [school_id]
-        or any(programme.school_id != school_id for programme in programmes)
-    ):
+    # Programmes, courses and sections must all belong to their school too.
+    other_schools = {programme.school_id for programme in audience.get("programmes", [])}
+    other_schools |= {course.school_id for course in audience.get("courses", [])}
+    other_schools |= {section.course.school_id for section in audience.get("sections", [])}
+    if not school_id or school_ids != [school_id] or other_schools - {school_id}:
         raise PermissionDenied("You can only send posts to students of your own school.")
 
 

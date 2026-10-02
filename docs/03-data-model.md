@@ -106,10 +106,10 @@ Every insight and every staff post owns one `Audience` row through a one-to-one 
 | schools | M2M → School | **MVP** |
 | programmes | M2M → Programme | **MVP** |
 | intakes | M2M → Intake | **MVP** |
-| courses | M2M → Course | **MVP** (added with courses, M3) |
-| sections | M2M → CourseSection | **MVP** (added with sections, M3) |
+| courses | M2M → Course | **MVP** (M3.3). Matches students in a section of the course in the **current term**. |
+| sections | M2M → CourseSection | **MVP** (M3.3). Matches students in that exact section. |
 | communities | M2M → Community (followers) | *[Later]* |
-| semester_min, semester_max | smallint, null | **MVP** (added in M3): "Year 2 students" becomes semesters 3–4 |
+| semester_min, semester_max | smallint, null | **MVP** (added in M3.4, with the worked-out semester): "Year 2 students" becomes semesters 3–4 |
 
 Matching rules:
 

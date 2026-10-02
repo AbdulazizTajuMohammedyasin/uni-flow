@@ -2,9 +2,10 @@ from datetime import date
 
 import pytest
 
-from apps.academics.models import Intake, Programme, School
+from apps.academics.models import Course, Intake, Programme, School, Term
 from apps.audiences.models import Audience
 from apps.audiences.serializers import AudienceSerializer
+from apps.timetable.models import CourseSection
 
 pytestmark = pytest.mark.django_db
 
@@ -68,6 +69,8 @@ def test_serializer_saves_and_shows_an_audience(data):
         "schools": [data["computing"].id],
         "programmes": [],
         "intakes": [data["oct24"].id],
+        "courses": [],
+        "sections": [],
         "summary": "Computing · Intake October 2024",
     }
 
@@ -79,3 +82,24 @@ def test_serializer_refuses_inactive_choices(data):
     serializer = AudienceSerializer(data={"intakes": [data["oct24"].id]})
     assert not serializer.is_valid()
     assert "intakes" in serializer.errors
+
+
+def test_summary_with_courses_and_sections(data):
+    course = Course.objects.create(school=data["computing"], code="CDE2313", name="DS")
+    other = Course.objects.create(school=data["computing"], code="CDE1001", name="Intro")
+    term = Term.objects.create(
+        name="2025/26 S1",
+        academic_session="2025/26",
+        number=1,
+        starts_on=date(2025, 10, 1),
+        ends_on=date(2026, 2, 28),
+    )
+    section = CourseSection.objects.create(course=course, term=term, code="A")
+
+    item = Audience.objects.create()
+    item.courses.set([course, other])
+    assert item.summary() == "CDE1001 or CDE2313"
+
+    item.courses.set([])
+    item.sections.set([section])
+    assert item.summary() == "CDE2313 Section A"

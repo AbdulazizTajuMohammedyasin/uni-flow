@@ -5,10 +5,11 @@ from datetime import date
 import pytest
 from django.contrib.auth.models import AnonymousUser
 
-from apps.academics.models import Intake, Programme, School
+from apps.academics.models import Course, Intake, Programme, School, Term
 from apps.accounts.services import create_user
 from apps.audiences.models import Audience
 from apps.audiences.selectors import students_matching, visible_audience_q
+from apps.timetable.models import CourseSection, SectionEnrollment
 
 pytestmark = pytest.mark.django_db
 
@@ -47,14 +48,44 @@ def world():
         "new": student("new"),  # hasn't done onboarding
         "half": student("half", "sci"),  # chose a school only (incomplete)
     }
+
+    # Courses and sections: this term, plus one section from last term.
+    def term(number, starts, current):
+        return Term.objects.create(
+            name=f"T{number}",
+            academic_session="2025/26",
+            number=number,
+            starts_on=starts,
+            ends_on=date(starts.year, starts.month + 3, 1),
+            is_current=current,
+        )
+
+    last, now = term(1, date(2025, 3, 1), False), term(2, date(2025, 9, 1), True)
+    items["cde"] = Course.objects.create(school=sci, code="CDE2313", name="DS")
+    items["mgt"] = Course.objects.create(school=sbss, code="MGT1001", name="Management")
+    items["cde_a"] = CourseSection.objects.create(course=items["cde"], term=now, code="A")
+    items["cde_b"] = CourseSection.objects.create(course=items["cde"], term=now, code="B")
+    items["cde_old"] = CourseSection.objects.create(course=items["cde"], term=last, code="A")
+    items["mgt_a"] = CourseSection.objects.create(course=items["mgt"], term=now, code="A")
+    students = items["students"]
+    for name, section in [
+        ("ali", "cde_a"),
+        ("sara", "cde_b"),
+        ("omar", "mgt_a"),
+        ("omar", "cde_old"),  # took CDE2313 last term, not now
+        ("half", "cde_a"),  # incomplete profile: still only "all students"
+    ]:
+        SectionEnrollment.objects.create(user=students[name], section=items[section])
     return items
 
 
-def make_audience(world, schools=(), programmes=(), intakes=()):
+def make_audience(world, schools=(), programmes=(), intakes=(), courses=(), sections=()):
     audience = Audience.objects.create()
     audience.schools.set([world[k] for k in schools])
     audience.programmes.set([world[k] for k in programmes])
     audience.intakes.set([world[k] for k in intakes])
+    audience.courses.set([world[k] for k in courses])
+    audience.sections.set([world[k] for k in sections])
     return audience
 
 
@@ -85,6 +116,17 @@ CASES = [
     ((("sci",), ("bba",), ()), set()),  # programme outside the school: nobody
     ((("sci", "sbss"), ("bcs", "bba"), ("oct24",)), {"ali", "omar"}),
     ((("sci",), ("bcs", "bit"), ("oct24", "mar25")), {"ali", "sara"}),
+    # (schools, programmes, intakes, courses, sections)
+    (((), (), (), ("cde",), ()), {"ali", "sara"}),  # not omar: that was last term
+    (((), (), (), ("mgt",), ()), {"omar"}),
+    (((), (), (), ("cde", "mgt"), ()), {"ali", "sara", "omar"}),
+    (((), (), (), (), ("cde_a",)), {"ali"}),
+    (((), (), (), (), ("cde_a", "cde_b")), {"ali", "sara"}),
+    (((), (), (), (), ("cde_old",)), {"omar"}),  # an exact section counts in any term
+    ((("sci",), (), (), ("cde",), ()), {"ali", "sara"}),
+    (((), (), ("oct24",), ("cde",), ()), {"ali"}),
+    (((), ("bit",), (), (), ("cde_a",)), set()),
+    ((("sbss",), (), (), ("cde",), ()), set()),
 ]
 
 
@@ -132,3 +174,12 @@ def test_no_duplicate_rows(world):
     visible = Audience.objects.filter(visible_audience_q(ali, via="pk"))
     assert visible.count() == 2
     assert students_matching(many[0]).count() == 3  # ali, sara, omar once each
+
+
+def test_two_sections_of_one_course_count_once(world):
+    ali = world["students"]["ali"]
+    SectionEnrollment.objects.create(user=ali, section=world["cde_b"])
+    audience = make_audience(world, courses=("cde",))
+
+    assert list(students_matching(audience)).count(ali) == 1
+    assert Audience.objects.filter(visible_audience_q(ali, via="pk")).count() == 1
