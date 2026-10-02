@@ -6,10 +6,14 @@ Each insight or post owns one Audience row.
 - Between fields: AND ("Computing and the October 2024 intake").
 - Courses match students in a section of that course in the *current* term;
   sections match the students in that exact section.
+- semester_min / semester_max: "Year 2" = semesters 4-6 (three semesters a year, worked
+  out from the intake, see apps/accounts/semesters.py). Either can be empty for "no limit".
+
 Checking which students match is in selectors.py.
 """
 
 from django.db import models
+from django.db.models import F, Q
 
 from apps.academics.models import Course, Intake, Programme, School
 from apps.timetable.models import CourseSection
@@ -22,6 +26,20 @@ class Audience(TimeStampedModel):
     intakes = models.ManyToManyField(Intake, blank=True, related_name="+")
     courses = models.ManyToManyField(Course, blank=True, related_name="+")
     sections = models.ManyToManyField(CourseSection, blank=True, related_name="+")
+    semester_min = models.PositiveSmallIntegerField(null=True, blank=True)
+    semester_max = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(semester_min__isnull=True)
+                    | Q(semester_max__isnull=True)
+                    | Q(semester_max__gte=F("semester_min"))
+                ),
+                name="audiences_semester_range",
+            )
+        ]
 
     def __str__(self) -> str:
         return self.summary()
@@ -47,4 +65,16 @@ class Audience(TimeStampedModel):
             parts.append(" or ".join(courses))
         if sections:
             parts.append(" or ".join(sections))
+        if semesters := self.semester_text():
+            parts.append(semesters)
         return " · ".join(parts) or "All students"
+
+    def semester_text(self) -> str:
+        low, high = self.semester_min, self.semester_max
+        if low and high:
+            return f"Semester {low}" if low == high else f"Semesters {low}–{high}"
+        if low:
+            return f"Semester {low} and above"
+        if high:
+            return f"Up to semester {high}"
+        return ""

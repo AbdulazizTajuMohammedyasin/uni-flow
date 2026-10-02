@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M3.3 is done ✅. A message can now be aimed at a **course** ("everyone taking CDE2313 this term") or a **section** ("CDE2313 Section A").
-**Next up:** M3.4, the student's **semester** (worked out from their intake, so "Year 2" messages reach the right students) and their **interests**.
+**Now:** M3.4 is done ✅. UniFlow knows each student's **semester** (worked out from their intake) and their **interests** and **information types**; a message can be aimed at "Year 2" (semesters 4–6).
+**Next up:** M3.5, the student API for sections: list the sections, "my sections", and add a missing class by hand.
 
 ---
 
@@ -93,7 +93,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M3.1 | **Courses and terms.** A course is a subject (CDE2313) that belongs to a school. A term is a semester ("2025/26 Semester 1"); only one can be the current one, so ticking "current" on one un-ticks the others. The website can read them. | `pipenv run python manage.py migrate`, then `/django-admin/` → Academics → Courses / Terms. Swagger → **academics** → `courses/`, `terms/`, `terms/current/` | ✅ Done |
 | M3.2 | **Sections and weekly classes.** A section is one group of a course in one term (CDE2313 Section A). Each section has weekly classes (day, start, end, room). A student can be in a section once. Each section remembers how it was added (by the AI, a student, an admin or a file). | `pipenv run python manage.py migrate`, then `/django-admin/` → **Timetable** → Course sections (add classes at the bottom of a section) | ✅ Done |
 | M3.3 | **"Who is affected" by course and section.** A message for CDE2313 reaches students in a CDE2313 section **this term** (not last term's). A message for Section A reaches only Section A. School staff can only pick their own school's courses and sections. *Semester ("Year 2") moved to M3.4.* | `pipenv run python manage.py migrate`, then `pipenv run pytest apps/audiences` | ✅ Done |
-| **M3.4** | **Semester and interests:** the semester worked out from the intake, "Year 2" targeting, interests and information types | – | ⏭️ **Next** |
+| M3.4 | **Semester and interests.** The semester is worked out by **counting AIU's real terms** since the student's intake (three a year; the dates change every year, so they come from the official academic calendar, not fixed dates). An October 2025 intake is in Semester 1 from 27 Oct 2025, 2 from 23 Mar 2026 and 3 from 3 Aug 2026. Foundation students count AIU's **Foundation** terms instead. The official 2024/2025 and 2025/2026 terms of both calendars are loaded by the seed command; new terms are added in the Django admin. A student can set it by hand if that's wrong. Messages can target semesters ("Year 2" = 4–6). Students can save interests (AI, Cybersecurity, …), information types (internships, bootcamps, …) and nicknames. | `pipenv run python manage.py migrate`, then `pipenv run python manage.py seed_academics` (loads the terms) and tick the current term of each calendar in `/django-admin/` → Terms; Swagger → **auth** → `users/me/` and `preferences/choices/` | ✅ Done |
+| **M3.5** | **Sections for students:** list sections, "my sections", add a missing class by hand | – | ⏭️ **Next** |
 
 ---
 
@@ -151,6 +152,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **The normal timetable comes from the groups too:** the AI reads timetable images, PDFs and Google Drive links, and the student confirms before anything is saved.
 - **Alerts stay inside UniFlow** for now; the mobile app will add phone notifications.
 - **Fewer backend apps:** from now on a new app only when it's really needed. The groups, messages, AI and feed will be **one app** (`intelligence`) and alerts a second (`notifications`). Existing apps stay as they are.
+- **Intakes are March and October** (the website only mentions October, but March is real).
+- **Two term calendars:** Foundation students follow AIU's Foundation calendar (e.g. 13 Oct, 9 Feb, 8 Jun), everyone else the Undergraduate one (e.g. 27 Oct, 23 Mar, 3 Aug). Each has its own current term.
 - **No phone numbers:** students just add their groups in the app and UniFlow's number joins them. Registering with the student email is the only verification.
 - **Start small:** a pilot with a few real students, using the Django admin page to check things, before building staff pages.
 

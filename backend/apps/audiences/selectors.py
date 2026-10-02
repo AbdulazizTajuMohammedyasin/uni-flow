@@ -6,6 +6,8 @@
 
 from django.db.models import Exists, OuterRef, Q, QuerySet
 
+from apps.academics.models import Programme, Term
+from apps.accounts import semesters
 from apps.accounts.models import User, UserRole
 from apps.timetable.models import SectionEnrollment
 
@@ -64,6 +66,19 @@ def visible_audience_q(user, via: str = "audience") -> Q:
             # e.g. "this post's school list contains the student's school"
             matches = links.filter(**{f"{column}__in": values[field]})
             visible &= chosen_nothing | Exists(matches)
+
+    # Semester range: the post's own fields (prefixed when filtering posts, not audiences).
+    p = "" if via == "pk" else f"{via}__"
+    if values is None:
+        visible &= Q(**{f"{p}semester_min__isnull": True, f"{p}semester_max__isnull": True})
+    else:
+        semester = user.student_profile.current_semester
+        visible &= Q(**{f"{p}semester_min__isnull": True}) | Q(
+            **{f"{p}semester_min__lte": semester}
+        )
+        visible &= Q(**{f"{p}semester_max__isnull": True}) | Q(
+            **{f"{p}semester_max__gte": semester}
+        )
     return visible
 
 
@@ -76,13 +91,43 @@ def _students_with(field: str, ids: list[int]) -> Q:
     return Q(Exists(SectionEnrollment.objects.filter(user=OuterRef("pk"), section_id__in=ids)))
 
 
+def _students_in_semesters(low: int | None, high: int | None) -> Q:
+    """Students whose semester is within low..high (either may be None for no limit).
+
+    Without an override the semester comes from the intake date and the student's calendar
+    (Foundation or Undergraduate), so the range is turned into a range of intake start
+    dates per calendar (no per-student calculation needed).
+    """
+    is_foundation = Q(student_profile__programme__level=Programme.Level.FOUNDATION)
+    by_intake = Q()
+    for calendar, in_calendar in [
+        (Term.Calendar.FOUNDATION, is_foundation),
+        (Term.Calendar.UNDERGRADUATE, ~is_foundation),
+    ]:
+        earliest, latest = semesters.intake_start_range(low, high, semesters.today(), calendar)
+        dates = Q()
+        if earliest:
+            dates &= Q(student_profile__intake__start_date__gte=earliest)
+        if latest:
+            dates &= Q(student_profile__intake__start_date__lte=latest)
+        by_intake |= in_calendar & dates
+    by_intake &= Q(student_profile__semester_override__isnull=True)
+    by_override = Q(student_profile__semester_override__isnull=False)
+    if low:
+        by_override &= Q(student_profile__semester_override__gte=low)
+    if high:
+        by_override &= Q(student_profile__semester_override__lte=high)
+    return by_intake | by_override
+
+
 def students_matching(audience: Audience) -> QuerySet[User]:
     """The active students that `audience` covers."""
     students = User.objects.filter(role=UserRole.STUDENT, is_active=True, is_suspended=False)
     chosen = {
         field: list(getattr(audience, field).values_list("id", flat=True)) for field in LINK_COLUMNS
     }
-    if not any(chosen.values()):
+    has_semesters = audience.semester_min is not None or audience.semester_max is not None
+    if not any(chosen.values()) and not has_semesters:
         return students  # all students
 
     # A narrowed audience only reaches students who finished their profile.
@@ -94,4 +139,8 @@ def students_matching(audience: Audience) -> QuerySet[User]:
     for field, ids in chosen.items():
         if ids:
             students = students.filter(_students_with(field, ids))
+    if has_semesters:
+        students = students.filter(
+            _students_in_semesters(audience.semester_min, audience.semester_max)
+        )
     return students

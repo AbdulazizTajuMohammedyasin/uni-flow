@@ -4,6 +4,7 @@ from django.db import models
 
 from core.models import TimeStampedModel
 
+from . import semesters
 from .managers import UserManager, normalize_email_address
 
 
@@ -13,6 +14,33 @@ class UserRole(models.TextChoices):
     SCHOOL_STAFF = "school_staff", "School staff"
     UNIVERSITY_ADMIN = "university_admin", "University admin"
     SUPER_ADMIN = "super_admin", "Super admin"
+
+
+class Interest(models.TextChoices):
+    """Subjects a student is interested in (used to rank opportunities and events)."""
+
+    AI = "ai", "Artificial Intelligence"
+    DATA_SCIENCE = "data_science", "Data Science"
+    SOFTWARE_ENGINEERING = "software_engineering", "Software Engineering"
+    CYBERSECURITY = "cybersecurity", "Cybersecurity"
+    NETWORKING = "networking", "Networking"
+    BUSINESS = "business", "Business"
+    FINANCE = "finance", "Finance"
+    EDUCATION = "education", "Education"
+    PSYCHOLOGY = "psychology", "Psychology"
+    ENTREPRENEURSHIP = "entrepreneurship", "Entrepreneurship"
+
+
+class InfoType(models.TextChoices):
+    """Kinds of information a student wants to receive. None chosen means "all"."""
+
+    INTERNSHIP = "internship", "Internships"
+    BOOTCAMP = "bootcamp", "Bootcamps"
+    INDUSTRY_VISIT = "industry_visit", "Industry visits"
+    COMPETITION = "competition", "Competitions"
+    SCHOLARSHIP = "scholarship", "Scholarships"
+    ACADEMIC_NOTICE = "academic_notice", "Academic notices"
+    STUDENT_AFFAIRS = "student_affairs", "Student affairs updates"
 
 
 class User(AbstractUser):
@@ -93,9 +121,30 @@ class StudentProfile(TimeStampedModel):
         "academics.Programme", on_delete=models.PROTECT, null=True, blank=True
     )
     intake = models.ForeignKey("academics.Intake", on_delete=models.PROTECT, null=True, blank=True)
+    # Normally empty: the semester is worked out from the intake (see semesters.py).
+    semester_override = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Set only if the worked-out semester is wrong."
+    )
+    interests = models.JSONField(default=list, blank=True, help_text="Interest values.")
+    info_types = models.JSONField(
+        default=list, blank=True, help_text="InfoType values. Empty means all."
+    )
+    aliases = models.CharField(
+        max_length=200, blank=True, help_text="Nicknames, comma-separated (for name mentions)."
+    )
 
     def __str__(self) -> str:
         return f"Student profile of {self.user}"
+
+    @property
+    def current_semester(self) -> int | None:
+        """The override if set, otherwise worked out from the intake (None without one)."""
+        if self.semester_override:
+            return self.semester_override
+        if self.intake_id is None:
+            return None
+        calendar = semesters.calendar_for(self.programme)
+        return semesters.semester_for(self.intake.start_date, semesters.today(), calendar)
 
     def clean(self):
         super().clean()

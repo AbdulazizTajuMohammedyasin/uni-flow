@@ -66,6 +66,11 @@ def test_new_student_sees_their_details_and_an_incomplete_profile(student):
             "school": None,
             "programme": None,
             "intake": None,
+            "current_semester": None,
+            "semester_override": None,
+            "interests": [],
+            "info_types": [],
+            "aliases": "",
         },
         "staff_profile": None,
         "capabilities": {

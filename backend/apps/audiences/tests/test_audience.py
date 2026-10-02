@@ -71,6 +71,8 @@ def test_serializer_saves_and_shows_an_audience(data):
         "intakes": [data["oct24"].id],
         "courses": [],
         "sections": [],
+        "semester_min": None,
+        "semester_max": None,
         "summary": "Computing · Intake October 2024",
     }
 

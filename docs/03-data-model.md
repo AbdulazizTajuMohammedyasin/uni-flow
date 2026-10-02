@@ -69,8 +69,8 @@ erDiagram
 | school | FK → School, null, PROTECT | Chosen during onboarding |
 | programme | FK → Programme, null, PROTECT | Must belong to the chosen school |
 | intake | FK → Intake, null, PROTECT | |
-| semester_override | smallint, null | Normally null: the semester is **worked out** from the intake's start date and today (`StudentProfile.current_semester`), so it never goes stale. A student can override it (for example after a deferral). Used for targeting ("Year 2"). |
-| interests | JSON list of `Interest` choices | For example `["ai", "data_science"]`. Choices: `ai`, `data_science`, `software_engineering`, `cybersecurity`, `networking`, `business`, `education`, … (a `TextChoices` list, extended as needed) |
+| semester_override | smallint (1–15), null | Normally null: the semester is **worked out** from the intake's start date and today (`StudentProfile.current_semester`): the number of **terms** (from the `Term` table) that have started since the intake, at least 1 (`accounts/semesters.py`). AIU has three semesters a year whose dates change every year (Semester 1 started 28 Oct 2024 and 27 Oct 2025), so real term dates are used, never fixed months. AIU publishes **two calendars**: Foundation students (programme level `foundation`) count Foundation terms, everyone else Undergraduate terms. `seed_academics` loads the official terms of both calendars for 2024/2025 and 2025/2026; each new term is added in the Django admin. A student moving from Foundation to a degree updates their programme and intake to the degree's start. A student can override it (for example after a deferral). Used for targeting ("Year 2"). |
+| interests | JSON list of `Interest` choices | For example `["ai", "data_science"]`. Choices: `ai`, `data_science`, `software_engineering`, `cybersecurity`, `networking`, `business`, `finance`, `education`, `psychology`, `entrepreneurship` (a `TextChoices` list, extended as needed) |
 | info_types | JSON list of `InfoType` choices | Which kinds of information the student wants: `internship`, `bootcamp`, `industry_visit`, `competition`, `scholarship`, `academic_notice`, `student_affairs`. Empty means "all". |
 | aliases | varchar(200), blank | Comma-separated nicknames, used only for direct-mention matching |
 
@@ -86,9 +86,9 @@ erDiagram
 |---|---|---|---|
 | `School` | code, name, is_active | `code` is unique | M1 |
 | `Programme` | school FK, code, name, level (foundation, diploma, bachelor, master, phd), is_active | `code` is unique | M1 |
-| `Intake` | code (for example `2024-SEP`), name, start_date, is_active | `code` is unique | M1 |
+| `Intake` | code (for example `2025-MAR`), name, start_date, is_active | `code` is unique. AIU has **March and October** intakes (confirmed by the developer; the website only mentions October). | M1 |
 | `Course` | school FK, code, name, is_active | `code` is unique | M3 |
-| `Term` | name ("2025/26 Semester 1"), academic_session, number, starts_on, ends_on, is_current | `unique(academic_session, number)`, `ends_on > starts_on`, and only one row can be current (enforced in `save()` inside a transaction) | M3 |
+| `Term` | calendar (`undergraduate` or `foundation`), name ("2025/2026 Semester 1"; the official terms are loaded by `seed_academics`), academic_session, number, starts_on, ends_on, is_current | `unique(calendar, academic_session, number)`, `ends_on > starts_on`, and only one current term **per calendar** (enforced in `save()` inside a transaction) | M3 |
 
 > **Terminology (confirmed):**
 > - **Programme:** the student's degree or programme of study, for example Bachelor of Computer Science.
@@ -109,7 +109,7 @@ Every insight and every staff post owns one `Audience` row through a one-to-one 
 | courses | M2M → Course | **MVP** (M3.3). Matches students in a section of the course in the **current term**. |
 | sections | M2M → CourseSection | **MVP** (M3.3). Matches students in that exact section. |
 | communities | M2M → Community (followers) | *[Later]* |
-| semester_min, semester_max | smallint, null | **MVP** (added in M3.4, with the worked-out semester): "Year 2 students" becomes semesters 3–4 |
+| semester_min, semester_max | smallint, null | **MVP** (added in M3.4, with the worked-out semester): "Year 2 students" becomes semesters 4–6 (three semesters a year) |
 
 Matching rules:
 

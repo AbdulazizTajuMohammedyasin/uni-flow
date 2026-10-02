@@ -9,7 +9,7 @@ from apps.academics.models import Intake, Programme, School
 
 from .capabilities import capabilities_for, publishers_for
 from .managers import normalize_email_address
-from .models import StaffProfile, StudentProfile, User, UserRole
+from .models import InfoType, Interest, StaffProfile, StudentProfile, User, UserRole
 from .services import STAFF_ROLES, create_staff_user, create_user, update_staff_details
 
 
@@ -48,10 +48,37 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     intake = serializers.PrimaryKeyRelatedField(
         queryset=Intake.objects.filter(is_active=True), allow_null=True, required=False
     )
+    # Worked out from the intake unless the student sets semester_override.
+    current_semester = serializers.IntegerField(read_only=True)
+    semester_override = serializers.IntegerField(
+        min_value=1, max_value=15, allow_null=True, required=False
+    )
+    interests = serializers.ListField(
+        child=serializers.ChoiceField(choices=Interest.choices), required=False
+    )
+    info_types = serializers.ListField(
+        child=serializers.ChoiceField(choices=InfoType.choices), required=False
+    )
 
     class Meta:
         model = StudentProfile
-        fields = ["student_number", "school", "programme", "intake"]
+        fields = [
+            "student_number",
+            "school",
+            "programme",
+            "intake",
+            "current_semester",
+            "semester_override",
+            "interests",
+            "info_types",
+            "aliases",
+        ]
+
+    def validate_interests(self, value):
+        return list(dict.fromkeys(value))  # drop repeats, keep order
+
+    def validate_info_types(self, value):
+        return list(dict.fromkeys(value))
 
     def validate(self, attrs):
         # Combine the new values with the current ones (PATCH may send only some fields).

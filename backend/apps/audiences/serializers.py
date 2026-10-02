@@ -30,8 +30,31 @@ class AudienceSerializer(serializers.ModelSerializer):
     sections = serializers.PrimaryKeyRelatedField(
         many=True, required=False, queryset=CourseSection.objects.filter(is_active=True)
     )
+    semester_min = serializers.IntegerField(
+        min_value=1, max_value=15, allow_null=True, required=False
+    )
+    semester_max = serializers.IntegerField(
+        min_value=1, max_value=15, allow_null=True, required=False
+    )
     summary = serializers.CharField(read_only=True)
 
     class Meta:
         model = Audience
-        fields = ["schools", "programmes", "intakes", "courses", "sections", "summary"]
+        fields = [
+            "schools",
+            "programmes",
+            "intakes",
+            "courses",
+            "sections",
+            "semester_min",
+            "semester_max",
+            "summary",
+        ]
+
+    def validate(self, attrs):
+        low, high = attrs.get("semester_min"), attrs.get("semester_max")
+        if low and high and high < low:
+            raise serializers.ValidationError(
+                {"semester_max": "Must be the same as or after the first semester."}
+            )
+        return attrs
