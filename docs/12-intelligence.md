@@ -16,7 +16,7 @@ This keeps the system explainable, testable, cheap and safe: a strange or malici
 ```
  Source (WhatsApp group, Telegram group/channel, staff post, pasted text)
    │
- 1 Receive      Message row (raw text, sender, time, reply-to)                  apps/sources
+ 1 Receive      Message row (raw text, sender, time, reply-to)                  apps/intelligence
    │            → job "triage" queued
  2 Triage       cheap model: academic information or noise?                   apps/intelligence
    │            noise → message marked, nothing else

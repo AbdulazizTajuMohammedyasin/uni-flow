@@ -45,7 +45,7 @@ UniFlow/
 
 | # | Decision |
 |---|---|
-| D1 | A modular Django monolith. Each app is split into selectors (reads), services (writes) and policies (permissions). |
+| D1 | A modular Django monolith with **few apps**: a new app only when separation is genuinely good practice. Each app is split into selectors (reads), services (writes) and policies (permissions). The AI pipeline (groups, messages, insights, feed) is one app, `intelligence`; alerts are `notifications`. |
 | D2 | One versioned API at `/api/v1/` for web now and mobile later. It has two surfaces: **read** (`/api/v1/<resource>/`) and **manage** (`/api/v1/manage/<resource>/`). |
 | D3 | **In the pilot, the Django admin (`/django-admin/`) is the operator's tool** for sources, AI drafts, corrections, timetable data and official posts. React staff pages (`/staff`) are built after the pilot (M10). |
 | D4 | **The frontend is not a security boundary.** Roles map to *capabilities*, and a school scope limits what each user can manage. The same functions drive both the API's permission checks and the `me.capabilities` field that the UI uses to hide actions. |

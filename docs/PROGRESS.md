@@ -149,6 +149,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).
 - **The normal timetable comes from the groups too:** the AI reads timetable images, PDFs and Google Drive links, and the student confirms before anything is saved.
 - **Alerts stay inside UniFlow** for now; the mobile app will add phone notifications.
+- **Fewer backend apps:** from now on a new app only when it's really needed. The groups, messages, AI and feed will be **one app** (`intelligence`) and alerts a second (`notifications`). Existing apps stay as they are.
 - **No phone numbers:** students just add their groups in the app and UniFlow's number joins them. Registering with the student email is the only verification.
 - **Start small:** a pilot with a few real students, using the Django admin page to check things, before building staff pages.
 

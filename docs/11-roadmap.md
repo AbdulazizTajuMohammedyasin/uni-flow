@@ -437,11 +437,11 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M4.1 | `core.Job` model and `manage.py run_jobs` (claim with `SKIP LOCKED`, retries, daily scheduling); jobs run inline in tests | Two runners never take the same job; a failed job retries then stops | `feat(core): add database job runner` |
-| M4.2 | `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(sources): add source and message models` |
-| M4.3 | Paste messages into a source and WhatsApp chat-export parsing | Multi-line messages and dates parsed; re-upload stores nothing twice | `feat(sources): add message paste and chat export import` |
-| M4.4 | `MessageFile`: timetable uploads (image, PDF, XLSX) with `filetype` checks (**needs approval**), private storage, and safe Google Drive link fetching | Fake types and other hosts refused; private files only for their owner | `feat(sources): add message files and drive links` |
-| M4.5 | Retention job: clear raw text and files after `MESSAGE_RETENTION_DAYS` | Old text and files cleared; evidence quotes kept | `feat(sources): add message retention` |
-| M4.6 | Sources page: my sources, create a manual source, paste, upload export | Upload progress; errors shown | `feat(sources): add sources page` |
+| M4.2 | `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(intelligence): add source and message models` |
+| M4.3 | Paste messages into a source and WhatsApp chat-export parsing | Multi-line messages and dates parsed; re-upload stores nothing twice | `feat(intelligence): add message paste and chat export import` |
+| M4.4 | `MessageFile`: timetable uploads (image, PDF, XLSX) with `filetype` checks (**needs approval**), private storage, and safe Google Drive link fetching | Fake types and other hosts refused; private files only for their owner | `feat(intelligence): add message files and drive links` |
+| M4.5 | Retention job: clear raw text and files after `MESSAGE_RETENTION_DAYS` | Old text and files cleared; evidence quotes kept | `feat(intelligence): add message retention` |
+| M4.6 | Sources page: my sources, create a manual source, paste, upload export | Upload progress; errors shown | `feat(intelligence): add sources page` |
 
 ## M5 — AI v1: timetables (the proof slice)
 
@@ -465,10 +465,10 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M6.1 | Telegram webhook: group and channel messages and their files; `setWebhook` command | Wrong secret → 403; duplicates stored once | `feat(sources): add telegram bot webhook` |
-| M6.2 | Internal connector API: messages, files, pending invites, joined; signed requests | Bad signature → 403; old timestamp rejected | `feat(sources): add internal connector endpoints` |
+| M6.1 | Telegram webhook: group and channel messages and their files; `setWebhook` command | Wrong secret → 403; duplicates stored once | `feat(intelligence): add telegram bot webhook` |
+| M6.2 | Internal connector API: messages, files, pending invites, joined; signed requests | Bad signature → 403; old timestamp rejected | `feat(intelligence): add internal connector endpoints` |
 | M6.3 | The WhatsApp connector process (`connectors/whatsapp/`): join by invite (or wait for admin approval), join notice, messages and files | Manual test on a test group; a restart resumes without duplicates | `feat(connectors): add whatsapp connector` |
-| M6.4 | Add-a-group API and page (invite link, suggested scope, joining an already-connected group, pending state) | Already-connected groups are not joined twice; wrong hosts refused | `feat(sources): add a group flow` |
+| M6.4 | Add-a-group API and page (invite link, suggested scope, joining an already-connected group, pending state) | Already-connected groups are not joined twice; wrong hosts refused | `feat(intelligence): add a group flow` |
 | M6.5 | A timetable shared in a group creates a ready import for each member without classes | Members get "Is this your timetable?"; others don't | `feat(timetable): offer group timetables to members` |
 
 ## M7 — AI v2: the personal feed
@@ -479,8 +479,8 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | M7.2 | Direct mentions: among the students who added the group first, full names and nicknames | A name shared by two members is not a mention | `feat(intelligence): detect direct student mentions` |
 | M7.3 | Duplicate merging (`merge_key`, extra evidence) | A forwarded copy adds evidence, not a new insight | `feat(intelligence): merge duplicate insights` |
 | M7.4 | `Delivery`: relevance (including group membership), tiers and reasons | The relevance and tier matrix | `feat(intelligence): add per-student relevance and tiers` |
-| M7.5 | Feed API: list by tier, detail with evidence, read, dismiss, "not relevant" | Only the caller's deliveries; 404 otherwise | `feat(feed): add personal feed endpoints` |
-| M7.6 | "For you" page and insight detail page; the student menu becomes For you, Timetable, Sources, Notifications, Profile | Four tiers in order; evidence and "open original"; old menu items gone | `feat(feed): add for you and insight pages` |
+| M7.5 | Feed API: list by tier, detail with evidence, read, dismiss, "not relevant" | Only the caller's deliveries; 404 otherwise | `feat(intelligence): add personal feed endpoints` |
+| M7.6 | "For you" page and insight detail page; the student menu becomes For you, Timetable, Sources, Notifications, Profile | Four tiers in order; evidence and "open original"; old menu items gone | `feat(intelligence): add for you and insight pages` |
 
 ## M8 — Notifications (inside UniFlow)
 
@@ -495,8 +495,8 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M9.1 | Home API and page: direct, action, important, today's classes, pending changes | Same visibility as the feed; 15 queries or fewer | `feat(feed): add home screen` |
-| M9.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(feed): add search` |
+| M9.1 | Home API and page: direct, action, important, today's classes, pending changes | Same visibility as the feed; 15 queries or fewer | `feat(intelligence): add home screen` |
+| M9.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(intelligence): add search` |
 | M9.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
 | M9.4 | Django admin for the operator: draft queue, publish and retract actions, source review, AI usage list | Actions do the same as the services | `feat(intelligence): add operator admin actions` |
 | M9.5 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |

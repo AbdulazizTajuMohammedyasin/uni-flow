@@ -33,7 +33,7 @@ These are the key principles:
 2. **The AI reads and proposes; code decides and acts.** Model calls happen in one module (`apps/intelligence/providers.py`). Their output is validated like user input and can only create insights and proposals. See [12](12-intelligence.md).
 3. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
 4. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
-5. **A modular monolith.** There is one Django project and one app per feature.
+5. **A modular monolith with few apps.** There is one Django project. A new app is created only when separation is genuinely good practice (like `accounts`); related features share an app. The AI pipeline is one app (`intelligence`), with alerts in `notifications`.
 6. **Background work without extra infrastructure.** AI calls are slow and can fail, so they never run inside a web request. They run as rows in a MySQL `Job` table, processed by one long-running management command (see [Background jobs](#background-jobs)). There is still **no Redis, Celery or message broker**.
 7. **Connectors are thin and replaceable.** The WhatsApp connector is a separate small process that only forwards messages; the Telegram bot is a webhook. Neither contains any understanding logic. See [08](08-messaging-integrations.md).
 8. **The Django admin is the operator's tool in the pilot.** It is used by the developer (super admin) to review new sources, check AI drafts, correct or retract insights, fix timetable data and create official staff posts. React staff pages are built after the pilot. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
@@ -120,10 +120,10 @@ backend/
     ├── audiences/      [MVP]   Audience + visibility selectors ("who is affected")
     ├── publishing/     [MVP]   PublishableModel base, publisher policy, publish/archive services
     ├── timetable/      [MVP]   CourseSection, ClassMeeting, SectionEnrollment, TimetableImport, ClassChange, confirmations
-    ├── sources/        [MVP]   Source, SourceMember, Message, MessageFile; Telegram webhook, internal endpoint, paste/export, Drive links
-    ├── intelligence/   [MVP]   providers.py (AI), triage, extraction, timetable reading, resolve, merge, Insight (incl. staff posts), Delivery
+    ├── intelligence/   [MVP]   sources (groups), SourceMember, Message, MessageFile; Telegram webhook, internal
+    │                           endpoint, paste/export, Drive links; providers.py (AI), triage, extraction, timetable
+    │                           reading, resolve, merge, Insight (incl. staff posts), Delivery; the student feed and search
     ├── notifications/  [MVP]   Notification, immediate alerts, daily digest  (Device [Later])
-    ├── feed/           [MVP]   no models — the student's personal feed and search over deliveries
     ├── documents/      [Later]
     ├── events/         [Later] browsable event list and calendar
     ├── communities/    [Later] browsable community directory
@@ -135,19 +135,17 @@ connectors/                    # outside backend/ (not Django)
 
 ### Allowed dependencies between apps
 
-An app may only import from the apps listed below it. Cycles are not allowed.
+An app may only import from the apps listed above it (each line shows what it uses). Cycles are not allowed.
 
 ```
 core
 academics            → core
 accounts             → core, academics
+timetable            → core, academics, accounts   (audiences imports timetable, so timetable never imports audiences)
 audiences            → core, academics, timetable  (courses, sections; [Later] communities)
 publishing           → core, academics, accounts, audiences
-timetable            → core, academics, accounts   (audiences imports timetable, so timetable never imports audiences)
-sources              → core, academics, accounts
 notifications        → core, accounts
-intelligence         → publishing, sources, audiences, timetable, notifications
-feed                 → intelligence, timetable (read selectors only)
+intelligence         → core, academics, accounts, publishing, audiences, timetable, notifications
 ```
 
 `intelligence` sits at the top of the pipeline: it calls the services of `timetable` and `notifications`, and those apps never import it. `notifications` stores `target_type` and `target_id` instead of importing content apps.

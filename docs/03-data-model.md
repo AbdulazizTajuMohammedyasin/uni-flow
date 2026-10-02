@@ -290,7 +290,7 @@ The report lists what would be created, updated or left unchanged, plus errors w
 
 The **status is derived and never stored**. It is one of `upcoming`, `open`, `closing_soon` (within 3 days of closing), `closed` or `cancelled`. It is computed in Python by `status_at(now)` and annotated in querysets with `Case`/`When` so lists can filter by it. A check requires `closes_at > opens_at`. There are indexes on `opens_at` and `closes_at`.
 
-## sources [MVP] — where messages come from
+## intelligence [MVP] — sources: where messages come from
 
 | Model | Fields | Constraints and notes |
 |---|---|---|
@@ -299,7 +299,7 @@ The **status is derived and never stored**. It is one of `upcoming`, `open`, `cl
 | `MessageFile` | message FK (null for direct uploads), kind (`image`, `pdf`, `spreadsheet`, `link`), file (private storage, null for links), url (for links such as Google Drive), mime_type, size_bytes, fetched_at | Only kinds UniFlow can read are kept; other attachments are ignored. Files follow the same retention as message text. |
 | `Message` | source FK, external_id, sender_name, sender_ref (a hash of the sender's platform id), text, sent_at, reply_to FK self null, raw (JSON, platform payload), triage (`pending`, `noise`, `relevant`), processed_at, text_deleted_at | `unique(source, external_id)`, index `(source, sent_at)`. `text` and `raw` are cleared after the retention period; `text_deleted_at` records when. |
 
-## intelligence [MVP] — what the AI understood
+## intelligence [MVP] — insights: what the AI understood
 
 | Model | Fields | Constraints and notes |
 |---|---|---|
