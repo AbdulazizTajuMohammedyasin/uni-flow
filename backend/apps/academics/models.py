@@ -7,7 +7,8 @@ Terminology (docs/03-data-model.md), matching https://aiu.edu.my/academic-progra
   (Honours). Every programme belongs to one school.
 - Intake: the batch a student joined with, e.g. September 2024.
 - Course: a subject, e.g. CDE2313. Every course belongs to one school.
-- Term: a semester, e.g. 2025/26 Semester 1. Exactly one term can be the current one.
+- Term: a semester, e.g. 2025/2026 Semester 1. AIU publishes two calendars (Undergraduate
+  and Foundation, with different dates); each has exactly one current term.
 """
 
 from django.db import models, transaction
@@ -80,7 +81,12 @@ class Course(TimeStampedModel):
 
 
 class Term(TimeStampedModel):
-    name = models.CharField(max_length=100, help_text="Display name, e.g. 2025/26 Semester 1.")
+    class Calendar(models.TextChoices):
+        UNDERGRADUATE = "undergraduate", "Undergraduate"
+        FOUNDATION = "foundation", "Foundation"
+
+    calendar = models.CharField(max_length=20, choices=Calendar, default=Calendar.UNDERGRADUATE)
+    name = models.CharField(max_length=100, help_text="Display name, e.g. 2025/2026 Semester 1.")
     academic_session = models.CharField(max_length=20, help_text="e.g. 2025/26.")
     number = models.PositiveSmallIntegerField(help_text="Semester number within the session.")
     starts_on = models.DateField()
@@ -91,7 +97,8 @@ class Term(TimeStampedModel):
         ordering = ["-starts_on"]  # newest term first
         constraints = [
             models.UniqueConstraint(
-                fields=["academic_session", "number"], name="academics_term_session_number"
+                fields=["calendar", "academic_session", "number"],
+                name="academics_term_calendar_session_number",
             ),
             models.CheckConstraint(
                 condition=Q(ends_on__gt=F("starts_on")), name="academics_term_ends_after_start"
@@ -102,8 +109,10 @@ class Term(TimeStampedModel):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Only one current term: marking this one current un-marks the others.
+        # One current term per calendar: marking this one current un-marks the others.
         with transaction.atomic():
             if self.is_current:
-                Term.objects.filter(is_current=True).exclude(pk=self.pk).update(is_current=False)
+                Term.objects.filter(calendar=self.calendar, is_current=True).exclude(
+                    pk=self.pk
+                ).update(is_current=False)
             super().save(*args, **kwargs)

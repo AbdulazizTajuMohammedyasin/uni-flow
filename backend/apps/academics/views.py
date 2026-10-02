@@ -87,18 +87,38 @@ class CourseListView(generics.ListAPIView):
         return filter_by_school(queryset, self.request)
 
 
-@extend_schema(tags=["academics"])
+CALENDAR_PARAMETER = OpenApiParameter(
+    "calendar",
+    OpenApiTypes.STR,
+    description="undergraduate (default) or foundation.",
+    required=False,
+)
+
+
+def requested_calendar(request) -> str:
+    calendar = request.query_params.get("calendar", Term.Calendar.UNDERGRADUATE)
+    if calendar not in Term.Calendar.values:
+        raise exceptions.ValidationError({"calendar": ["Must be undergraduate or foundation."]})
+    return calendar
+
+
+@extend_schema(tags=["academics"], parameters=[CALENDAR_PARAMETER])
 class TermListView(generics.ListAPIView):
+    """Terms of one calendar (undergraduate by default), newest first."""
+
     serializer_class = TermSerializer
     pagination_class = None
-    queryset = Term.objects.all()
+
+    def get_queryset(self):
+        return Term.objects.filter(calendar=requested_calendar(self.request))
 
 
-@extend_schema(tags=["academics"])
+@extend_schema(tags=["academics"], parameters=[CALENDAR_PARAMETER])
 class CurrentTermView(generics.RetrieveAPIView):
-    """The term marked as current (404 if none is set)."""
+    """The current term of one calendar (404 if none is set)."""
 
     serializer_class = TermSerializer
 
     def get_object(self):
-        return generics.get_object_or_404(Term, is_current=True)
+        calendar = requested_calendar(self.request)
+        return generics.get_object_or_404(Term, calendar=calendar, is_current=True)

@@ -98,3 +98,25 @@ def test_terms_list_and_current_term(client):
 def test_login_required():
     assert APIClient().get(COURSES_URL).status_code == 401
     assert APIClient().get(CURRENT_URL).status_code == 401
+
+
+def test_each_calendar_has_its_own_current_term(client):
+    ug = make_term(number=1, current=True)
+    foundation = Term.objects.create(
+        calendar="foundation",
+        name="Foundation 2025/26 Semester 1",
+        academic_session="2025/26",
+        number=1,  # same session and number is fine in another calendar
+        starts_on=date(2025, 10, 13),
+        ends_on=date(2026, 1, 23),
+        is_current=True,
+    )
+
+    ug.refresh_from_db()
+    assert ug.is_current is True  # not un-marked by the Foundation term
+    assert client.get(CURRENT_URL).json()["id"] == ug.id
+    assert client.get(CURRENT_URL, {"calendar": "foundation"}).json()["id"] == foundation.id
+    assert [t["id"] for t in client.get(TERMS_URL, {"calendar": "foundation"}).json()] == [
+        foundation.id
+    ]
+    assert client.get(TERMS_URL, {"calendar": "masters"}).status_code == 400

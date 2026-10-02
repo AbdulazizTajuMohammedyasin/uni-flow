@@ -34,7 +34,16 @@ class CourseSerializer(serializers.ModelSerializer):
 class TermSerializer(serializers.ModelSerializer):
     class Meta:
         model = Term
-        fields = ["id", "name", "academic_session", "number", "starts_on", "ends_on", "is_current"]
+        fields = [
+            "id",
+            "calendar",
+            "name",
+            "academic_session",
+            "number",
+            "starts_on",
+            "ends_on",
+            "is_current",
+        ]
 
 
 # --- Staff area: manage the lists (/api/v1/manage/academics/) -------------------------

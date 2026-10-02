@@ -40,5 +40,13 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
-    list_display = ("name", "academic_session", "number", "starts_on", "ends_on", "is_current")
-    list_filter = ("is_current", "academic_session")
+    list_display = (
+        "name",
+        "calendar",
+        "academic_session",
+        "number",
+        "starts_on",
+        "ends_on",
+        "is_current",
+    )
+    list_filter = ("calendar", "is_current", "academic_session")
