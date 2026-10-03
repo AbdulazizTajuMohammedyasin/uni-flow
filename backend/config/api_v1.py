@@ -11,6 +11,7 @@ urlpatterns = [
     path("academics/", include("apps.academics.urls")),
     path("auth/", include("apps.accounts.urls")),
     path("timetable/", include("apps.timetable.urls")),
+    path("sources/", include("apps.intelligence.urls")),
     # Staff area (each address checks the matching capability).
     path("manage/academics/", include("apps.academics.manage_urls")),
     path("manage/", include("apps.accounts.manage_urls")),
