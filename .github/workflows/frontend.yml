@@ -52,5 +52,7 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Security audit (high and critical only)
-        run: npm audit --audit-level=high
+      # Only packages shipped to users' browsers. Dev tools (e.g. the shadcn CLI) never
+      # reach users; GitHub's Dependabot alerts still cover them.
+      - name: Security audit of shipped packages (high and critical only)
+        run: npm audit --audit-level=high --omit=dev
