@@ -1,0 +1,51 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import {
+  addSectionByHand,
+  getMySections,
+  getSections,
+  getToday,
+  getWeek,
+  joinSection,
+  leaveSection,
+} from '@/api/timetable'
+import type { AddSectionData } from '@/types/timetable'
+
+// Every timetable query starts with 'timetable', so one invalidation refreshes them all.
+export const timetableKeys = {
+  all: ['timetable'] as const,
+  today: ['timetable', 'today'] as const,
+  week: (date: string | undefined) => ['timetable', 'week', date ?? 'this'] as const,
+  mySections: ['timetable', 'my-sections'] as const,
+  sections: (search: string) => ['timetable', 'sections', search] as const,
+}
+
+export function useToday() {
+  return useQuery({ queryKey: timetableKeys.today, queryFn: getToday })
+}
+
+export function useWeek(date: string | undefined) {
+  return useQuery({ queryKey: timetableKeys.week(date), queryFn: () => getWeek(date) })
+}
+
+export function useMySections() {
+  return useQuery({ queryKey: timetableKeys.mySections, queryFn: getMySections })
+}
+
+export function useSectionSearch(search: string) {
+  return useQuery({ queryKey: timetableKeys.sections(search), queryFn: () => getSections(search) })
+}
+
+/** Join, leave and add-by-hand all change "my timetable": refresh everything after. */
+function useTimetableChange<Input, Result>(change: (input: Input) => Promise<Result>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: change,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: timetableKeys.all }),
+  })
+}
+
+export const useJoinSection = () => useTimetableChange((id: number) => joinSection(id))
+export const useLeaveSection = () => useTimetableChange((id: number) => leaveSection(id))
+export const useAddSection = () =>
+  useTimetableChange((data: AddSectionData) => addSectionByHand(data))

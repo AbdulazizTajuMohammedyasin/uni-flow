@@ -35,7 +35,12 @@ export function createAppRoutes(): RouteObject[] {
                 { index: true, element: <PlaceholderPage title="Home" /> },
                 { path: 'announcements', element: <PlaceholderPage title="Announcements" /> },
                 { path: 'events', element: <PlaceholderPage title="Events" /> },
-                { path: 'timetable', element: <PlaceholderPage title="Timetable" /> },
+                {
+                  path: 'timetable',
+                  lazy: {
+                    Component: async () => (await import('./pages/Timetable/Timetable')).TimetablePage,
+                  },
+                },
                 { path: 'communities', element: <PlaceholderPage title="Communities" /> },
                 {
                   path: 'profile',
