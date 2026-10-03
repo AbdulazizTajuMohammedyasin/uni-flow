@@ -437,7 +437,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M4.1 ✅ | **Celery with Redis** (changed from a database job table at the developer's request): `config/celery.py`, `CELERY_*` settings, jobs run immediately in tests, and a `ping` job to check the set-up | The worker connects to Redis and `ping` returns `'pong'`; tests need no Redis | `feat(core): add celery background jobs` |
-| M4.2 | `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(intelligence): add source and message models` |
+| M4.2 ✅ | New `intelligence` app: `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(intelligence): add source and message models` |
 | M4.3 | Paste messages into a source and WhatsApp chat-export parsing | Multi-line messages and dates parsed; re-upload stores nothing twice | `feat(intelligence): add message paste and chat export import` |
 | M4.4 | `MessageFile`: timetable uploads (image, PDF, XLSX) with `filetype` checks (**needs approval**), private storage, and safe Google Drive link fetching | Fake types and other hosts refused; private files only for their owner | `feat(intelligence): add message files and drive links` |
 | M4.5 | Retention job: clear raw text and files after `MESSAGE_RETENTION_DAYS` | Old text and files cleared; evidence quotes kept | `feat(intelligence): add message retention` |

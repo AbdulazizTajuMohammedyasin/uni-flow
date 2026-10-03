@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M4.1 is done ✅. **Celery with Redis** is set up for background work (the AI, later), and a test job ("ping") proves the worker and Redis talk to each other.
-**Next up:** M4.2, the tables for **groups (sources), their members and messages**.
+**Now:** M4.2 is done ✅. UniFlow has tables for **groups** (sources), the **students who added them**, and their **messages**, visible in the Django admin.
+**Next up:** M4.3, getting messages in by hand: **pasting messages** and uploading a **WhatsApp "Export chat"** file.
 
 ---
 
@@ -106,7 +106,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M4.1 | **Background work with Celery and Redis.** Slow work (the AI, later) will be handed to a **worker** program instead of making students wait. Redis holds the to-do list. Tests don't need Redis. Includes a tiny **ping** job to check the set-up. | See "Background jobs" in [backend/README.md](../backend/README.md): start Redis, start the worker, send `ping`, see `'pong'` | ✅ Done |
-| **M4.2** | **Groups, members and messages:** the tables for connected groups and the messages in them | – | ⏭️ **Next** |
+| M4.2 | **Groups, members and messages.** A new `intelligence` app with three tables: **Source** (a WhatsApp/Telegram group or channel, or pasted messages: what it's for, official or not, waiting/active/disconnected), **Source member** (a student who added the group) and **Message** (sender, time, text, and whether the AI has looked at it). A group is only connected once, and a message is only stored once. | `pipenv run python manage.py migrate`, then `/django-admin/` → **Intelligence** → Sources / Messages | ✅ Done |
+| **M4.3** | **Messages by hand:** paste messages, or upload a WhatsApp "Export chat" file | – | ⏭️ **Next** |
 
 ---
 
@@ -146,6 +147,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `apps/academics/` | University structure: schools, programmes and intakes, and `manage_views.py` (admins edit them) |
 | `apps/audiences/` | Who a post is for (`Audience`), and `selectors.py` (who sees what) |
 | `apps/timetable/` | Sections, weekly classes and which students are in each section |
+| `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages (insights come in M5) |
 | `apps/publishing/` | The shared base for every post (status, publisher, expiry), the publish / archive actions, and `policies.py` (the school boundary) |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |

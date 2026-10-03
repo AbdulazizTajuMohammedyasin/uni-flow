@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.academics",
     "apps.audiences",
     "apps.timetable",
+    "apps.intelligence",
     "apps.publishing",
 ]
 
