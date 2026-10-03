@@ -58,3 +58,36 @@ class AddSectionSerializer(serializers.Serializer):
     course_name = serializers.CharField(max_length=200)
     section = serializers.CharField(max_length=20)
     meetings = MeetingSerializer(many=True, allow_empty=False)
+
+
+class ClassSlotSerializer(serializers.Serializer):
+    """One class on one day."""
+
+    section_id = serializers.IntegerField()
+    course_code = serializers.CharField()
+    course_name = serializers.CharField()
+    section_code = serializers.CharField()
+    lecturer_name = serializers.CharField()
+    start_time = serializers.TimeField(format="%H:%M")
+    end_time = serializers.TimeField(format="%H:%M")
+    meeting_type = serializers.CharField()
+    building = serializers.CharField()
+    room = serializers.CharField()
+
+
+class DaySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    weekday = serializers.IntegerField(help_text="0 = Monday … 6 = Sunday")
+    classes = ClassSlotSerializer(many=True)
+
+
+class TermBriefSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
+
+class TimetableDaysSerializer(serializers.Serializer):
+    """GET timetable/today/ (one day) and timetable/week/ (Monday to Sunday)."""
+
+    term = TermBriefSerializer(allow_null=True)
+    days = DaySerializer(many=True)

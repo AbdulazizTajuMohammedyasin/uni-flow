@@ -1,8 +1,11 @@
-"""Timetable actions for students: which term is theirs, joining sections, adding a class.
+"""Timetable actions for students: which term is theirs, joining sections, adding a class,
+and their classes for today or a week.
 
 Sections are shared: a section added by one student is the one everyone else picks.
 Existing sections and their weekly classes are never changed by a student.
 """
+
+from datetime import date, timedelta
 
 from django.db import transaction
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -75,3 +78,58 @@ def add_section_by_hand(
         )
     SectionEnrollment.objects.get_or_create(user=user, section=section)
     return section, created
+
+
+def _class_slots(user, term: Term) -> dict[int, list[dict]]:
+    """The student's weekly classes this term, grouped by weekday (0 = Monday)."""
+    meetings = (
+        ClassMeeting.objects.filter(
+            section__term=term, section__is_active=True, section__enrollments__user=user
+        )
+        .select_related("section__course")
+        .order_by("start_time")
+    )
+    by_weekday: dict[int, list[dict]] = {day: [] for day in range(7)}
+    for meeting in meetings:
+        section = meeting.section
+        by_weekday[meeting.weekday].append(
+            {
+                "section_id": section.id,
+                "course_code": section.course.code,
+                "course_name": section.course.name,
+                "section_code": section.code,
+                "lecturer_name": section.lecturer_name,
+                "start_time": meeting.start_time,
+                "end_time": meeting.end_time,
+                "meeting_type": meeting.meeting_type,
+                "building": meeting.building,
+                "room": meeting.room,
+            }
+        )
+    return by_weekday
+
+
+def classes_for_days(user, days: list[date]) -> dict:
+    """The student's classes on each of `days` (empty outside the current term)."""
+    require_student(user)
+    term = current_term_for(user)
+    slots = _class_slots(user, term) if term else {}
+    return {
+        "term": {"id": term.id, "name": term.name} if term else None,
+        "days": [
+            {
+                "date": day,
+                "weekday": day.weekday(),
+                "classes": slots[day.weekday()]
+                if term and term.starts_on <= day <= term.ends_on
+                else [],
+            }
+            for day in days
+        ],
+    }
+
+
+def week_of(day: date) -> list[date]:
+    """Monday to Sunday of the week that contains `day`."""
+    monday = day - timedelta(days=day.weekday())
+    return [monday + timedelta(days=offset) for offset in range(7)]

@@ -1,8 +1,11 @@
-"""Student timetable API (/api/v1/timetable/): browse sections, my sections, add a class.
+"""Student timetable API (/api/v1/timetable/): browse sections, my sections, add a class,
+and my classes today or this week.
 
 Students only ever change their own enrolments; shared sections created by hand are
 never edited afterwards by students (see services.py).
 """
+
+from datetime import date
 
 from django.db.models import Prefetch
 from drf_spectacular.types import OpenApiTypes
@@ -11,9 +14,16 @@ from rest_framework import exceptions, filters, generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts import semesters
+
 from . import services
 from .models import ClassMeeting, CourseSection, SectionEnrollment
-from .serializers import AddSectionSerializer, JoinSectionSerializer, SectionSerializer
+from .serializers import (
+    AddSectionSerializer,
+    JoinSectionSerializer,
+    SectionSerializer,
+    TimetableDaysSerializer,
+)
 
 
 def id_param(request, name: str) -> int | None:
@@ -113,3 +123,36 @@ class MySectionDeleteView(APIView):
         )
         enrollment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["timetable"], responses=TimetableDaysSerializer)
+class TodayView(APIView):
+    """GET timetable/today/ — my classes today (Kuala Lumpur date)."""
+
+    def get(self, request):
+        data = services.classes_for_days(request.user, [semesters.today()])
+        return Response(TimetableDaysSerializer(data).data)
+
+
+@extend_schema(
+    tags=["timetable"],
+    responses=TimetableDaysSerializer,
+    parameters=[
+        OpenApiParameter(
+            "date",
+            OpenApiTypes.DATE,
+            description="Any day of the wanted week (YYYY-MM-DD). Default: today.",
+        )
+    ],
+)
+class WeekView(APIView):
+    """GET timetable/week/?date= — my classes Monday to Sunday of that week."""
+
+    def get(self, request):
+        raw = request.query_params.get("date")
+        try:
+            day = date.fromisoformat(raw) if raw else semesters.today()
+        except ValueError:
+            raise exceptions.ValidationError({"date": ["Use the format YYYY-MM-DD."]}) from None
+        data = services.classes_for_days(request.user, services.week_of(day))
+        return Response(TimetableDaysSerializer(data).data)
