@@ -26,13 +26,13 @@ def current_term_for(user) -> Term | None:
     """The current term of the student's calendar (Foundation or Undergraduate)."""
     profile = getattr(user, "student_profile", None)
     calendar = semesters.calendar_for(profile.programme if profile else None)
-    return Term.objects.filter(calendar=calendar, is_current=True).first()
+    return Term.current(calendar, semesters.today())
 
 
 def _require_current_term(user) -> Term:
     term = current_term_for(user)
     if term is None:
-        raise ValidationError("There is no current term yet. Please try again later.")
+        raise ValidationError("No terms have been added yet. Please try again later.")
     return term
 
 

@@ -4,6 +4,7 @@ In the pilot this is where courses and terms are added and fixed (React pages co
 """
 
 from django.contrib import admin
+from django.utils import timezone
 
 from .models import Course, Intake, Programme, School, Term
 
@@ -47,6 +48,11 @@ class TermAdmin(admin.ModelAdmin):
         "number",
         "starts_on",
         "ends_on",
-        "is_current",
+        "is_current_now",
     )
-    list_filter = ("calendar", "is_current", "academic_session")
+    list_filter = ("calendar", "academic_session")
+
+    @admin.display(boolean=True, description="Current now")
+    def is_current_now(self, term):
+        current = Term.current(term.calendar, timezone.localdate())
+        return current is not None and current.pk == term.pk

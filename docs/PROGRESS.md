@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M3.7 is done ✅. New students pick their **interests** and **information types** during onboarding (or skip), and the profile shows their **semester**.
-**Next up:** M3.8, the **Timetable page**: today and this week, choosing sections, and adding a missing class.
+**Now:** M3 is done ✅. Students have a **Timetable page**: today's classes, this week, choosing their sections and adding a missing class.
+**Next up:** M4.1, the **background job runner**: a simple way for slow work (the AI, later) to run outside web requests, without Redis or Celery.
 
 ---
 
@@ -17,8 +17,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M0** Foundations | Set up the empty backend and website so they run and are checked automatically | ✅ Done |
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
-| **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | 🔄 In progress |
-| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ⏳ |
+| **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
+| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ⏭️ Next |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏳ |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
@@ -90,14 +90,14 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
-| M3.1 | **Courses and terms.** A course is a subject (CDE2313) that belongs to a school. A term is a semester ("2025/26 Semester 1"); only one can be the current one, so ticking "current" on one un-ticks the others. The website can read them. | `pipenv run python manage.py migrate`, then `/django-admin/` → Academics → Courses / Terms. Swagger → **academics** → `courses/`, `terms/`, `terms/current/` | ✅ Done |
+| M3.1 | **Courses and terms.** A course is a subject (CDE2313) that belongs to a school. A term is a semester ("2025/26 Semester 1"); UniFlow works out the **current term from the dates** (during a break: the next term if it's added, otherwise the one that just ended), so nobody ticks it by hand. The website can read them. | `pipenv run python manage.py migrate`, then `/django-admin/` → Academics → Courses / Terms. Swagger → **academics** → `courses/`, `terms/`, `terms/current/` | ✅ Done |
 | M3.2 | **Sections and weekly classes.** A section is one group of a course in one term (CDE2313 Section A). Each section has weekly classes (day, start, end, room). A student can be in a section once. Each section remembers how it was added (by the AI, a student, an admin or a file). | `pipenv run python manage.py migrate`, then `/django-admin/` → **Timetable** → Course sections (add classes at the bottom of a section) | ✅ Done |
 | M3.3 | **"Who is affected" by course and section.** A message for CDE2313 reaches students in a CDE2313 section **this term** (not last term's). A message for Section A reaches only Section A. School staff can only pick their own school's courses and sections. *Semester ("Year 2") moved to M3.4.* | `pipenv run python manage.py migrate`, then `pipenv run pytest apps/audiences` | ✅ Done |
-| M3.4 | **Semester and interests.** The semester is worked out by **counting AIU's real terms** since the student's intake (three a year; the dates change every year, so they come from the official academic calendar, not fixed dates). An October 2025 intake is in Semester 1 from 27 Oct 2025, 2 from 23 Mar 2026 and 3 from 3 Aug 2026. Foundation students count AIU's **Foundation** terms instead. The official 2024/2025 and 2025/2026 terms of both calendars are loaded by the seed command; new terms are added in the Django admin. A student can set it by hand if that's wrong. Messages can target semesters ("Year 2" = 4–6). Students can save interests (AI, Cybersecurity, …), information types (internships, bootcamps, …) and nicknames. | `pipenv run python manage.py migrate`, then `pipenv run python manage.py seed_academics` (loads the terms) and tick the current term of each calendar in `/django-admin/` → Terms; Swagger → **auth** → `users/me/` and `preferences/choices/` | ✅ Done |
+| M3.4 | **Semester and interests.** The semester is worked out by **counting AIU's real terms** since the student's intake (three a year; the dates change every year, so they come from the official academic calendar, not fixed dates). An October 2025 intake is in Semester 1 from 27 Oct 2025, 2 from 23 Mar 2026 and 3 from 3 Aug 2026. Foundation students count AIU's **Foundation** terms instead. The official 2024/2025 and 2025/2026 terms of both calendars are loaded by the seed command; new terms are added in the Django admin. A student can set it by hand if that's wrong. Messages can target semesters ("Year 2" = 4–6). Students can save interests (AI, Cybersecurity, …), information types (internships, bootcamps, …) and nicknames. | `pipenv run python manage.py migrate`, then `pipenv run python manage.py seed_academics` (loads the terms); Swagger → **auth** → `users/me/` and `preferences/choices/` | ✅ Done |
 | M3.5 | **Sections for students.** A student can browse this term's sections (search by course code or name), join and leave sections, and **add a class that's missing**: course code, section and weekly times. It is created once, so classmates who add the same class just join it, and nobody can change classes someone else added. Foundation students see Foundation-term sections. | Swagger → **timetable** → `sections/` and `my-sections/` (log in as a student) | ✅ Done |
 | M3.6 | **Today and this week.** A student's classes for today, or for a whole week (Monday to Sunday), from the sections they joined, in time order. "Today" uses Kuala Lumpur time, so just after midnight it already shows the new day. Days outside the current term are empty. | Swagger → **timetable** → `today/` and `week/` (log in as a student who joined a section) | ✅ Done |
 | M3.7 | **Interests on the website.** Onboarding now has a second step, "What matters to you?": tap your interests (AI, Cybersecurity…) and what you want to hear about (internships, bootcamps…), add nicknames, or **Skip for now**. The profile page has a "Your interests" section, and "Your studies" shows **"You are in Semester 3"** with a way to correct it. | Register a new student → after school/programme/intake you see the interests step; then open **Profile** | ✅ Done |
-| **M3.8** | **Timetable page:** today and this week, choose sections, add a missing class | – | ⏭️ **Next** |
+| M3.8 | **Timetable page.** **Today** and **This week** (Monday to Sunday, with previous/next week). A **My sections** box: search for sections and add them, remove them, or **add a missing class** (course, section and one or more weekly classes). New students without classes see a clear "add your classes" message. *The week is a simple list per day, not a calendar grid: easier on phones and no extra library.* | Log in as a student → **Timetable** in the menu | ✅ Done |
 
 ---
 
@@ -117,14 +117,14 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `main.tsx` | Starting point: turns on data loading (TanStack Query) and the router |
 | `router.tsx` | **The router:** which address shows which page |
-| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
+| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `timetable.ts` (sections, today, week), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
-| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useHealth.ts` |
-| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `health.ts` |
-| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
+| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useTimetable.ts` (today, week, my sections), `useHealth.ts` |
+| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `health.ts` |
+| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `SectionPicker` and `AddClassForm` (timetable), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
-| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage) |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `Timetable/`, `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage), `timetable.ts` (date and class-time formatting) |
 | `index.css` | Colours and fonts |
 
 ### Backend files so far (`backend/`)
@@ -154,6 +154,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).
 - **The normal timetable comes from the groups too:** the AI reads timetable images, PDFs and Google Drive links, and the student confirms before anything is saved.
 - **Alerts stay inside UniFlow** for now; the mobile app will add phone notifications.
+- **The current term is automatic:** worked out from the term dates, so nobody ticks "current". When AIU publishes a new term, add it in `/django-admin/` → Terms (the "Current now" column shows which one UniFlow is using).
 - **Fewer backend apps:** from now on a new app only when it's really needed. The groups, messages, AI and feed will be **one app** (`intelligence`) and alerts a second (`notifications`). Existing apps stay as they are.
 - **Intakes are March and October** (the website only mentions October, but March is real).
 - **Two term calendars:** Foundation students follow AIU's Foundation calendar (e.g. 13 Oct, 9 Feb, 8 Jun), everyone else the Undergraduate one (e.g. 27 Oct, 23 Mar, 3 Aug). Each has its own current term.

@@ -4,6 +4,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from apps.academics.models import Course, Intake, Programme, School, Term
+from apps.accounts import semesters
 from apps.accounts.services import create_user
 from apps.timetable.models import ClassMeeting, CourseSection, SectionEnrollment
 
@@ -15,27 +16,28 @@ PASSWORD = "Str0ng-pass-99"
 
 
 @pytest.fixture
-def world():
+def world(monkeypatch):
     sci = School.objects.create(code="SCI", name="Computing")
     sbss = School.objects.create(code="SBSS", name="Business")
     bcs = Programme.objects.create(school=sci, code="BCS", name="CS", level="bachelor")
     fnd = Programme.objects.create(school=sci, code="FND", name="Foundation", level="foundation")
     intake = Intake.objects.create(code="2025-OCT", name="Oct 2025", start_date=date(2025, 10, 1))
 
-    def term(calendar, number, starts, current):
+    def term(calendar, number, starts, ends):
         return Term.objects.create(
             calendar=calendar,
             name=f"{calendar} {number}",
             academic_session="2025/2026",
             number=number,
             starts_on=starts,
-            ends_on=date(starts.year + 1, 1, 1),
-            is_current=current,
+            ends_on=ends,
         )
 
-    past = term("undergraduate", 1, date(2025, 10, 27), False)
-    now = term("undergraduate", 2, date(2026, 3, 23), True)
-    foundation_now = term("foundation", 2, date(2026, 2, 9), True)
+    # "Today" is 15 April 2026: inside `now` and `foundation_now`.
+    monkeypatch.setattr(semesters, "today", lambda: date(2026, 4, 15))
+    past = term("undergraduate", 1, date(2025, 10, 27), date(2026, 2, 27))
+    now = term("undergraduate", 2, date(2026, 3, 23), date(2026, 7, 17))
+    foundation_now = term("foundation", 2, date(2026, 2, 9), date(2026, 5, 22))
 
     cde = Course.objects.create(school=sci, code="CDE2313", name="Data Structures")
     mgt = Course.objects.create(school=sbss, code="MGT1001", name="Management")
@@ -193,9 +195,10 @@ def test_add_a_class_checks_its_input(world):
     assert api.post(SECTIONS, new_class(meetings=[]), format="json").status_code == 400
 
 
-def test_no_current_term_means_nothing_can_be_added(world):
+def test_without_any_terms_nothing_can_be_added(world):
     _, api = world["ali"]
-    Term.objects.filter(calendar="undergraduate").update(is_current=False)
+    CourseSection.objects.filter(term__calendar="undergraduate").delete()
+    Term.objects.filter(calendar="undergraduate").delete()
 
     assert api.get(SECTIONS).json()["results"] == []
     assert api.post(SECTIONS, new_class(), format="json").status_code == 400

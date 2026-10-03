@@ -42,7 +42,6 @@ class TermSerializer(serializers.ModelSerializer):
             "number",
             "starts_on",
             "ends_on",
-            "is_current",
         ]
 
 

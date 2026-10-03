@@ -24,9 +24,16 @@ LINK_COLUMNS = {
 PROFILE_FIELDS = ("schools", "programmes", "intakes")  # stored on StudentProfile
 
 
+def _current_term_ids() -> list[int]:
+    """Today's current term of each calendar (Undergraduate and Foundation)."""
+    today = semesters.today()
+    terms = (Term.current(calendar, today) for calendar in Term.Calendar.values)
+    return [term.id for term in terms if term is not None]
+
+
 def _current_enrollments(user_ref):
-    """Enrolments in sections of the current term (`user_ref` is a user or OuterRef)."""
-    return SectionEnrollment.objects.filter(user=user_ref, section__term__is_current=True)
+    """Enrolments in sections of a current term (`user_ref` is a user or OuterRef)."""
+    return SectionEnrollment.objects.filter(user=user_ref, section__term_id__in=_current_term_ids())
 
 
 def _student_values(user) -> dict[str, list[int]]:

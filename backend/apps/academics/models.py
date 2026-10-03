@@ -8,10 +8,13 @@ Terminology (docs/03-data-model.md), matching https://aiu.edu.my/academic-progra
 - Intake: the batch a student joined with, e.g. September 2024.
 - Course: a subject, e.g. CDE2313. Every course belongs to one school.
 - Term: a semester, e.g. 2025/2026 Semester 1. AIU publishes two calendars (Undergraduate
-  and Foundation, with different dates); each has exactly one current term.
+  and Foundation, with different dates). The current term is worked out from the dates
+  (Term.current), so nobody has to mark it by hand.
 """
 
-from django.db import models, transaction
+from datetime import date
+
+from django.db import models
 from django.db.models import F, Q
 
 from core.models import TimeStampedModel
@@ -91,7 +94,6 @@ class Term(TimeStampedModel):
     number = models.PositiveSmallIntegerField(help_text="Semester number within the session.")
     starts_on = models.DateField()
     ends_on = models.DateField()
-    is_current = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-starts_on"]  # newest term first
@@ -108,11 +110,16 @@ class Term(TimeStampedModel):
     def __str__(self) -> str:
         return self.name
 
-    def save(self, *args, **kwargs):
-        # One current term per calendar: marking this one current un-marks the others.
-        with transaction.atomic():
-            if self.is_current:
-                Term.objects.filter(calendar=self.calendar, is_current=True).exclude(
-                    pk=self.pk
-                ).update(is_current=False)
-            super().save(*args, **kwargs)
+    @classmethod
+    def current(cls, calendar: str, on: date) -> "Term | None":
+        """The calendar's current term on date `on`:
+        - during a term: that term;
+        - during a break: the next term if it is already loaded (so students can set up
+          their new classes before it starts), otherwise the term that just ended.
+        """
+        terms = cls.objects.filter(calendar=calendar)
+        return (
+            terms.filter(starts_on__lte=on, ends_on__gte=on).first()
+            or terms.filter(starts_on__gt=on).order_by("starts_on").first()
+            or terms.filter(ends_on__lt=on).order_by("-ends_on").first()
+        )

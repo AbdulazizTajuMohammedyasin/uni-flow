@@ -144,7 +144,6 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Done: {School.objects.count()} schools, {Programme.objects.count()} programmes, "
-                f"{Intake.objects.count()} intakes, {Term.objects.count()} terms. "
-                "Mark the current term of each calendar in the Django admin."
+                f"{Intake.objects.count()} intakes, {Term.objects.count()} terms."
             )
         )

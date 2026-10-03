@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.academics.models import Course, School, Term
@@ -21,14 +22,20 @@ def client():
     return api
 
 
-def make_term(session="2025/26", number=1, current=False, starts=date(2025, 10, 1)):
+def make_term(
+    number=1,
+    starts=date(2025, 10, 27),
+    ends=date(2026, 2, 27),
+    session="2025/26",
+    calendar="undergraduate",
+):
     return Term.objects.create(
+        calendar=calendar,
         name=f"{session} Semester {number}",
         academic_session=session,
         number=number,
         starts_on=starts,
-        ends_on=date(starts.year + 1, 2, 28),
-        is_current=current,
+        ends_on=ends,
     )
 
 
@@ -56,14 +63,22 @@ def test_term_must_end_after_it_starts_and_be_unique_per_session():
         )
 
 
-def test_only_one_term_is_current():
-    first = make_term(number=1, current=True)
-    second = make_term(number=2, current=True, starts=date(2026, 3, 1))
+@pytest.mark.parametrize(
+    ("today", "expected"),
+    [
+        (date(2025, 11, 1), 1),  # during Semester 1
+        (date(2026, 2, 27), 1),  # its last day
+        (date(2026, 3, 1), 2),  # break: the next term is already loaded
+        (date(2026, 8, 1), 2),  # break, nothing loaded after it: the term that just ended
+        (date(2025, 1, 1), 1),  # before any term: the first one
+    ],
+)
+def test_current_term_follows_the_dates(today, expected):
+    make_term(number=1, starts=date(2025, 10, 27), ends=date(2026, 2, 27))
+    make_term(number=2, starts=date(2026, 3, 23), ends=date(2026, 7, 17))
 
-    first.refresh_from_db()
-    assert first.is_current is False
-    assert second.is_current is True
-    assert Term.objects.filter(is_current=True).count() == 1
+    assert Term.current("undergraduate", today).number == expected
+    assert Term.current("foundation", today) is None  # no Foundation terms loaded
 
 
 # --- Read API ---------------------------------------------------------------------------
@@ -85,11 +100,12 @@ def test_courses_list_active_only_with_school_filter_and_search(client):
     assert client.get(COURSES_URL, {"school": "abc"}).status_code == 400
 
 
-def test_terms_list_and_current_term(client):
+def test_terms_list_and_current_term(client, monkeypatch):
     assert client.get(CURRENT_URL).status_code == 404
 
-    make_term(number=1, starts=date(2025, 10, 1))
-    current = make_term(number=2, current=True, starts=date(2026, 3, 1))
+    monkeypatch.setattr(timezone, "localdate", lambda: date(2026, 4, 1))
+    make_term(number=1)
+    current = make_term(number=2, starts=date(2026, 3, 23), ends=date(2026, 7, 17))
 
     assert [t["number"] for t in client.get(TERMS_URL).json()] == [2, 1]  # newest first
     assert client.get(CURRENT_URL).json()["id"] == current.id
@@ -100,20 +116,16 @@ def test_login_required():
     assert APIClient().get(CURRENT_URL).status_code == 401
 
 
-def test_each_calendar_has_its_own_current_term(client):
-    ug = make_term(number=1, current=True)
-    foundation = Term.objects.create(
-        calendar="foundation",
-        name="Foundation 2025/26 Semester 1",
-        academic_session="2025/26",
+def test_each_calendar_has_its_own_current_term(client, monkeypatch):
+    monkeypatch.setattr(timezone, "localdate", lambda: date(2025, 11, 1))
+    ug = make_term(number=1)
+    foundation = make_term(
         number=1,  # same session and number is fine in another calendar
-        starts_on=date(2025, 10, 13),
-        ends_on=date(2026, 1, 23),
-        is_current=True,
+        starts=date(2025, 10, 13),
+        ends=date(2026, 1, 23),
+        calendar="foundation",
     )
 
-    ug.refresh_from_db()
-    assert ug.is_current is True  # not un-marked by the Foundation term
     assert client.get(CURRENT_URL).json()["id"] == ug.id
     assert client.get(CURRENT_URL, {"calendar": "foundation"}).json()["id"] == foundation.id
     assert [t["id"] for t in client.get(TERMS_URL, {"calendar": "foundation"}).json()] == [

@@ -5,6 +5,7 @@
 - Not paginated: these lists are short and dropdowns need every item.
 """
 
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import exceptions, filters, generics
@@ -115,10 +116,13 @@ class TermListView(generics.ListAPIView):
 
 @extend_schema(tags=["academics"], parameters=[CALENDAR_PARAMETER])
 class CurrentTermView(generics.RetrieveAPIView):
-    """The current term of one calendar (404 if none is set)."""
+    """The current term of one calendar, worked out from today's date (404 if none)."""
 
     serializer_class = TermSerializer
 
     def get_object(self):
         calendar = requested_calendar(self.request)
-        return generics.get_object_or_404(Term, calendar=calendar, is_current=True)
+        term = Term.current(calendar, timezone.localdate())
+        if term is None:
+            raise exceptions.NotFound("No terms have been added yet.")
+        return term

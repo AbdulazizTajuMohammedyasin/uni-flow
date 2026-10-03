@@ -32,7 +32,6 @@ def courses_and_sections(sci, sbss):
         number=1,
         starts_on=date(2025, 9, 1),
         ends_on=date(2026, 1, 31),
-        is_current=True,
     )
     cde = Course.objects.create(school=sci, code="CDE2313", name="DS")
     mgt = Course.objects.create(school=sbss, code="MGT1001", name="Management")

@@ -24,7 +24,6 @@ def student():
         number=2,
         starts_on=date(2026, 3, 23),
         ends_on=date(2026, 7, 17),
-        is_current=True,
     )
     past = Term.objects.create(
         name="2025/2026 Semester 1",
@@ -111,8 +110,9 @@ def test_today_uses_kuala_lumpur_time_just_after_midnight(student, monkeypatch):
     assert classes(today) == [("MGT1001", "08:00"), ("CDE2313", "10:00")]
 
 
-def test_without_a_current_term_everything_is_empty(student):
-    Term.objects.update(is_current=False)
+def test_without_any_terms_everything_is_empty(student):
+    CourseSection.objects.all().delete()
+    Term.objects.all().delete()
     body = student.get(WEEK).json()
     assert body["term"] is None
     assert all(d["classes"] == [] for d in body["days"])

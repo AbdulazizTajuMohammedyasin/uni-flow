@@ -21,7 +21,6 @@ def section():
         number=1,
         starts_on=date(2025, 10, 1),
         ends_on=date(2026, 2, 28),
-        is_current=True,
     )
     return CourseSection.objects.create(course=course, term=term, code="A")
 

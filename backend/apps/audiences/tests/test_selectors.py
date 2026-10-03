@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 
 from apps.academics.models import Course, Intake, Programme, School, Term
+from apps.accounts import semesters
 from apps.accounts.services import create_user
 from apps.audiences.models import Audience
 from apps.audiences.selectors import students_matching, visible_audience_q
@@ -17,7 +18,7 @@ PASSWORD = "Str0ng-pass-99"
 
 
 @pytest.fixture
-def world():
+def world(monkeypatch):
     sci = School.objects.create(code="SCI", name="Computing")
     sbss = School.objects.create(code="SBSS", name="Business")
     items = {
@@ -50,17 +51,18 @@ def world():
     }
 
     # Courses and sections: this term, plus one section from last term.
-    def term(number, starts, current):
+    def term(number, starts):
         return Term.objects.create(
             name=f"T{number}",
             academic_session="2025/26",
             number=number,
             starts_on=starts,
             ends_on=date(starts.year, starts.month + 3, 1),
-            is_current=current,
         )
 
-    last, now = term(1, date(2025, 3, 1), False), term(2, date(2025, 9, 1), True)
+    # "Today" is 1 Oct 2025, inside the second term (the current one).
+    monkeypatch.setattr(semesters, "today", lambda: date(2025, 10, 1))
+    last, now = term(1, date(2025, 3, 1)), term(2, date(2025, 9, 1))
     items["cde"] = Course.objects.create(school=sci, code="CDE2313", name="DS")
     items["mgt"] = Course.objects.create(school=sbss, code="MGT1001", name="Management")
     items["cde_a"] = CourseSection.objects.create(course=items["cde"], term=now, code="A")
