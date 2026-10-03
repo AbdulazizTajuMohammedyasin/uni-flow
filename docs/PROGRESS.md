@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M3 is done ✅. Students have a **Timetable page**: today's classes, this week, choosing their sections and adding a missing class.
-**Next up:** M4.1, the **background job runner**: a simple way for slow work (the AI, later) to run outside web requests, without Redis or Celery.
+**Now:** M4.1 is done ✅. **Celery with Redis** is set up for background work (the AI, later), and a test job ("ping") proves the worker and Redis talk to each other.
+**Next up:** M4.2, the tables for **groups (sources), their members and messages**.
 
 ---
 
@@ -18,7 +18,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
 | **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
-| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ⏭️ Next |
+| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | 🔄 In progress |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏳ |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
@@ -101,6 +101,15 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ---
 
+## M4 Messages: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M4.1 | **Background work with Celery and Redis.** Slow work (the AI, later) will be handed to a **worker** program instead of making students wait. Redis holds the to-do list. Tests don't need Redis. Includes a tiny **ping** job to check the set-up. | See "Background jobs" in [backend/README.md](../backend/README.md): start Redis, start the worker, send `ping`, see `'pong'` | ✅ Done |
+| **M4.2** | **Groups, members and messages:** the tables for connected groups and the messages in them | – | ⏭️ **Next** |
+
+---
+
 ## Where things are
 
 | I want to... | Look at |
@@ -149,7 +158,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **UniFlow is an AI information assistant**, not a notice board. Messages from academic WhatsApp and Telegram groups are the main input. The AI **proposes**; normal code decides; the student **confirms** timetable changes.
 - **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
 - **Staff posts stay** as one official source. The M2 code is kept and reused.
-- **Background work** uses a simple database job table, still no Redis or Celery.
+- **Background work uses Celery with Redis** (your choice, over a simpler database table). Redis runs in WSL on your PC; tests need no Redis.
 - **When the AI isn't sure:** sure → shown; unsure → daily summary marked "Not confirmed"; very unsure → hidden until you check it.
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).
 - **The normal timetable comes from the groups too:** the AI reads timetable images, PDFs and Google Drive links, and the student confirms before anything is saved.

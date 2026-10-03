@@ -365,7 +365,7 @@ UniFlow is built **one small task at a time**.
 - **Files:** `.github/workflows/frontend.yml`
 - **Implementation:**
   - Runs on `ubuntu-latest` with Node 24 (LTS) and the npm cache keyed on `frontend/package-lock.json`.
-  - Runs `npm ci`, then `lint`, `typecheck`, `test`, `build` and `npm audit --audit-level=high`.
+  - Runs `npm ci`, then `lint`, `typecheck`, `test`, `build` and `npm audit --audit-level=high --omit=dev` (shipped packages only; changed after M3.8 because the shadcn CLI's dependencies had an advisory with no fix).
   - Only runs when `frontend/**` or the workflow file changes, and cancels older runs.
   - Checked beforehand: the Windows-generated `package-lock.json` already lists the **Linux** native binaries that Tailwind's oxide, lightningcss, Vite's rolldown and oxlint need.
 - **Verification:**
@@ -436,7 +436,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M4.1 | `core.Job` model and `manage.py run_jobs` (claim with `SKIP LOCKED`, retries, daily scheduling); jobs run inline in tests | Two runners never take the same job; a failed job retries then stops | `feat(core): add database job runner` |
+| M4.1 ✅ | **Celery with Redis** (changed from a database job table at the developer's request): `config/celery.py`, `CELERY_*` settings, jobs run immediately in tests, and a `ping` job to check the set-up | The worker connects to Redis and `ping` returns `'pong'`; tests need no Redis | `feat(core): add celery background jobs` |
 | M4.2 | `Source` (suggested scope), `SourceMember` and `Message` models with Django admin | `unique(platform, external_id)`; `unique(source, external_id)` | `feat(intelligence): add source and message models` |
 | M4.3 | Paste messages into a source and WhatsApp chat-export parsing | Multi-line messages and dates parsed; re-upload stores nothing twice | `feat(intelligence): add message paste and chat export import` |
 | M4.4 | `MessageFile`: timetable uploads (image, PDF, XLSX) with `filetype` checks (**needs approval**), private storage, and safe Google Drive link fetching | Fake types and other hosts refused; private files only for their owner | `feat(intelligence): add message files and drive links` |
@@ -500,7 +500,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | M9.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
 | M9.4 | Django admin for the operator: draft queue, publish and retract actions, source review, AI usage list | Actions do the same as the services | `feat(intelligence): add operator admin actions` |
 | M9.5 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
-| M9.6 | Deployment guide: nginx, gunicorn, `run_jobs` and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
+| M9.6 | Deployment guide: nginx, gunicorn, Redis, the Celery worker and Beat, and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
 | M9.7 | Pilot checklist: university approval, WhatsApp number, Telegram bot, AI spend limit, the pilot intake and groups | Checklist signed off | `docs(release): add pilot checklist` |
 
 ## M10 — Staff pages (after the pilot)

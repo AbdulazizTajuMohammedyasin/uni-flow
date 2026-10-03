@@ -308,11 +308,9 @@ The **status is derived and never stored**. It is one of `upcoming`, `open`, `cl
 | `InsightMention` | insight FK, user FK, matched_text | `unique(insight, user)` |
 | `Delivery` | insight FK, user FK, relevance (0–100), tier (`direct`, `action`, `important`, `digest`), reason (varchar 200), notified_at, digested_at, read_at, dismissed_at, feedback (`not_relevant`, null) | `unique(insight, user)`, index `(user, tier, created_at)`. The student's feed is a query on this table. |
 
-## core — background jobs [MVP]
+## Background jobs
 
-| Model | Fields | Notes |
-|---|---|---|
-| `Job` | kind (`triage`, `extract`, `deliver`, `send_digest`, …), payload (JSON), status (`queued`, `running`, `done`, `failed`), attempts, run_after, locked_at, last_error | Index on `(status, run_after)`. Processed by `manage.py run_jobs` ([02](02-system-architecture.md#background-jobs)). |
+There is no job table: jobs are kept in **Redis** by Celery ([02](02-system-architecture.md#background-jobs)). Each job records its own outcome on the rows it works on (for example `Message.triage` and `processed_at`).
 
 ## notifications [MVP]
 

@@ -33,7 +33,7 @@ This keeps the system explainable, testable, cheap and safe: a strange or malici
  7 Notify       immediate (direct attention, action required, important) or digest
 ```
 
-Each step runs as a **job** from the database job table (see [02](02-system-architecture.md#background-jobs)), so a slow or failed AI call never blocks a web request, and failed steps are retried.
+Each step runs as a **Celery job** (see [02](02-system-architecture.md#background-jobs)), so a slow or failed AI call never blocks a web request, and failed steps are retried.
 
 ## Step details
 

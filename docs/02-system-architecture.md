@@ -16,9 +16,9 @@
  └──────┬──────────────────┬───────────────────────┬──────────────────────┬─────────────────┘
         │                  │                       │                      │
   ┌─────┴────┐   ┌─────────┴────────┐   ┌──────────┴──────────┐   ┌───────┴──────────┐
-  │ MySQL 8.4│   │ Local file store │   │ Job runner          │   │ AI provider API  │
-  │ (+ Job   │   │                  │   │ manage.py run_jobs  │──►│ (one module,     │
-  │  table)  │   └──────────────────┘   │ (systemd service)   │   │  providers.py)   │
+  │ MySQL 8.4│   │ Local file store │   │ Redis (to-do list)  │   │ AI provider API  │
+  │          │   │                  │   │  ▲ Celery worker    │──►│ (one module,     │
+  │          │   └──────────────────┘   │  ▲ Celery Beat      │   │  providers.py)   │
   └──────────┘                          └─────────────────────┘   └──────────────────┘
         ▲
  ┌──────┴─────────────── React web app ───────────────────────┐     Django admin (/django-admin/)
@@ -34,16 +34,18 @@ These are the key principles:
 3. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
 4. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
 5. **A modular monolith with few apps.** There is one Django project. A new app is created only when separation is genuinely good practice (like `accounts`); related features share an app. The AI pipeline is one app (`intelligence`), with alerts in `notifications`.
-6. **Background work without extra infrastructure.** AI calls are slow and can fail, so they never run inside a web request. They run as rows in a MySQL `Job` table, processed by one long-running management command (see [Background jobs](#background-jobs)). There is still **no Redis, Celery or message broker**.
+6. **Background work runs in Celery.** AI calls are slow and can fail, so they never run inside a web request. Web requests add a job to **Redis**; a **Celery worker** runs it, and **Celery Beat** starts the daily jobs (see [Background jobs](#background-jobs)). Chosen by the developer before M4.1 over a database job table.
 7. **Connectors are thin and replaceable.** The WhatsApp connector is a separate small process that only forwards messages; the Telegram bot is a webhook. Neither contains any understanding logic. See [08](08-messaging-integrations.md).
 8. **The Django admin is the operator's tool in the pilot.** It is used by the developer (super admin) to review new sources, check AI drafts, correct or retract insights, fix timetable data and create official staff posts. React staff pages are built after the pilot. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
 
 ### Background jobs
 
-- `core.Job` rows (kind, payload, status, attempts, `run_after`) are created inside the same transaction as the data that needs work (for example, a new `Message` queues a `triage` job).
-- `manage.py run_jobs` runs as a systemd service. It claims jobs with `SELECT … FOR UPDATE SKIP LOCKED` (MySQL 8), runs them, and retries failures with a growing delay up to a limit.
-- The daily digest and retention clean-up are scheduled by `run_jobs` itself (it queues them once a day), so no separate cron entry is needed.
-- In tests, jobs run immediately in the same process.
+- **Celery** with **Redis** as the broker (the to-do list). Set up in `config/celery.py`; settings start with `CELERY_` in `config/settings/base.py`.
+- Jobs are plain functions marked `@shared_task` in each app's `tasks.py`; Celery finds them automatically. A job saves its own results in MySQL (Celery results are switched off).
+- `CELERY_TASK_ACKS_LATE` keeps a job in Redis until it has finished, and the worker takes one job at a time (AI calls are slow). Jobs that can fail (AI calls) retry with a growing delay.
+- **Daily jobs** (digest, deleting old message text) are listed in `CELERY_BEAT_SCHEDULE` and started by Celery Beat.
+- **Tests and CI need no Redis:** test settings set `CELERY_TASK_ALWAYS_EAGER`, so jobs run immediately in the same process.
+- **On a Windows PC:** Redis runs in WSL (`sudo service redis-server start`); the worker runs on Windows with `--pool=solo`. Use `127.0.0.1`, not `localhost`, in `CELERY_BROKER_URL`: `localhost` tries IPv6 first, which WSL does not forward, and each connection waits ~20 seconds.
 
 ## 6. Backend architecture
 
@@ -71,6 +73,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | Spreadsheets | `openpyxl` | **Needs approval**, only if timetables arrive as `.xlsx` (turns them into text for the model) | M5 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `anthropic` (proposed) | **Needs approval** in the first AI task | Intelligence milestone |
+| Background jobs | `celery` (5.6) and `redis` (the Python client), with a Redis server | Approved before M4.1 | M4.1 |
 | WhatsApp connector | Baileys (Node.js) or neonize/whatsmeow (Python) | **Needs approval** in the connector task. Lives in `connectors/whatsapp/`, outside Django. | Connectors milestone |
 
 ### Layering inside each app
@@ -173,6 +176,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `AI_API_KEY`, `AI_TRIAGE_MODEL`, `AI_EXTRACT_MODEL`, `AI_DAILY_SPEND_LIMIT` | | The AI provider ([12](12-intelligence.md#ai-provider)) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
+| `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |
 | `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |
 | *[Later]* `STORAGE_BACKEND`, `AWS_*` | | Not used in the MVP |
 

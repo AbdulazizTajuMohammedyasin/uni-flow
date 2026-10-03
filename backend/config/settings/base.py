@@ -228,3 +228,16 @@ CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", [])
 # The website's API client sends credentials; safe because origins are an exact list.
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (*default_cors_headers, "x-client")
+
+
+# Background jobs: Celery with Redis as the broker (see config/celery.py).
+
+# 127.0.0.1, not "localhost": on Windows "localhost" tries IPv6 first, which WSL does not
+# forward, and every connection then waits ~20 seconds.
+CELERY_BROKER_URL = env_str("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_IGNORE_RESULT = True  # jobs save their results in the database themselves
+CELERY_TASK_ACKS_LATE = True  # a job is only removed from Redis after it finishes
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # take one job at a time (AI calls are slow)
+# Daily jobs (digest, deleting old message text) are added here as they are built.
+CELERY_BEAT_SCHEDULE: dict = {}

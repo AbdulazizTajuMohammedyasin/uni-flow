@@ -87,6 +87,35 @@ Accounts use **Djoser's own URLs**. Login and refresh use SimpleJWT with one cha
 
 Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Real sending is set up at deployment (M10).
 
+## Background jobs (Celery + Redis)
+
+Slow work (the AI, daily summaries) runs in a Celery **worker**, with **Redis** holding the to-do
+list. Tests don't need either: jobs run immediately there.
+
+1. Start Redis in WSL (install once with `sudo apt install redis-server`):
+
+   ```bash
+   sudo service redis-server start
+   redis-cli ping            # answers PONG
+   ```
+
+2. Start the worker from `backend/` on Windows (`--pool=solo` is needed on Windows):
+
+   ```powershell
+   pipenv run celery -A config worker --pool=solo -l info
+   ```
+
+3. Check the set-up from a second terminal; the worker's window shows `succeeded ... 'pong'`:
+
+   ```powershell
+   pipenv run celery -A config call config.celery.ping
+   ```
+
+4. Daily jobs (added in later milestones) need Celery Beat too: `pipenv run celery -A config beat -l info`.
+
+`CELERY_BROKER_URL` defaults to `redis://127.0.0.1:6379/0`. Use `127.0.0.1`, not `localhost`: on
+Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connection waits ~20 s.
+
 ## Database migrations
 
 UniFlow uses a custom, email-based user model (`accounts.User`, `AUTH_USER_MODEL = "accounts.User"`). There is no `username`.

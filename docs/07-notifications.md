@@ -8,7 +8,7 @@ In the MVP, alerts appear **inside UniFlow only** (the bell and the notification
 
 ```
 intelligence: Delivery rows created for an insight (one per affected student, with a tier)
-        │  same transaction → Job "notify" for that insight
+        │  after the transaction commits → Celery job "notify" for that insight
         ▼
 notifications.services.notify_deliveries(insight)
         │  immediate tiers: direct / action / important  → Notification now
@@ -33,13 +33,13 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 - **Merged duplicates don't notify again.** When a forwarded copy is merged into an existing insight ([12](12-intelligence.md#5-merge-duplicates)), no new notification is sent.
 - **Every notification opens the insight**, and from there the original message.
 - The digest is one notification that opens a digest page listing the day's digest-tier insights, grouped by information type.
-- Notifications are created by `run_jobs` ([02](02-system-architecture.md#background-jobs)), never inside a web request. For about 10k students, `bulk_create` in batches finishes in well under a second.
+- Notifications are created by a Celery job ([02](02-system-architecture.md#background-jobs)), never inside a web request. For about 10k students, `bulk_create` in batches finishes in well under a second. The daily digest is started by Celery Beat.
 
 ## Later
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run from `run_jobs` with retries |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run as Celery jobs with retries |
 | Email digest | The SMTP settings (M10 release) and a per-user choice |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |

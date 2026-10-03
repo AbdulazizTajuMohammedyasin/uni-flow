@@ -193,7 +193,7 @@ The MVP is first released as a **pilot**: one intake and a handful of real group
 | Replacing chat | Students keep talking in WhatsApp and Telegram |
 | Grades, submissions, official enrolment | The LMS and Student Hub already do this |
 | Changing a timetable without the student's confirmation | Trust: messages can be wrong, old or jokes |
-| Infrastructure without a demonstrated need (Redis, Celery, Docker, Kubernetes, Elasticsearch, microservices) | Complexity without benefit at this scale. Background work uses a database job table (see [02](02-system-architecture.md)). |
+| Infrastructure without a demonstrated need (Docker, Kubernetes, Elasticsearch, microservices) | Complexity without benefit at this scale. Background work uses Celery with Redis (see [02](02-system-architecture.md#background-jobs)). |
 
 ## 5. User roles
 
@@ -228,4 +228,4 @@ Every user has exactly **one role**.
 - All logic lives in the backend. The frontend is never the security boundary.
 - Accounts: only `@student.aiu.edu.my` can self-register; staff accounts are created by a super admin.
 - AIU is organized into **Schools**; a Programme is a degree; a Course is a subject (for example CDE2313).
-- Minimal infrastructure: no Redis, Celery or Docker for now.
+- Minimal infrastructure: no Docker for now. Background work uses Celery with Redis (Redis runs in WSL during development).

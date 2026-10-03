@@ -58,7 +58,7 @@ There is no Docker in the current plan. Containerization can be revisited if the
                             └─ api.uniflow.example.edu  → gunicorn (systemd service) → Django
                                                          /api/v1/internal/ blocked from the internet
         systemd services on the same VM:
-          gunicorn (Django)  ·  run_jobs (background jobs, digest, retention)  ·  whatsapp-connector
+          gunicorn (Django)  ·  celery worker  ·  celery beat  ·  redis-server  ·  whatsapp-connector
         MySQL 8.4 (same VM, native)   ·   nightly mysqldump + media backup → off-site
 ```
 
@@ -70,7 +70,7 @@ There is no Docker in the current plan. Containerization can be revisited if the
   4. `collectstatic`
   5. restart gunicorn
   6. `npm ci && npm run build`
-- There is **no cron** in the MVP: `run_jobs` runs as a systemd service and queues its own daily work (the digest and retention clean-up).
+- There is **no cron**: Celery Beat starts the daily jobs (the digest and retention clean-up). Redis, the Celery worker and Celery Beat run as services next to gunicorn. Tests and CI don't need Redis (jobs run immediately).
 - The WhatsApp connector runs as its own systemd service and restarts automatically. Its login session files are kept outside the repository and backed up.
 - `manage.py check --deploy` must pass. A monitor watches `/api/v1/health/`.
 - **Backups:** a daily `mysqldump` plus media, kept for 30 days. Restoring is tested once per term.
