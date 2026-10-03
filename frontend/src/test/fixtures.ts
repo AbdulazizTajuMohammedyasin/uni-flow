@@ -1,6 +1,6 @@
 /** Shared fake data for page tests. */
 import type { Intake, Programme, School } from '@/types/academics'
-import type { Capability, User } from '@/types/auth'
+import type { Capability, PreferenceChoices, StudentProfile, User } from '@/types/auth'
 
 export const schools: School[] = [
   { id: 1, code: 'SCI', name: 'School of Computing and Informatics' },
@@ -18,6 +18,33 @@ export const intakes: Intake[] = [
   { id: 101, code: '2025-MAR', name: 'March 2025', start_date: '2025-03-01' },
 ]
 
+export const preferenceChoices: PreferenceChoices = {
+  interests: [
+    { value: 'ai', label: 'Artificial Intelligence' },
+    { value: 'cybersecurity', label: 'Cybersecurity' },
+  ],
+  info_types: [
+    { value: 'internship', label: 'Internships' },
+    { value: 'bootcamp', label: 'Bootcamps' },
+  ],
+}
+
+/** A student profile with nothing chosen yet, plus any `overrides`. */
+export function makeStudentProfile(overrides: Partial<StudentProfile> = {}): StudentProfile {
+  return {
+    student_number: null,
+    school: null,
+    programme: null,
+    intake: null,
+    current_semester: null,
+    semester_override: null,
+    interests: [],
+    info_types: [],
+    aliases: '',
+    ...overrides,
+  }
+}
+
 export function makeStudent(overrides: Partial<User> = {}): User {
   return {
     id: 1,
@@ -25,7 +52,7 @@ export function makeStudent(overrides: Partial<User> = {}): User {
     full_name: 'Ali Hassan',
     role: 'student',
     profile_complete: false,
-    student_profile: { student_number: null, school: null, programme: null, intake: null },
+    student_profile: makeStudentProfile(),
     staff_profile: null,
     capabilities: capabilitiesOf([]),
     publishers: [],

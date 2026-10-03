@@ -16,6 +16,34 @@ export type Publisher = {
   name: string
 }
 
+/** The student part of "my profile". */
+export type StudentProfile = {
+  student_number: string | null
+  school: number | null
+  programme: number | null
+  intake: number | null
+  /** Worked out by the backend from the intake and AIU's terms (read-only). */
+  current_semester: number | null
+  /** Set only when the worked-out semester is wrong. */
+  semester_override: number | null
+  interests: string[]
+  info_types: string[]
+  /** Nicknames, comma-separated (used to notice when someone mentions the student). */
+  aliases: string
+}
+
+/** One option of a picker, e.g. { value: 'ai', label: 'Artificial Intelligence' }. */
+export type Choice = {
+  value: string
+  label: string
+}
+
+/** GET /api/v1/auth/preferences/choices/ */
+export type PreferenceChoices = {
+  interests: Choice[]
+  info_types: Choice[]
+}
+
 /** GET /api/v1/auth/users/me/ */
 export type User = {
   id: number
@@ -23,12 +51,7 @@ export type User = {
   full_name: string
   role: 'student' | 'lecturer' | 'school_staff' | 'university_admin' | 'super_admin'
   profile_complete: boolean
-  student_profile: {
-    student_number: string | null
-    school: number | null
-    programme: number | null
-    intake: number | null
-  } | null
+  student_profile: StudentProfile | null
   staff_profile: {
     school: number | null
     position_title: string
@@ -45,12 +68,7 @@ export type LoginData = {
 /** PATCH /api/v1/auth/users/me/ (send only what changes) */
 export type UpdateMeData = {
   full_name?: string
-  student_profile?: {
-    student_number?: string | null
-    school?: number | null
-    programme?: number | null
-    intake?: number | null
-  }
+  student_profile?: Partial<Omit<StudentProfile, 'current_semester'>>
 }
 
 export type ChangePasswordData = {

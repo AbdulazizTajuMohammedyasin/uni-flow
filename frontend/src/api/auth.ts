@@ -1,4 +1,11 @@
-import type { ChangePasswordData, LoginData, RegisterData, UpdateMeData, User } from '@/types/auth'
+import type {
+  ChangePasswordData,
+  LoginData,
+  PreferenceChoices,
+  RegisterData,
+  UpdateMeData,
+  User,
+} from '@/types/auth'
 
 import { api, refreshAccessToken } from './client'
 import { toApiError } from './errors'
@@ -100,6 +107,15 @@ export async function updateCurrentUser(data: UpdateMeData): Promise<User> {
 export async function changePassword(data: ChangePasswordData): Promise<void> {
   try {
     await api.post('/auth/users/set_password/', data)
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** The options for the interests and information-type pickers. */
+export async function getPreferenceChoices(): Promise<PreferenceChoices> {
+  try {
+    return (await api.get<PreferenceChoices>('/auth/preferences/choices/')).data
   } catch (error) {
     throw toApiError(error)
   }

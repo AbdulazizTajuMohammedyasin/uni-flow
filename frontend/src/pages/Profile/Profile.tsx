@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import type { ReactNode } from 'react'
 
 import { ChangePasswordForm } from '@/components/ChangePasswordForm'
+import { PreferencesForm } from '@/components/PreferencesForm'
 import { StudentDetailsForm } from '@/components/StudentDetailsForm'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
@@ -50,9 +51,14 @@ export function ProfilePage() {
       </Section>
 
       {user.role === 'student' && (
-        <Section title="Your studies">
-          <StudentDetailsForm submitLabel="Save changes" />
-        </Section>
+        <>
+          <Section title="Your studies">
+            <StudentDetailsForm submitLabel="Save changes" withSemester />
+          </Section>
+          <Section title="Your interests">
+            <PreferencesForm submitLabel="Save interests" />
+          </Section>
+        </>
       )}
 
       <Section title="Password">

@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M3.6 is done ✅. The API can give each student **today's classes** and **a week of classes** (Monday to Sunday).
-**Next up:** M3.7, the onboarding and profile pages: interests and information types.
+**Now:** M3.7 is done ✅. New students pick their **interests** and **information types** during onboarding (or skip), and the profile shows their **semester**.
+**Next up:** M3.8, the **Timetable page**: today and this week, choosing sections, and adding a missing class.
 
 ---
 
@@ -96,7 +96,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M3.4 | **Semester and interests.** The semester is worked out by **counting AIU's real terms** since the student's intake (three a year; the dates change every year, so they come from the official academic calendar, not fixed dates). An October 2025 intake is in Semester 1 from 27 Oct 2025, 2 from 23 Mar 2026 and 3 from 3 Aug 2026. Foundation students count AIU's **Foundation** terms instead. The official 2024/2025 and 2025/2026 terms of both calendars are loaded by the seed command; new terms are added in the Django admin. A student can set it by hand if that's wrong. Messages can target semesters ("Year 2" = 4–6). Students can save interests (AI, Cybersecurity, …), information types (internships, bootcamps, …) and nicknames. | `pipenv run python manage.py migrate`, then `pipenv run python manage.py seed_academics` (loads the terms) and tick the current term of each calendar in `/django-admin/` → Terms; Swagger → **auth** → `users/me/` and `preferences/choices/` | ✅ Done |
 | M3.5 | **Sections for students.** A student can browse this term's sections (search by course code or name), join and leave sections, and **add a class that's missing**: course code, section and weekly times. It is created once, so classmates who add the same class just join it, and nobody can change classes someone else added. Foundation students see Foundation-term sections. | Swagger → **timetable** → `sections/` and `my-sections/` (log in as a student) | ✅ Done |
 | M3.6 | **Today and this week.** A student's classes for today, or for a whole week (Monday to Sunday), from the sections they joined, in time order. "Today" uses Kuala Lumpur time, so just after midnight it already shows the new day. Days outside the current term are empty. | Swagger → **timetable** → `today/` and `week/` (log in as a student who joined a section) | ✅ Done |
-| **M3.7** | **Onboarding and profile pages:** interests and information types on the website | – | ⏭️ **Next** |
+| M3.7 | **Interests on the website.** Onboarding now has a second step, "What matters to you?": tap your interests (AI, Cybersecurity…) and what you want to hear about (internships, bootcamps…), add nicknames, or **Skip for now**. The profile page has a "Your interests" section, and "Your studies" shows **"You are in Semester 3"** with a way to correct it. | Register a new student → after school/programme/intake you see the interests step; then open **Profile** | ✅ Done |
+| **M3.8** | **Timetable page:** today and this week, choose sections, add a missing class | – | ⏭️ **Next** |
 
 ---
 
@@ -118,9 +119,9 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `router.tsx` | **The router:** which address shows which page |
 | `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
-| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `useHealth.ts` |
+| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useHealth.ts` |
 | `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `health.ts` |
-| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
+| `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
 | `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
 | `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage) |

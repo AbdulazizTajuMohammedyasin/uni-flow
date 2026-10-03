@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as authApi from '@/api/auth'
-import { capabilitiesOf } from '@/test/fixtures'
+import { capabilitiesOf, makeStudentProfile } from '@/test/fixtures'
 import type { User } from '@/types/auth'
 
 import { AuthProvider, useAuth } from './AuthContext'
@@ -20,7 +20,7 @@ const student: User = {
   full_name: 'Ali Hassan',
   role: 'student',
   profile_complete: false,
-  student_profile: { student_number: null, school: null, programme: null, intake: null },
+  student_profile: makeStudentProfile(),
   staff_profile: null,
   capabilities: capabilitiesOf([]),
   publishers: [],

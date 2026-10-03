@@ -7,7 +7,14 @@ import * as academicsApi from '@/api/academics'
 import * as authApi from '@/api/auth'
 import { AuthProvider } from '@/context/AuthContext'
 import { createQueryClient } from '@/lib/queryClient'
-import { intakes, makeStudent, programmes, schools } from '@/test/fixtures'
+import {
+  intakes,
+  makeStudent,
+  makeStudentProfile,
+  preferenceChoices,
+  programmes,
+  schools,
+} from '@/test/fixtures'
 
 import { ProfilePage } from './Profile'
 
@@ -15,6 +22,7 @@ vi.mock('@/api/auth', () => ({
   restoreSession: vi.fn(),
   getCurrentUser: vi.fn(),
   updateCurrentUser: vi.fn(),
+  getPreferenceChoices: vi.fn(),
   changePassword: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
@@ -27,7 +35,14 @@ vi.mock('@/api/academics', () => ({
 
 const completeStudent = makeStudent({
   profile_complete: true,
-  student_profile: { student_number: 'AIU22001', school: 1, programme: 10, intake: 100 },
+  student_profile: makeStudentProfile({
+    student_number: 'AIU22001',
+    school: 1,
+    programme: 10,
+    intake: 100,
+    current_semester: 3,
+    interests: ['cybersecurity'],
+  }),
 })
 
 function renderProfile() {
@@ -51,6 +66,7 @@ beforeEach(() => {
   vi.mocked(authApi.restoreSession).mockResolvedValue(true)
   vi.mocked(authApi.getCurrentUser).mockResolvedValue(completeStudent)
   vi.mocked(authApi.logout).mockResolvedValue()
+  vi.mocked(authApi.getPreferenceChoices).mockResolvedValue(preferenceChoices)
   vi.mocked(academicsApi.getSchools).mockResolvedValue(schools)
   vi.mocked(academicsApi.getIntakes).mockResolvedValue(intakes)
   vi.mocked(academicsApi.getProgrammes).mockImplementation(async (schoolId) =>
@@ -72,6 +88,45 @@ describe('Profile page', () => {
     expect((screen.getByLabelText('Student number (optional)') as HTMLInputElement).value).toBe(
       'AIU22001',
     )
+  })
+
+  it('shows the worked-out semester and lets the student correct it', async () => {
+    vi.mocked(authApi.updateCurrentUser).mockResolvedValue(completeStudent)
+    renderProfile()
+
+    expect(await screen.findByText('Semester 3', { selector: 'strong' })).toBeTruthy()
+    await waitFor(() => {
+      expect((screen.getByLabelText('Programme') as HTMLSelectElement).value).toBe('10')
+    })
+    fireEvent.change(screen.getByLabelText('Semester'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(authApi.updateCurrentUser).toHaveBeenCalledWith({
+        student_profile: {
+          school: 1,
+          programme: 10,
+          intake: 100,
+          student_number: 'AIU22001',
+          semester_override: 4,
+        },
+      })
+    })
+  })
+
+  it('pre-fills and saves interests', async () => {
+    vi.mocked(authApi.updateCurrentUser).mockResolvedValue(completeStudent)
+    renderProfile()
+
+    const cyber = (await screen.findByLabelText('Cybersecurity')) as HTMLInputElement
+    expect(cyber.checked).toBe(true)
+    fireEvent.click(screen.getByLabelText('Bootcamps'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save interests' }))
+
+    expect(await screen.findByText('Saved.')).toBeTruthy()
+    expect(authApi.updateCurrentUser).toHaveBeenCalledWith({
+      student_profile: { interests: ['cybersecurity'], info_types: ['bootcamp'], aliases: '' },
+    })
   })
 
   it('changes the password', async () => {

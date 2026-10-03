@@ -7,7 +7,7 @@ import * as academicsApi from '@/api/academics'
 import * as authApi from '@/api/auth'
 import { AuthProvider } from '@/context/AuthContext'
 import { createQueryClient } from '@/lib/queryClient'
-import { intakes, makeStudent, programmes, schools } from '@/test/fixtures'
+import { intakes, makeStudent, preferenceChoices, programmes, schools } from '@/test/fixtures'
 
 import { OnboardingPage } from './Onboarding'
 
@@ -15,6 +15,7 @@ vi.mock('@/api/auth', () => ({
   restoreSession: vi.fn(),
   getCurrentUser: vi.fn(),
   updateCurrentUser: vi.fn(),
+  getPreferenceChoices: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
 }))
@@ -48,6 +49,7 @@ function select(label: string, value: string | number) {
 beforeEach(() => {
   vi.mocked(authApi.restoreSession).mockResolvedValue(true)
   vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeStudent())
+  vi.mocked(authApi.getPreferenceChoices).mockResolvedValue(preferenceChoices)
   vi.mocked(academicsApi.getSchools).mockResolvedValue(schools)
   vi.mocked(academicsApi.getIntakes).mockResolvedValue(intakes)
   vi.mocked(academicsApi.getProgrammes).mockImplementation(async (schoolId) =>
@@ -83,7 +85,7 @@ describe('Onboarding page', () => {
     expect(authApi.updateCurrentUser).not.toHaveBeenCalled()
   })
 
-  it('saves the choices and continues to Home', async () => {
+  async function saveStudies() {
     vi.mocked(authApi.updateCurrentUser).mockResolvedValue(makeStudent({ profile_complete: true }))
     renderOnboarding()
     await screen.findByRole('option', { name: 'School of Computing and Informatics' })
@@ -93,10 +95,30 @@ describe('Onboarding page', () => {
     select('Programme', 10)
     select('Intake', 100)
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+    await screen.findByRole('heading', { name: 'What matters to you?' })
+  }
 
-    expect(await screen.findByRole('heading', { name: 'Home' })).toBeTruthy()
+  it('saves the studies, then asks for interests (which can be skipped)', async () => {
+    await saveStudies()
     expect(authApi.updateCurrentUser).toHaveBeenCalledWith({
       student_profile: { school: 1, programme: 10, intake: 100, student_number: null },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip for now' }))
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeTruthy()
+  })
+
+  it('saves the chosen interests and information types, then goes Home', async () => {
+    await saveStudies()
+
+    fireEvent.click(await screen.findByLabelText('Artificial Intelligence'))
+    fireEvent.click(screen.getByLabelText('Internships'))
+    fireEvent.change(screen.getByLabelText('Nicknames (optional)'), { target: { value: 'Ali' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Finish' }))
+
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeTruthy()
+    expect(authApi.updateCurrentUser).toHaveBeenLastCalledWith({
+      student_profile: { interests: ['ai'], info_types: ['internship'], aliases: 'Ali' },
     })
   })
 })

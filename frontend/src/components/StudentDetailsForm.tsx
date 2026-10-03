@@ -18,16 +18,22 @@ const schema = z.object({
   programme: z.string().min(1, 'Choose your programme.'),
   intake: z.string().min(1, 'Choose your intake.'),
   student_number: z.string().trim().max(32, 'At most 32 characters.'),
+  // "" = worked out automatically from the intake.
+  semester_override: z.string(),
 })
 type StudentDetails = z.infer<typeof schema>
 
 type Props = {
   submitLabel: string
   onSaved?: () => void
+  /** Show the semester and let the student correct it (profile page). */
+  withSemester?: boolean
 }
 
+const SEMESTERS = Array.from({ length: 15 }, (_, index) => index + 1)
+
 /** School → programme → intake (+ optional student number). Used by onboarding and profile. */
-export function StudentDetailsForm({ submitLabel, onSaved }: Props) {
+export function StudentDetailsForm({ submitLabel, onSaved, withSemester = false }: Props) {
   const { user, setUser } = useAuth()
   const profile = user?.student_profile
   const [saved, setSaved] = useState(false)
@@ -46,6 +52,7 @@ export function StudentDetailsForm({ submitLabel, onSaved }: Props) {
       programme: profile?.programme ? String(profile.programme) : '',
       intake: profile?.intake ? String(profile.intake) : '',
       student_number: profile?.student_number ?? '',
+      semester_override: profile?.semester_override ? String(profile.semester_override) : '',
     },
   })
 
@@ -64,6 +71,9 @@ export function StudentDetailsForm({ submitLabel, onSaved }: Props) {
           programme: Number(data.programme),
           intake: Number(data.intake),
           student_number: data.student_number || null,
+          ...(withSemester && {
+            semester_override: data.semester_override ? Number(data.semester_override) : null,
+          }),
         },
       })
       setUser(updated)
@@ -74,7 +84,13 @@ export function StudentDetailsForm({ submitLabel, onSaved }: Props) {
       const nested = error instanceof ApiError ? error.fields.student_profile : undefined
       const fieldErrors = nested && !Array.isArray(nested) ? (nested as Record<string, string[]>) : {}
       let shown = false
-      for (const field of ['school', 'programme', 'intake', 'student_number'] as const) {
+      for (const field of [
+        'school',
+        'programme',
+        'intake',
+        'student_number',
+        'semester_override',
+      ] as const) {
         if (fieldErrors[field]?.length) {
           setError(field, { message: fieldErrors[field].join(' ') })
           shown = true
@@ -140,6 +156,31 @@ export function StudentDetailsForm({ submitLabel, onSaved }: Props) {
         error={errors.student_number?.message}
         {...register('student_number')}
       />
+
+      {withSemester && (
+        <div className="space-y-1.5">
+          {profile?.current_semester && (
+            <p className="text-sm">
+              You are in <strong>Semester {profile.current_semester}</strong>.
+            </p>
+          )}
+          <SelectField
+            label="Semester"
+            error={errors.semester_override?.message}
+            {...register('semester_override')}
+          >
+            <option value="">Worked out from my intake</option>
+            {SEMESTERS.map((number) => (
+              <option key={number} value={number}>
+                Semester {number}
+              </option>
+            ))}
+          </SelectField>
+          <p className="text-xs text-muted-foreground">
+            Change this only if the worked-out semester is wrong (for example after a deferral).
+          </p>
+        </div>
+      )}
 
       {errors.root && (
         <p role="alert" className="text-sm text-destructive">

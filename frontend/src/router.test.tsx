@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as authApi from '@/api/auth'
 import { AuthProvider } from '@/context/AuthContext'
-import { capabilitiesOf, makeSchoolStaff } from '@/test/fixtures'
+import { capabilitiesOf, makeSchoolStaff, makeStudentProfile } from '@/test/fixtures'
 import type { User } from '@/types/auth'
 
 import { createQueryClient } from './lib/queryClient'
@@ -35,7 +35,7 @@ const student: User = {
   full_name: 'Ali Hassan',
   role: 'student',
   profile_complete: true,
-  student_profile: { student_number: null, school: 1, programme: 1, intake: 1 },
+  student_profile: makeStudentProfile({ school: 1, programme: 1, intake: 1 }),
   staff_profile: null,
   capabilities: capabilitiesOf([]),
   publishers: [],
