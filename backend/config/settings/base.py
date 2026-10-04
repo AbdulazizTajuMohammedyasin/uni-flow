@@ -261,5 +261,5 @@ MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))
 
 AI_PROVIDER = env_str("AI_PROVIDER", "gemini")  # "gemini", or "fake" in tests
 GEMINI_API_KEY = env_str("GEMINI_API_KEY", "")
-AI_FAST_MODEL = env_str("AI_FAST_MODEL", "gemini-2.5-flash-lite")  # "is this academic?"
-AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-2.5-flash")  # understanding, timetables
+AI_FAST_MODEL = env_str("AI_FAST_MODEL", "gemini-3.1-flash-lite")  # "is this academic?"
+AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-3.5-flash")  # understanding, timetables

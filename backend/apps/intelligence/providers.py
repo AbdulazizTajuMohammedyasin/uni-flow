@@ -61,6 +61,7 @@ class GeminiProvider:
             response_mime_type="application/json",
             response_json_schema=schema,
             temperature=0,
+            automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
         try:
             response = self._client.models.generate_content(

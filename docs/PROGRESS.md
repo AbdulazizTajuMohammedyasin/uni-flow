@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M5.2 is done ✅. UniFlow has the **Insight** table for the AI's findings and official staff posts, with the "how sure must the AI be" rule. Staff can write and publish posts in the Django admin.
-**Next up:** M5.3, the AI's first job: **triage**, sorting new messages into "academic information" or "noise".
+**Now:** M5.3 is done ✅. New messages are automatically **sorted by the AI** into "academic information" or "noise" (tested on the real Gemini).
+**Next up:** M5.4, **reading timetables**: the AI turns a timetable image, PDF or Excel sheet into classes the student confirms.
 
 ---
 
@@ -116,9 +116,10 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
-| M5.1 | **The AI connection.** One small module talks to **Gemini** (Google), using Google's official library: a fast model (`gemini-2.5-flash-lite`) for "is this message academic?" and a smarter one (`gemini-2.5-flash`) that can also read timetable images and PDFs. Both can be changed in `.env`. When Gemini says "too many requests" (the free tier has limits), the job will wait and retry. Tests use a **fake AI**, so they never use your quota. | Put `GEMINI_API_KEY=…` in `backend/.env` and save, then run `pipenv run python manage.py check_ai` | ✅ Done |
+| M5.1 | **The AI connection.** One small module talks to **Gemini** (Google), using Google's official library: a fast model (`gemini-3.1-flash-lite`) for "is this message academic?" and a smarter one (`gemini-3.5-flash`) that can also read timetable images and PDFs. Both can be changed in `.env`. When Gemini says "too many requests" (the free tier has limits), the job will wait and retry. Tests use a **fake AI**, so they never use your quota. | Put `GEMINI_API_KEY=…` in `backend/.env` and save, then run `pipenv run python manage.py check_ai` | ✅ Done |
 | M5.2 | **Insights.** An **insight** is one piece of information ("CDE2313 class moved to 2 PM"): kind, title, summary, importance, action needed, dates and link, who it's for, and **how sure the AI was**. It links to the **original messages** with a short **quote** that stays after the 60-day clean-up. The rule: **sure** (80%+) → shown; **unsure** (50–80%) → shown but marked "Not confirmed"; **very unsure** → kept as a draft. **Official staff posts** are insights too: write one in the Django admin (leave "audience" empty for all students), then use **Publish**. | `pipenv run python manage.py migrate`; `/django-admin/` → Intelligence → Insights → Add | ✅ Done |
-| **M5.3** | **Triage:** the AI sorts new messages into "academic information" or "noise" | – | ⏭️ **Next** |
+| M5.3 | **Triage.** As soon as messages arrive, a background job sends them to the **fast model** in batches of up to 30 (one request per batch) and marks each one **academic** or **noise** (greetings, thanks, selling things…). Messages with a file count as academic and emptied ones as noise, without asking the AI. If Gemini says "too many requests", the job waits 1, 2, 4… minutes and tries again. Messages are sent as data, so a message saying "ignore your instructions" can't change the rules (checked on the real Gemini). | With Redis and the worker running, paste messages on the Groups page, then `/django-admin/` → Intelligence → Messages (the "Triage" column). Or select a group in Sources → **Sort new messages now** | ✅ Done |
+| **M5.4** | **Reading timetables:** the AI turns a timetable image, PDF or Excel sheet into classes the student confirms | – | ⏭️ **Next** |
 
 ---
 
@@ -171,7 +172,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **UniFlow is an AI information assistant**, not a notice board. Messages from academic WhatsApp and Telegram groups are the main input. The AI **proposes**; normal code decides; the student **confirms** timetable changes.
 - **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
 - **Staff posts stay** as one official source. The M2 code is kept and reused.
-- **The AI is Gemini, on the free tier for now**, using the slightly older **Gemini 2.5** models because they usually allow many more free requests than the newest ones. Google may use what's sent on the free tier; decide on the paid tier before real students' messages are used.
+- **The AI is Gemini, on the free tier for now**, using the **oldest models that still work for a new key** (`gemini-3.1-flash-lite` and `gemini-3.5-flash`; the 2.5 models are closed to new users), because older models usually allow many more free requests. Google may use what's sent on the free tier; decide on the paid tier before real students' messages are used.
 - **Background work uses Celery with Redis** (your choice, over a simpler database table). Redis runs in WSL on your PC; tests need no Redis.
 - **When the AI isn't sure:** sure → shown; unsure → daily summary marked "Not confirmed"; very unsure → hidden until you check it.
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).

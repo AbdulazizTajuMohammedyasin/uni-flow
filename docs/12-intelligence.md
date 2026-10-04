@@ -209,10 +209,10 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 
 - All model calls go through **one small module**, `apps/intelligence/providers.py`, with a single interface (`triage(messages)`, `extract(window, context)`). The rest of the code never imports a vendor SDK.
 - **Gemini** (Google), through Google's official `google-genai` library, chosen by the developer in M5.1:
-  - `AI_FAST_MODEL` = **`gemini-2.5-flash-lite`** for triage ("is this message academic?"),
-  - `AI_SMART_MODEL` = **`gemini-2.5-flash`** for understanding messages and reading timetable images, PDFs and sheets.
+  - `AI_FAST_MODEL` = **`gemini-3.1-flash-lite`** for triage ("is this message academic?"),
+  - `AI_SMART_MODEL` = **`gemini-3.5-flash`** for understanding messages and reading timetable images, PDFs and sheets.
 
-  These are the **Gemini 2.5** models on purpose: on the free tier, older models usually allow many more requests than the newest ones (the developer's experience; the exact limits are shown per project in Google AI Studio). Both are settings, so other models can be used without code changes. Answers are requested as JSON matching a schema (`ask_json`).
+  These are the **oldest models that still work for a new key** (checked in M5.3: the Gemini 2.5 models answer "no longer available to new users"), because on the free tier older models usually allow many more requests than the newest ones (the developer's experience; the exact limits are shown per project in Google AI Studio). Both are settings, so other models can be used without code changes. Answers are requested as JSON matching a schema (`ask_json`).
 - **Free tier for now (developer's choice).** On Gemini's free tier, Google may use what is sent to improve its products ("Used to improve our products: Yes"; the paid tier says "No"). Decide on the paid tier before real students' messages are processed.
 - **Limits:** the free tier has per-minute and daily request limits (shown in Google AI Studio). When Gemini answers "too many requests", `providers.AIRateLimited` is raised and the Celery job waits and retries later.
 - Tests never call Gemini: `AI_PROVIDER = "fake"` uses `providers.FakeProvider` with prepared answers. `manage.py check_ai` sends one tiny question to each model to check the key.

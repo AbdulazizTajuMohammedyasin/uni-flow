@@ -78,7 +78,16 @@ def store_messages(source: Source, parsed: list[ParsedMessage]) -> tuple[int, in
             known.add(row.external_id)
             new_rows.append(row)
     Message.objects.bulk_create(new_rows)
+    if new_rows:
+        queue_triage(source)
     return len(new_rows), len(rows) - len(new_rows)
+
+
+def queue_triage(source: Source) -> None:
+    """Ask the background worker to sort the new messages, once the save is committed."""
+    from .tasks import triage_source  # tasks imports this module
+
+    transaction.on_commit(lambda: triage_source.delay(source.id))
 
 
 def paste_messages(user, source: Source, *, text: str, sender_name: str = "") -> tuple[int, int]:
@@ -105,6 +114,8 @@ def _store_plain_message(source: Source, text: str, sender_name: str) -> tuple[i
             "sent_at": timezone.now(),
         },
     )
+    if created:
+        queue_triage(source)
     return (1, 0) if created else (0, 1)
 
 

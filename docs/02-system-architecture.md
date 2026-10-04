@@ -173,7 +173,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `TIME_ZONE` | `Asia/Kuala_Lumpur` | |
 | `MEDIA_ROOT` | `./media` | Local file storage |
 | `MAX_UPLOAD_MB` | `10` | Timetable files and uploads |
-| `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODEL`, `AI_SMART_MODEL` | `gemini`, *(key)*, `gemini-2.5-flash-lite`, `gemini-2.5-flash` | The AI provider ([12](12-intelligence.md#ai-provider)); tests use `fake` |
+| `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODEL`, `AI_SMART_MODEL` | `gemini`, *(key)*, `gemini-3.1-flash-lite`, `gemini-3.5-flash` | The AI provider ([12](12-intelligence.md#ai-provider)); tests use `fake` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
 | `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |

@@ -9,6 +9,7 @@ from apps.audiences.models import Audience
 from apps.publishing.services import archive, publish
 
 from .models import Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
+from .tasks import triage_source
 
 # Links typed without "https://" are read as https (Django 6.0's default, chosen now).
 HTTPS_LINKS = {models.URLField: {"assume_scheme": "https"}}
@@ -28,6 +29,13 @@ class SourceAdmin(admin.ModelAdmin):
     search_fields = ("title", "external_id")
     raw_id_fields = ("connected_by", "section")
     inlines = [SourceMemberInline]
+    actions = ["sort_new_messages"]
+
+    @admin.action(description="Sort new messages now (academic or noise)")
+    def sort_new_messages(self, request, queryset):
+        for source in queryset:
+            triage_source.delay(source.id)
+        self.message_user(request, f"Sorting started for {queryset.count()} group(s).")
 
 
 @admin.register(Message)
