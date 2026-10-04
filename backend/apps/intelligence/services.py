@@ -1,6 +1,7 @@
 """Getting messages into UniFlow by hand: groups for pasted messages, pasting, and
 uploading a WhatsApp "Export chat" file. The connectors (M6) reuse store_messages().
-Also the daily privacy clean-up of old message text and files (clear_old_messages).
+Also the daily privacy clean-up of old message text and files (clear_old_messages), and
+saving what the AI found (save_ai_insight).
 
 The same message is never stored twice: each one gets a fingerprint (time, sender and
 text) as its id, so pasting or uploading the same chat again adds nothing.
@@ -15,8 +16,12 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from apps.audiences.models import Audience
+from apps.publishing.models import PublisherType
+from apps.publishing.services import publish
+
 from . import whatsapp_export
-from .models import Message, MessageFile, Source, SourceMember
+from .models import UNSURE, Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
 from .whatsapp_export import ParsedMessage
 
 MAX_EXPORT_BYTES = 5 * 1024 * 1024  # 5 MB of text is years of a busy group
@@ -145,3 +150,47 @@ def clear_old_messages(now=None) -> dict[str, int]:
         deleted_files += 1
 
     return {"messages_cleared": cleared, "files_deleted": deleted_files}
+
+
+AUDIENCE_LISTS = ("schools", "programmes", "intakes", "courses", "sections")
+
+
+@transaction.atomic
+def save_ai_insight(
+    *,
+    source: Source,
+    kind: str,
+    title: str,
+    summary: str,
+    confidence: float,
+    evidence: list[tuple[Message, str]],
+    audience: dict | None = None,
+    **fields,
+) -> Insight:
+    """Store what the AI found, linked to its messages, and apply the "how sure" rule:
+    sure (>= CONFIDENT) or unsure (>= UNSURE) -> published; very unsure -> draft."""
+    audience = audience or {}
+    target = Audience.objects.create(
+        semester_min=audience.get("semester_min"), semester_max=audience.get("semester_max")
+    )
+    for name in AUDIENCE_LISTS:
+        getattr(target, name).set(audience.get(name, []))
+
+    insight = Insight.objects.create(
+        audience=target,
+        publisher_type=PublisherType.SOURCE,
+        publisher_source=source,
+        origin=Insight.Origin.AI,
+        kind=kind,
+        title=title[:200],
+        summary=summary[:500],
+        confidence=confidence,
+        **fields,
+    )
+    InsightEvidence.objects.bulk_create(
+        InsightEvidence(insight=insight, message=message, quote=quote[:500])
+        for message, quote in evidence
+    )
+    if confidence >= UNSURE:
+        publish(insight, None)
+    return insight

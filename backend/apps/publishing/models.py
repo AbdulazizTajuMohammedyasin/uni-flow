@@ -17,6 +17,9 @@ from core.models import TimeStampedModel
 class PublisherType(models.TextChoices):
     UNIVERSITY = "university", "University"
     SCHOOL = "school", "School"
+    # An insight the AI found in a group; the group itself is linked by the model that
+    # uses this (Insight.publisher_source), because publishing must not depend on it.
+    SOURCE = "source", "A connected group"
 
 
 class Status(models.TextChoices):

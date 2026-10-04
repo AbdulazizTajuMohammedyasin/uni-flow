@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M5.1 is done ✅. UniFlow can talk to the AI (**Gemini, free tier**). Tests use a fake AI.
-**Next up:** M5.2, the **Insight** table: where the AI's findings (and official staff posts) are stored, and the "how sure must the AI be" rule.
+**Now:** M5.2 is done ✅. UniFlow has the **Insight** table for the AI's findings and official staff posts, with the "how sure must the AI be" rule. Staff can write and publish posts in the Django admin.
+**Next up:** M5.3, the AI's first job: **triage**, sorting new messages into "academic information" or "noise".
 
 ---
 
@@ -117,7 +117,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M5.1 | **The AI connection.** One small module talks to **Gemini** (Google), using Google's official library: a fast model (`gemini-2.5-flash-lite`) for "is this message academic?" and a smarter one (`gemini-2.5-flash`) that can also read timetable images and PDFs. Both can be changed in `.env`. When Gemini says "too many requests" (the free tier has limits), the job will wait and retry. Tests use a **fake AI**, so they never use your quota. | Put `GEMINI_API_KEY=…` in `backend/.env` and save, then run `pipenv run python manage.py check_ai` | ✅ Done |
-| **M5.2** | **Insights:** the table for the AI's findings and official staff posts, with the "how sure must the AI be" rule | – | ⏭️ **Next** |
+| M5.2 | **Insights.** An **insight** is one piece of information ("CDE2313 class moved to 2 PM"): kind, title, summary, importance, action needed, dates and link, who it's for, and **how sure the AI was**. It links to the **original messages** with a short **quote** that stays after the 60-day clean-up. The rule: **sure** (80%+) → shown; **unsure** (50–80%) → shown but marked "Not confirmed"; **very unsure** → kept as a draft. **Official staff posts** are insights too: write one in the Django admin (leave "audience" empty for all students), then use **Publish**. | `pipenv run python manage.py migrate`; `/django-admin/` → Intelligence → Insights → Add | ✅ Done |
+| **M5.3** | **Triage:** the AI sorts new messages into "academic information" or "noise" | – | ⏭️ **Next** |
 
 ---
 

@@ -130,7 +130,7 @@ The implementation is one selector, `audiences.selectors.visible_audience_q(user
 |---|---|---|
 | publisher_type | varchar | `university`, `school` or `source` (an insight the AI found in a group). *[Later]* adds `community`. |
 | publisher_school | FK → School, null | Required when the type is `school` |
-| publisher_source | FK → Source, null | Required when the type is `source`; the byline is the group's name |
+| *(on `Insight` only)* publisher_source | FK → Source, null | Required when the type is `source`; the byline is the group's name. It lives on `Insight`, not on the shared base, because `publishing` must not depend on the `intelligence` app. |
 | created_by, updated_by | FK → User, SET_NULL | Audit trail |
 | status | varchar | `draft`, `published` or `archived`. For insights: **draft** = held for review, **published** = delivered to students, **archived** = retracted. |
 | published_at | datetime, null | Set by the publish service to **now**. There is no scheduling in the MVP. |
@@ -143,7 +143,7 @@ The implementation is one selector, `audiences.selectors.visible_audience_q(user
 
 Constraints:
 
-- A `CheckConstraint` requires `publisher_school` to be set if and only if `publisher_type = 'school'`, and `publisher_source` if and only if `publisher_type = 'source'`.
+- A `CheckConstraint` requires `publisher_school` to be set if and only if `publisher_type = 'school'`. `Insight` adds one for `publisher_source` (if and only if `publisher_type = 'source'`) and one for `confidence` between 0 and 1.
 - A `CheckConstraint` requires `expires_at IS NULL OR published_at IS NULL OR expires_at > published_at`.
 - An index on `(status, published_at)`.
 

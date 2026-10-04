@@ -5,7 +5,8 @@
 - Message: one message from a source. Raw text is deleted after the retention period.
 - MessageFile: a timetable image, PDF or spreadsheet (from a group, an upload or a Google
   Drive link). Stored privately; deleted with the message text after the retention period.
-Insights (what the AI understood) are added in M5.
+- Insight: one piece of information (found by the AI, or posted by staff), with
+  InsightEvidence linking it to the original messages.
 """
 
 import uuid
@@ -15,6 +16,8 @@ from django.db import models
 from django.utils import timezone
 
 from apps.academics.models import Course, Intake, Programme, School
+from apps.accounts.models import InfoType
+from apps.publishing.models import TargetedModel
 from apps.timetable.models import CourseSection
 from core.models import TimeStampedModel
 
@@ -171,3 +174,109 @@ class MessageFile(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.original_name or self.source_url or f"File {self.pk}"
+
+
+# How sure the AI must be (docs/12-intelligence.md, "How sure must the AI be?"):
+CONFIDENT = 0.8  # at or above: published and delivered normally
+UNSURE = 0.5  # from here up to CONFIDENT: published, digest only, marked "Not confirmed"
+#               below UNSURE: kept as a draft until someone checks it
+
+
+class Insight(TargetedModel):
+    """One piece of information UniFlow found (or a staff member posted), e.g. "CDE2313 class
+    moved to 2 PM tomorrow". Inherited from TargetedModel: audience (who it is for),
+    publisher, status (draft = held for review, published = delivered, archived =
+    retracted), created_by, published_at, expires_at and notified_at.
+    """
+
+    class Kind(models.TextChoices):
+        CLASS_MOVED = "class_moved", "Class moved"
+        CLASS_CANCELLED = "class_cancelled", "Class cancelled"
+        ROOM_CHANGED = "room_changed", "Room changed"
+        EXTRA_SESSION = "extra_session", "Extra session"
+        TIMETABLE_SHARED = "timetable_shared", "Timetable shared"
+        INTERNSHIP = "internship", "Internship"
+        BOOTCAMP = "bootcamp", "Bootcamp"
+        INDUSTRY_VISIT = "industry_visit", "Industry visit"
+        COMPETITION = "competition", "Competition"
+        SCHOLARSHIP = "scholarship", "Scholarship"
+        ACADEMIC_NOTICE = "academic_notice", "Academic notice"
+        STUDENT_AFFAIRS = "student_affairs", "Student affairs"
+        MANDATORY_EVENT = "mandatory_event", "Mandatory event"
+        DEADLINE = "deadline", "Deadline"
+        DIRECT_REQUEST = "direct_request", "Request to a student"
+
+    class Origin(models.TextChoices):
+        AI = "ai", "Found by the AI"
+        STAFF = "staff", "Posted by staff"
+
+    kind = models.CharField(max_length=30, choices=Kind)
+    title = models.CharField(max_length=200)
+    summary = models.CharField(max_length=500)
+    importance = models.PositiveSmallIntegerField(default=50, help_text="0–100.")
+    action_required = models.BooleanField(default=False)
+    action_text = models.CharField(max_length=200, blank=True)
+    info_type = models.CharField(max_length=30, choices=InfoType, blank=True)
+    topics = models.JSONField(default=list, blank=True, help_text="Interest values.")
+    starts_at = models.DateTimeField(null=True, blank=True)
+    deadline_at = models.DateTimeField(null=True, blank=True)
+    location = models.CharField(max_length=200, blank=True)
+    link = models.URLField(max_length=500, blank=True)
+    data = models.JSONField(default=dict, blank=True, help_text="The AI's checked answer.")
+    confidence = models.FloatField(default=1.0, help_text="0–1: how sure the AI was.")
+    origin = models.CharField(max_length=10, choices=Origin, default=Origin.STAFF)
+    publisher_source = models.ForeignKey(
+        Source, null=True, blank=True, on_delete=models.PROTECT, related_name="insights"
+    )
+    corrected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    corrected_at = models.DateTimeField(null=True, blank=True)
+    model_version = models.CharField(max_length=100, blank=True)
+    prompt_version = models.CharField(max_length=50, blank=True)
+    merge_key = models.CharField(max_length=200, blank=True, db_index=True)
+
+    class Meta(TargetedModel.Meta):
+        indexes = [*TargetedModel.Meta.indexes, models.Index(fields=["kind"])]
+        constraints = [
+            *TargetedModel.Meta.constraints,
+            models.CheckConstraint(
+                # An insight "from a group" names its group; other publishers don't.
+                condition=(
+                    models.Q(publisher_type="source", publisher_source__isnull=False)
+                    | (~models.Q(publisher_type="source") & models.Q(publisher_source__isnull=True))
+                ),
+                name="intelligence_insight_publisher_source",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(confidence__gte=0, confidence__lte=1),
+                name="intelligence_insight_confidence_range",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+    @property
+    def is_unconfirmed(self) -> bool:
+        """Shown only in the daily digest, marked "Not confirmed" (the AI wasn't sure)."""
+        return self.origin == self.Origin.AI and self.confidence < CONFIDENT
+
+
+class InsightEvidence(TimeStampedModel):
+    """Links an insight to an original message. The quote stays after the message text is
+    deleted (60-day privacy clean-up), so the insight can still show where it came from."""
+
+    insight = models.ForeignKey(Insight, on_delete=models.CASCADE, related_name="evidence")
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="evidence")
+    quote = models.CharField(max_length=500)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["insight", "message"], name="intelligence_evidence_unique"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.quote
