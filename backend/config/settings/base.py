@@ -130,6 +130,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env_str("MEDIA_ROOT", str(BASE_DIR / "media")))
+# Uploaded files (timetable images, PDFs, spreadsheets) are private: no URL serves MEDIA_ROOT.
+MAX_UPLOAD_MB = int(env_str("MAX_UPLOAD_MB", "10"))
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

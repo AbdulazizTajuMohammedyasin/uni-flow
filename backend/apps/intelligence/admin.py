@@ -3,7 +3,7 @@ groups and messages."""
 
 from django.contrib import admin
 
-from .models import Message, Source, SourceMember
+from .models import Message, MessageFile, Source, SourceMember
 
 
 class SourceMemberInline(admin.TabularInline):
@@ -33,3 +33,11 @@ class MessageAdmin(admin.ModelAdmin):
     @admin.display(description="Text")
     def short_text(self, message):
         return message.text[:80]
+
+
+@admin.register(MessageFile)
+class MessageFileAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "kind", "original_name", "uploaded_by", "message", "size_bytes")
+    list_filter = ("kind",)
+    search_fields = ("original_name", "source_url")
+    raw_id_fields = ("message", "uploaded_by")

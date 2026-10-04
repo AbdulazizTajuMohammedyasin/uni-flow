@@ -68,7 +68,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | CORS for the Vite dev server | `django-cors-headers` | Approved | M0.7 |
 | OpenAPI schema | `drf-spectacular` | Approved | M0.7 |
 | Filtering | `django-filter` | Approved | M2.2 |
-| File type checking | `filetype` (pure Python) | **Needs approval** when timetable files are first stored | M4 |
+| File type checking | `filetype` (pure Python) | Approved (M4.4) | M4.4 |
 | Images | Pillow | Not needed: timetable images are stored with `FileField` and sent to the model as they are | Later, only for resizing |
 | Spreadsheets | `openpyxl` | **Needs approval**, only if timetables arrive as `.xlsx` (turns them into text for the model) | M5 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |

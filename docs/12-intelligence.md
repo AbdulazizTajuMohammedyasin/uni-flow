@@ -184,7 +184,9 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 ```
 
 - **Google Drive links:** only public ("anyone with the link") files are read. UniFlow downloads them as PDF or spreadsheet; private files are reported as "can't open this link".
-- **Spreadsheets** are converted to text before being sent to the model.
+- **Spreadsheets** are converted to text before being sent to the model (`openpyxl`).
+- **One file, many batches:** staff usually share one Google Sheet per school (for example SCI), with **one tab per batch** (programme and intake). Downloading it as Excel keeps every tab. The AI reads **each tab once per file**, and the result is reused for every student, so a school-wide file costs one reading, not one per student.
+- Each student is shown **the tab that matches their programme and intake** (matched by the tab's name); they can switch to another tab if the guess is wrong. Only the classes they confirm are saved for them.
 - A timetable shared in a group creates a ready import for each **member** of that group who has no sections yet, so most students only need to press Confirm.
 - Once one student has confirmed a section, other students simply pick it (or confirm it from their own import); nobody has to type it again.
 - If an import disagrees with classes that already exist, the existing classes stay and the difference is shown to the admin.

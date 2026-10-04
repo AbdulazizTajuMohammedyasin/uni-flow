@@ -3,11 +3,16 @@
 - Source: a connected group or channel (WhatsApp, Telegram), or a staff/manual source.
 - SourceMember: a student who added that group in UniFlow ("I am in this group").
 - Message: one message from a source. Raw text is deleted after the retention period.
+- MessageFile: a timetable image, PDF or spreadsheet (from a group, an upload or a Google
+  Drive link). Stored privately; deleted with the message text after the retention period.
 Insights (what the AI understood) are added in M5.
 """
 
+import uuid
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from apps.academics.models import Course, Intake, Programme, School
 from apps.timetable.models import CourseSection
@@ -129,3 +134,40 @@ class Message(TimeStampedModel):
     def __str__(self) -> str:
         preview = self.text[:50] + ("…" if len(self.text) > 50 else "")
         return f"{self.sender_name or 'Unknown'}: {preview}"
+
+
+def message_file_path(instance, filename: str) -> str:
+    """message_files/2026/10/<random>.pdf — the original name is never used in the path."""
+    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
+    return f"message_files/{timezone.now():%Y/%m}/{uuid.uuid4().hex}.{extension}"
+
+
+class MessageFile(TimeStampedModel):
+    """A file UniFlow can read: from a group message, a student's upload, or a Drive link."""
+
+    class Kind(models.TextChoices):
+        IMAGE = "image", "Image"
+        PDF = "pdf", "PDF"
+        SPREADSHEET = "spreadsheet", "Spreadsheet"
+
+    message = models.ForeignKey(
+        Message, null=True, blank=True, on_delete=models.CASCADE, related_name="files"
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="uploaded_files",
+        help_text="Set for a student's own upload or Drive link (only they can use it).",
+    )
+    kind = models.CharField(max_length=20, choices=Kind)
+    file = models.FileField(upload_to=message_file_path, blank=True)
+    original_name = models.CharField(max_length=255, blank=True)
+    source_url = models.URLField(max_length=1000, blank=True, help_text="The Drive link, if any.")
+    mime_type = models.CharField(max_length=100)
+    size_bytes = models.PositiveIntegerField()
+    file_deleted_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return self.original_name or self.source_url or f"File {self.pk}"

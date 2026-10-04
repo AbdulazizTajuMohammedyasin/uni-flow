@@ -13,6 +13,7 @@ djoser = ">=2.3,<2.4"
 djangorestframework-simplejwt = ">=5.5,<5.6"
 celery = "<6,>=5.5"
 redis = "<7,>=5"
+filetype = "<2,>=1.2"
 
 [dev-packages]
 pytest = ">=9.1,<10"
