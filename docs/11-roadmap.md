@@ -445,11 +445,11 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 ## M5 — AI v1: timetables (the proof slice)
 
-**Needs approval first:** the AI provider and its SDK ([12](12-intelligence.md#ai-provider)); `openpyxl` only if spreadsheets are needed.
+**Decided:** Gemini (free tier for now) through `google-genai` ([12](12-intelligence.md#ai-provider)). **Needs approval:** `openpyxl` for spreadsheet timetables (M5.4).
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M5.1 | `providers.py` interface, the real provider and the fake provider for tests; settings and spend limit | Tests never call the network; the spend limit stops calls | `feat(intelligence): add ai provider interface` |
+| M5.1 ✅ | `providers.py`: one `ask_json` interface, `GeminiProvider` (`google-genai`; fast model `gemini-2.5-flash-lite`, smart model `gemini-2.5-flash`), `FakeProvider` for tests, `AIRateLimited` for "too many requests", and `manage.py check_ai`. No spend limit on the free tier. | Tests never call the network; rate limits are recognised | `feat(intelligence): add ai provider interface` |
 | M5.2 | `Insight(TargetedModel)` with publisher type `source`, `InsightEvidence`, the confidence rule, and staff posts created in the Django admin | Confidence below 0.5 → draft; 0.5–0.8 → digest-only and "Not confirmed"; staff posts publish normally | `feat(intelligence): add insight model` |
 | M5.3 | Triage job: batches of new messages → `noise` or `relevant` | Noise stops the pipeline | `feat(intelligence): add message triage` |
 | M5.4 | Reading timetables: `TimetableImport`, the AI reads an image, PDF or spreadsheet into rows (a spreadsheet tab by tab, **once per file**, stored on `MessageFile.reading`; each student gets the tab matching their programme and intake); confirm applies them with the import service (never overwriting existing classes) | Nothing saved before confirm; confirm creates missing classes and enrols | `feat(timetable): read timetables with ai` |
@@ -501,7 +501,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | M9.4 | Django admin for the operator: draft queue, publish and retract actions, source review, AI usage list | Actions do the same as the services | `feat(intelligence): add operator admin actions` |
 | M9.5 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |
 | M9.6 | Deployment guide: nginx, gunicorn, Redis, the Celery worker and Beat, and the WhatsApp connector as systemd services; `internal/` blocked | A staging deployment passes smoke tests | `chore(deploy): add deployment guide and server configs` |
-| M9.7 | Pilot checklist: university approval, WhatsApp number, Telegram bot, AI spend limit, the pilot intake and groups | Checklist signed off | `docs(release): add pilot checklist` |
+| M9.7 | Pilot checklist: university approval, WhatsApp number, Telegram bot, Gemini paid tier (privacy) and a spend limit, the pilot intake and groups | Checklist signed off | `docs(release): add pilot checklist` |
 
 ## M10 — Staff pages (after the pilot)
 

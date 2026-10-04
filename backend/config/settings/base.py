@@ -253,3 +253,13 @@ CELERY_BEAT_SCHEDULE = {
 
 # Privacy: message text and timetable files are deleted after this many days.
 MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))
+
+
+# The AI (apps/intelligence/providers.py). Gemini's free tier for now: Google may use what
+# is sent on the free tier to improve its products (decide on the paid tier before real
+# students' messages are processed; see docs/PROGRESS.md "Open decisions").
+
+AI_PROVIDER = env_str("AI_PROVIDER", "gemini")  # "gemini", or "fake" in tests
+GEMINI_API_KEY = env_str("GEMINI_API_KEY", "")
+AI_FAST_MODEL = env_str("AI_FAST_MODEL", "gemini-2.5-flash-lite")  # "is this academic?"
+AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-2.5-flash")  # understanding, timetables

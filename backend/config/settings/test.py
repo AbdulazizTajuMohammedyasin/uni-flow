@@ -12,3 +12,6 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 # Tests never need Redis: jobs run immediately in the same process, and errors surface.
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# Tests never call the real AI (no key, no quota used): see providers.FakeProvider.
+AI_PROVIDER = "fake"

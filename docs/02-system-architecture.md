@@ -72,7 +72,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | Images | Pillow | Not needed: timetable images are stored with `FileField` and sent to the model as they are | Later, only for resizing |
 | Spreadsheets | `openpyxl` | **Needs approval**, only if timetables arrive as `.xlsx` (turns them into text for the model) | M5 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
-| AI provider SDK | `anthropic` (proposed) | **Needs approval** in the first AI task | Intelligence milestone |
+| AI provider SDK | `google-genai` (Google's official Gemini library) | Approved (M5.1): the developer chose Gemini | M5.1 |
 | Background jobs | `celery` (5.6) and `redis` (the Python client), with a Redis server | Approved before M4.1 | M4.1 |
 | WhatsApp connector | Baileys (Node.js) or neonize/whatsmeow (Python) | **Needs approval** in the connector task. Lives in `connectors/whatsapp/`, outside Django. | Connectors milestone |
 
@@ -173,7 +173,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `TIME_ZONE` | `Asia/Kuala_Lumpur` | |
 | `MEDIA_ROOT` | `./media` | Local file storage |
 | `MAX_UPLOAD_MB` | `10` | Timetable files and uploads |
-| `AI_API_KEY`, `AI_TRIAGE_MODEL`, `AI_EXTRACT_MODEL`, `AI_DAILY_SPEND_LIMIT` | | The AI provider ([12](12-intelligence.md#ai-provider)) |
+| `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODEL`, `AI_SMART_MODEL` | `gemini`, *(key)*, `gemini-2.5-flash-lite`, `gemini-2.5-flash` | The AI provider ([12](12-intelligence.md#ai-provider)); tests use `fake` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
 | `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |

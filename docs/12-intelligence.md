@@ -208,10 +208,16 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 ## AI provider
 
 - All model calls go through **one small module**, `apps/intelligence/providers.py`, with a single interface (`triage(messages)`, `extract(window, context)`). The rest of the code never imports a vendor SDK.
-- **Proposed:** Anthropic Claude through the official `anthropic` Python SDK, using a small, fast model for triage (Claude Haiku 4.5) and a stronger model for understanding (Claude Sonnet 5), with structured output (tool use or JSON schema). **The library and the provider are approved in the task that first needs them**, as with every dependency.
-- Every insight records the model and prompt version that produced it.
+- **Gemini** (Google), through Google's official `google-genai` library, chosen by the developer in M5.1:
+  - `AI_FAST_MODEL` = **`gemini-2.5-flash-lite`** for triage ("is this message academic?"),
+  - `AI_SMART_MODEL` = **`gemini-2.5-flash`** for understanding messages and reading timetable images, PDFs and sheets.
+
+  These are the **Gemini 2.5** models on purpose: on the free tier, older models usually allow many more requests than the newest ones (the developer's experience; the exact limits are shown per project in Google AI Studio). Both are settings, so other models can be used without code changes. Answers are requested as JSON matching a schema (`ask_json`).
+- **Free tier for now (developer's choice).** On Gemini's free tier, Google may use what is sent to improve its products ("Used to improve our products: Yes"; the paid tier says "No"). Decide on the paid tier before real students' messages are processed.
+- **Limits:** the free tier has per-minute and daily request limits (shown in Google AI Studio). When Gemini answers "too many requests", `providers.AIRateLimited` is raised and the Celery job waits and retries later.
+- Tests never call Gemini: `AI_PROVIDER = "fake"` uses `providers.FakeProvider` with prepared answers. `manage.py check_ai` sends one tiny question to each model to check the key.
 - Messages can be in English, Malay, Arabic or a mix; the model handles this, and summaries are written in English.
-- Reading timetables needs a model that accepts images and PDFs (the proposed Claude models do).
+- Reading timetables needs a model that accepts images and PDFs (Gemini Flash models do).
 
 ## Quality and evaluation
 
@@ -225,4 +231,4 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 - Triage drops most messages before the expensive step.
 - Messages are processed in batches per source, not one call per message.
 - Relevance is computed by code, not by the model.
-- A daily spend limit in settings pauses processing (with an alert to admins) if exceeded.
+- *[With a paid tier]* a daily spend limit in settings pauses processing (with an alert to admins) if exceeded. On the free tier, Google's own limits apply.

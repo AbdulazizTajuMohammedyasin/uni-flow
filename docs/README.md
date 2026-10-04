@@ -70,7 +70,7 @@ UniFlow/
 
 ## Remaining decisions
 
-1. **AI provider and SDK** (proposed: Anthropic Claude via `anthropic`; it must read images and PDFs). Needed before **M5.1**.
+1. **Gemini free tier vs paid tier** (privacy: on the free tier Google may use what is sent). The developer chose the free tier for now; decide before real students' messages are processed (**M9.7**).
 2. **WhatsApp connector library** (Baileys or neonize/whatsmeow) and a **dedicated WhatsApp number**. Needed before **M6.3**.
 3. **University approval** for reading academic groups. Needed before the pilot (**M9.7**).
 4. The university's own timetable export (for an extra import adapter). Not blocking: the AI reads shared timetables.

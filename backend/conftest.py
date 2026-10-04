@@ -4,7 +4,16 @@ import pytest
 from django.core.cache import cache
 from django.db import connection
 
+from apps.intelligence.providers import fake_provider
 from apps.publishing.tests.models import SamplePost
+
+
+@pytest.fixture(autouse=True)
+def _reset_fake_ai():
+    """Each test starts with a fake AI that has no answers and no recorded questions."""
+    fake = fake_provider()
+    fake.answers.clear()
+    fake.calls.clear()
 
 
 @pytest.fixture(autouse=True)

@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M4 is done ✅. Students have a **Groups** page: add a group, then paste its messages or upload its WhatsApp export.
-**Next up:** M5.1, the **AI connection** (the first AI task). It needs your decision on the **AI provider** first (proposed: Anthropic Claude).
+**Now:** M5.1 is done ✅. UniFlow can talk to the AI (**Gemini, free tier**). Tests use a fake AI.
+**Next up:** M5.2, the **Insight** table: where the AI's findings (and official staff posts) are stored, and the "how sure must the AI be" rule.
 
 ---
 
@@ -19,7 +19,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
 | **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
 | **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ✅ Done |
-| **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏭️ Next |
+| **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | 🔄 In progress |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
@@ -112,6 +112,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M4.5 | **Privacy clean-up.** Every night at 03:00, a background job **blanks the text** of messages older than **60 days** (who sent it and when stay) and **deletes timetable files** older than 60 days from the disk. What UniFlow already learned from them (classes, and later the AI's findings with a short quote) stays. 60 days is a setting (`MESSAGE_RETENTION_DAYS`). | Start Celery Beat (`pipenv run celery -A config beat -l info`) next to the worker; or run it now: `pipenv run celery -A config call apps.intelligence.tasks.clear_old_messages` | ✅ Done |
 | M4.6 | **Groups page.** In the menu, **Groups** replaces Communities (a later feature). Students see their groups with message counts, **add a group** by name, and for each group **paste messages** or **upload a WhatsApp export** (with instructions). UniFlow says how many messages were new, or shows the reason a file was refused. | Log in as a student → **Groups** in the menu | ✅ Done |
 
+## M5 AI, first version: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M5.1 | **The AI connection.** One small module talks to **Gemini** (Google), using Google's official library: a fast model (`gemini-2.5-flash-lite`) for "is this message academic?" and a smarter one (`gemini-2.5-flash`) that can also read timetable images and PDFs. Both can be changed in `.env`. When Gemini says "too many requests" (the free tier has limits), the job will wait and retry. Tests use a **fake AI**, so they never use your quota. | Put `GEMINI_API_KEY=…` in `backend/.env` and save, then run `pipenv run python manage.py check_ai` | ✅ Done |
+| **M5.2** | **Insights:** the table for the AI's findings and official staff posts, with the "how sure must the AI be" rule | – | ⏭️ **Next** |
+
 ---
 
 ## Where things are
@@ -163,6 +170,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **UniFlow is an AI information assistant**, not a notice board. Messages from academic WhatsApp and Telegram groups are the main input. The AI **proposes**; normal code decides; the student **confirms** timetable changes.
 - **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
 - **Staff posts stay** as one official source. The M2 code is kept and reused.
+- **The AI is Gemini, on the free tier for now**, using the slightly older **Gemini 2.5** models because they usually allow many more free requests than the newest ones. Google may use what's sent on the free tier; decide on the paid tier before real students' messages are used.
 - **Background work uses Celery with Redis** (your choice, over a simpler database table). Redis runs in WSL on your PC; tests need no Redis.
 - **When the AI isn't sure:** sure → shown; unsure → daily summary marked "Not confirmed"; very unsure → hidden until you check it.
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).
@@ -189,7 +197,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **Real email sending** (for example Gmail with an app password, or a university mailbox). For now emails are printed in the backend terminal. Set up before launch (M10); it needs 5 SMTP settings in `.env`.
 
-- **AI provider** (proposed: Anthropic Claude). Needed before M5.1.
+- **Gemini free or paid tier.** For now UniFlow uses Gemini's **free tier**. On the free tier Google may use the messages sent to it to improve its products (the paid tier doesn't). Decide before real students' group messages are processed (pilot checklist, M9.7).
 - **WhatsApp connector library and a dedicated WhatsApp number.** Needed before M6.3.
 - **University approval** for reading academic groups. Needed before the pilot (M9.7).
 - The university's official timetable format (optional import). Not blocking.
