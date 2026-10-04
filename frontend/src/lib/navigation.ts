@@ -15,7 +15,7 @@ export const studentNavItems: NavItem[] = [
   { to: '/announcements', label: 'Announcements', shortLabel: 'News' },
   { to: '/events', label: 'Events', shortLabel: 'Events' },
   { to: '/timetable', label: 'Timetable', shortLabel: 'Classes' },
-  { to: '/communities', label: 'Communities', shortLabel: 'Groups' },
+  { to: '/sources', label: 'Groups', shortLabel: 'Groups' },
 ]
 
 /** Staff-dashboard navigation. Each item shows only if the user has its capability. */

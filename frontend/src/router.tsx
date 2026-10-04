@@ -41,7 +41,12 @@ export function createAppRoutes(): RouteObject[] {
                     Component: async () => (await import('./pages/Timetable/Timetable')).TimetablePage,
                   },
                 },
-                { path: 'communities', element: <PlaceholderPage title="Communities" /> },
+                {
+                  path: 'sources',
+                  lazy: {
+                    Component: async () => (await import('./pages/Sources/Sources')).SourcesPage,
+                  },
+                },
                 {
                   path: 'profile',
                   lazy: { Component: async () => (await import('./pages/Profile/Profile')).ProfilePage },

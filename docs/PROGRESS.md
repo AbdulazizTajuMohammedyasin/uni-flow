@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M4.5 is done ✅. Every night UniFlow **deletes message text and timetable files older than 60 days** (privacy).
-**Next up:** M4.6, the **Groups page** on the website: your groups, create one, paste messages, upload a WhatsApp export.
+**Now:** M4 is done ✅. Students have a **Groups** page: add a group, then paste its messages or upload its WhatsApp export.
+**Next up:** M5.1, the **AI connection** (the first AI task). It needs your decision on the **AI provider** first (proposed: Anthropic Claude).
 
 ---
 
@@ -18,8 +18,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M1** Identity | Students can register, log in and fill in their profile | ✅ Done |
 | **M2** Permissions | Who is allowed to do what, "who is affected by a post", and the staff dashboard frame | ✅ Done (M2.9–M2.11 moved to later milestones) |
 | **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
-| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | 🔄 In progress |
-| **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏳ |
+| **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ✅ Done |
+| **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ⏭️ Next |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
@@ -110,7 +110,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M4.3 | **Messages by hand.** A student creates a group (e.g. "CDE2313 Sec A") and becomes its member. Then they can **paste** messages copied from WhatsApp (split into separate messages with sender and time) or a single plain message, or **upload WhatsApp's "Export chat" .txt**. UniFlow understands Android and iPhone formats, messages over several lines, and skips system lines ("Ali joined…") and "<Media omitted>". Pasting or uploading the same chat again adds only the new messages. | Swagger → **sources** → `POST /sources/`, then `paste/` or `export/` (with a real exported chat) | ✅ Done |
 | M4.4 | **Timetable files.** UniFlow can keep a timetable **image (PNG, JPG, WEBP), PDF or Excel file**, up to 10 MB. The file must **really be** that type (a renamed program is refused), and it's stored **privately** under a random name. A **Google Drive or Google Docs link** is downloaded too (Docs as PDF, Sheets as Excel), but only from Google's own sites and only if the file is shared "Anyone with the link"; otherwise the student gets a clear message. *The upload screen comes with timetable reading in M5.* | `pipenv run python manage.py migrate`; `/django-admin/` → Intelligence → Message files; `pipenv run pytest apps/intelligence` | ✅ Done |
 | M4.5 | **Privacy clean-up.** Every night at 03:00, a background job **blanks the text** of messages older than **60 days** (who sent it and when stay) and **deletes timetable files** older than 60 days from the disk. What UniFlow already learned from them (classes, and later the AI's findings with a short quote) stays. 60 days is a setting (`MESSAGE_RETENTION_DAYS`). | Start Celery Beat (`pipenv run celery -A config beat -l info`) next to the worker; or run it now: `pipenv run celery -A config call apps.intelligence.tasks.clear_old_messages` | ✅ Done |
-| **M4.6** | **Groups page:** your groups, create one, paste messages, upload a WhatsApp export | – | ⏭️ **Next** |
+| M4.6 | **Groups page.** In the menu, **Groups** replaces Communities (a later feature). Students see their groups with message counts, **add a group** by name, and for each group **paste messages** or **upload a WhatsApp export** (with instructions). UniFlow says how many messages were new, or shows the reason a file was refused. | Log in as a student → **Groups** in the menu | ✅ Done |
 
 ---
 
@@ -130,13 +130,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `main.tsx` | Starting point: turns on data loading (TanStack Query) and the router |
 | `router.tsx` | **The router:** which address shows which page |
-| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `timetable.ts` (sections, today, week), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
+| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `timetable.ts` (sections, today, week), `sources.ts` (groups, paste, upload), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
-| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useTimetable.ts` (today, week, my sections), `useHealth.ts` |
-| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `health.ts` |
+| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useTimetable.ts` (today, week, my sections), `useSources.ts` (groups), `useHealth.ts` |
+| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `sources.ts`, `health.ts` |
 | `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `SectionPicker` and `AddClassForm` (timetable), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `Timetable/`, `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `Timetable/`, `Sources/` (Groups), `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
 | `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage), `timetable.ts` (date and class-time formatting) |
 | `index.css` | Colours and fonts |
 

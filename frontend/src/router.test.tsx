@@ -66,7 +66,7 @@ describe('student area (AppLayout)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeTruthy()
 
     const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
-    for (const label of ['Home', 'Announcements', 'Events', 'Timetable', 'Communities']) {
+    for (const label of ['Home', 'Announcements', 'Events', 'Timetable', 'Groups']) {
       expect(within(sidebar).getByRole('link', { name: label })).toBeTruthy()
     }
 
