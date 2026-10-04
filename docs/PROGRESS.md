@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M4.4 is done ✅. UniFlow can safely keep **timetable files** (images, PDFs, Excel files) and download **Google Drive links**, ready for the AI to read in M5.
-**Next up:** M4.5, **deleting old message text and files** after 60 days (privacy).
+**Now:** M4.5 is done ✅. Every night UniFlow **deletes message text and timetable files older than 60 days** (privacy).
+**Next up:** M4.6, the **Groups page** on the website: your groups, create one, paste messages, upload a WhatsApp export.
 
 ---
 
@@ -109,7 +109,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M4.2 | **Groups, members and messages.** A new `intelligence` app with three tables: **Source** (a WhatsApp/Telegram group or channel, or pasted messages: what it's for, official or not, waiting/active/disconnected), **Source member** (a student who added the group) and **Message** (sender, time, text, and whether the AI has looked at it). A group is only connected once, and a message is only stored once. | `pipenv run python manage.py migrate`, then `/django-admin/` → **Intelligence** → Sources / Messages | ✅ Done |
 | M4.3 | **Messages by hand.** A student creates a group (e.g. "CDE2313 Sec A") and becomes its member. Then they can **paste** messages copied from WhatsApp (split into separate messages with sender and time) or a single plain message, or **upload WhatsApp's "Export chat" .txt**. UniFlow understands Android and iPhone formats, messages over several lines, and skips system lines ("Ali joined…") and "<Media omitted>". Pasting or uploading the same chat again adds only the new messages. | Swagger → **sources** → `POST /sources/`, then `paste/` or `export/` (with a real exported chat) | ✅ Done |
 | M4.4 | **Timetable files.** UniFlow can keep a timetable **image (PNG, JPG, WEBP), PDF or Excel file**, up to 10 MB. The file must **really be** that type (a renamed program is refused), and it's stored **privately** under a random name. A **Google Drive or Google Docs link** is downloaded too (Docs as PDF, Sheets as Excel), but only from Google's own sites and only if the file is shared "Anyone with the link"; otherwise the student gets a clear message. *The upload screen comes with timetable reading in M5.* | `pipenv run python manage.py migrate`; `/django-admin/` → Intelligence → Message files; `pipenv run pytest apps/intelligence` | ✅ Done |
-| **M4.5** | **Privacy clean-up:** delete old message text and files after 60 days | – | ⏭️ **Next** |
+| M4.5 | **Privacy clean-up.** Every night at 03:00, a background job **blanks the text** of messages older than **60 days** (who sent it and when stay) and **deletes timetable files** older than 60 days from the disk. What UniFlow already learned from them (classes, and later the AI's findings with a short quote) stays. 60 days is a setting (`MESSAGE_RETENTION_DAYS`). | Start Celery Beat (`pipenv run celery -A config beat -l info`) next to the worker; or run it now: `pipenv run celery -A config call apps.intelligence.tasks.clear_old_messages` | ✅ Done |
+| **M4.6** | **Groups page:** your groups, create one, paste messages, upload a WhatsApp export | – | ⏭️ **Next** |
 
 ---
 

@@ -1,18 +1,22 @@
 """Getting messages into UniFlow by hand: groups for pasted messages, pasting, and
 uploading a WhatsApp "Export chat" file. The connectors (M6) reuse store_messages().
+Also the daily privacy clean-up of old message text and files (clear_old_messages).
 
 The same message is never stored twice: each one gets a fingerprint (time, sender and
 text) as its id, so pasting or uploading the same chat again adds nothing.
 """
 
 import hashlib
+from datetime import timedelta
 
+from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from . import whatsapp_export
-from .models import Message, Source, SourceMember
+from .models import Message, MessageFile, Source, SourceMember
 from .whatsapp_export import ParsedMessage
 
 MAX_EXPORT_BYTES = 5 * 1024 * 1024  # 5 MB of text is years of a busy group
@@ -114,3 +118,30 @@ def import_whatsapp_export(user, source: Source, uploaded_file) -> tuple[int, in
     if not parsed:
         raise ValidationError({"file": "No messages found in this file."})
     return store_messages(source, parsed)
+
+
+def clear_old_messages(now=None) -> dict[str, int]:
+    """Privacy: blank the text of messages older than MESSAGE_RETENTION_DAYS and delete old
+    timetable files. The message rows stay (sender, time), and so does anything already
+    learned from them (classes, and from M5 the insights with their short quotes).
+    """
+    now = now or timezone.now()
+    cutoff = now - timedelta(days=settings.MESSAGE_RETENTION_DAYS)
+
+    cleared = Message.objects.filter(sent_at__lt=cutoff, text_deleted_at__isnull=True).update(
+        text="", raw={}, text_deleted_at=now
+    )
+
+    old_files = MessageFile.objects.filter(file_deleted_at__isnull=True).filter(
+        Q(message__sent_at__lt=cutoff) | Q(message__isnull=True, created_at__lt=cutoff)
+    )
+    deleted_files = 0
+    for stored in old_files:
+        if stored.file:
+            stored.file.delete(save=False)  # removes it from the disk
+        stored.file = ""
+        stored.file_deleted_at = now
+        stored.save(update_fields=["file", "file_deleted_at", "updated_at"])
+        deleted_files += 1
+
+    return {"messages_cleared": cleared, "files_deleted": deleted_files}

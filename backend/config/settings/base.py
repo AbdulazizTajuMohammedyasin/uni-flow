@@ -7,6 +7,7 @@ Configuration comes from environment variables, optionally loaded from `backend/
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from corsheaders.defaults import default_headers as default_cors_headers
 
 from config.env import env_list, env_str, load_env_file
@@ -242,5 +243,13 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_IGNORE_RESULT = True  # jobs save their results in the database themselves
 CELERY_TASK_ACKS_LATE = True  # a job is only removed from Redis after it finishes
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # take one job at a time (AI calls are slow)
-# Daily jobs (digest, deleting old message text) are added here as they are built.
-CELERY_BEAT_SCHEDULE: dict = {}
+# Daily jobs, started by Celery Beat (times are Kuala Lumpur time).
+CELERY_BEAT_SCHEDULE = {
+    "clear-old-messages": {
+        "task": "apps.intelligence.tasks.clear_old_messages",
+        "schedule": crontab(hour=3, minute=0),  # every night at 03:00
+    },
+}
+
+# Privacy: message text and timetable files are deleted after this many days.
+MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))
