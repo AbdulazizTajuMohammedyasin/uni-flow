@@ -153,8 +153,10 @@ def fetch_drive_link(user, link: str) -> MessageFile:
         # A private file comes back as Google's sign-in page instead of the file.
         raise ValidationError(
             {
-                "link": "Couldn't open this file. In Drive, set sharing to \"Anyone with the "
-                'link", or upload the file instead. ' + WRONG_TYPE
+                "link": "UniFlow couldn't open this link. If it only opens with your AIU "
+                "account, open it, choose File → Download → Microsoft Excel (.xlsx) or PDF, "
+                'and upload that file here instead. Otherwise set sharing to "Anyone with '
+                'the link". ' + WRONG_TYPE
             }
         ) from None
     return _save(data, user=user, kind=kind, mime=mime, extension=extension, source_url=link)

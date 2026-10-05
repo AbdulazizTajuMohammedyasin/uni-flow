@@ -10,6 +10,7 @@ urlpatterns = [
     path("health/", health, name="health"),
     path("academics/", include("apps.academics.urls")),
     path("auth/", include("apps.accounts.urls")),
+    path("timetable/imports/", include("apps.intelligence.timetable_urls")),
     path("timetable/", include("apps.timetable.urls")),
     path("sources/", include("apps.intelligence.urls")),
     # Staff area (each address checks the matching capability).

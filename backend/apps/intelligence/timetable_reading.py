@@ -243,6 +243,27 @@ def confirm_import(user, timetable_import: TimetableImport, rows: list[dict] | N
     return timetable_import
 
 
+def update_import(user, timetable_import: TimetableImport, *, tab=None, rows=None):
+    """Before confirming: switch to another tab of the file, or keep only some classes."""
+    _require_ready(user, timetable_import)
+    if tab is not None:
+        tabs = timetable_import.message_file.reading.get("tabs", {})
+        if tab not in tabs:
+            raise ValidationError({"tab": "This file has no such tab."})
+        timetable_import.tab = tab
+        timetable_import.rows = tabs[tab]
+    if rows is not None:
+        timetable_import.rows = rows_to_json(rows_from_json(rows))
+    timetable_import.save(update_fields=["tab", "rows", "updated_at"])
+    return timetable_import
+
+
+def tab_names(timetable_import: TimetableImport) -> list[str]:
+    """The file's tabs that have classes (the student can switch between them)."""
+    tabs = timetable_import.message_file.reading.get("tabs", {})
+    return [name for name, rows in tabs.items() if rows]
+
+
 def discard_import(user, timetable_import: TimetableImport) -> TimetableImport:
     _require_ready(user, timetable_import)
     timetable_import.status = TimetableImport.Status.DISCARDED

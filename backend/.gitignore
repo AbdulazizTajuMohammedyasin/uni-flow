@@ -22,3 +22,6 @@ db.sqlite3
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Real sample files for local testing (e.g. an AIU timetable); never committed.
+local_samples/

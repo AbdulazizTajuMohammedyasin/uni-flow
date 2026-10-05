@@ -68,3 +68,45 @@ class ExportSerializer(serializers.Serializer):
 class ImportResultSerializer(serializers.Serializer):
     added = serializers.IntegerField(help_text="New messages stored.")
     already_stored = serializers.IntegerField(help_text="Messages UniFlow already had.")
+
+
+# --- Timetable imports (/api/v1/timetable/imports/) -------------------------------------
+
+
+class TimetableImportSerializer(serializers.Serializer):
+    """A student's "Is this your timetable?"."""
+
+    id = serializers.IntegerField()
+    status = serializers.CharField(help_text="reading, ready, confirmed, discarded or failed")
+    file_name = serializers.CharField()
+    tab = serializers.CharField(help_text="The spreadsheet tab shown (blank for an image or PDF).")
+    tabs = serializers.ListField(child=serializers.CharField(), help_text="Tabs with classes.")
+    rows = serializers.JSONField(help_text="The classes read (course, section, meetings…).")
+    report = serializers.JSONField(help_text="What confirming created or kept.")
+    error = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class StartImportSerializer(serializers.Serializer):
+    """POST timetable/imports/ — a timetable file (multipart) or a Google Drive / Docs link."""
+
+    file = serializers.FileField(required=False)
+    link = serializers.URLField(required=False, max_length=1000)
+
+    def validate(self, attrs):
+        if bool(attrs.get("file")) == bool(attrs.get("link")):
+            raise serializers.ValidationError("Send a file or a link (one of them).")
+        return attrs
+
+
+class UpdateImportSerializer(serializers.Serializer):
+    """PATCH timetable/imports/{id}/ — another tab, or the classes to keep."""
+
+    tab = serializers.CharField(required=False, allow_blank=True)
+    rows = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+class ConfirmImportSerializer(serializers.Serializer):
+    """POST timetable/imports/{id}/confirm/ — optionally the classes to keep."""
+
+    rows = serializers.ListField(child=serializers.DictField(), required=False)

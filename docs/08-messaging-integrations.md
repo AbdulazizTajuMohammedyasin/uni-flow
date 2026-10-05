@@ -91,6 +91,7 @@ A staff post is an `Insight` with `origin = staff` (built on the `publishing` ba
 
 - Images, PDFs and spreadsheets attached to messages in connected groups are kept as `MessageFile` rows (WhatsApp: downloaded by the connector; Telegram: fetched with `getFile`).
 - Google Drive links in messages, or pasted by a student, are fetched only if public, from `drive.google.com` or `docs.google.com` only, as PDF or XLSX.
+- **Links that only open with an AIU account** (common for school timetables) can't be fetched by the server. The student opens the link, chooses File → Download → Microsoft Excel (.xlsx), and uploads the file; UniFlow says so when a link fails. *[Later]*: "Connect your Google account" so UniFlow can download with the student's permission (needs Google's app review).
 - The AI decides whether a file is a timetable; if so, it is read into classes for students to confirm ([12](12-intelligence.md#reading-timetables)).
 
 ## Linking back to the original
