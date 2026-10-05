@@ -6,8 +6,8 @@ from django.db import models
 from django.utils import timezone
 
 from apps.audiences.models import Audience
-from apps.publishing.services import archive, publish
 
+from . import services
 from .models import (
     Insight,
     InsightEvidence,
@@ -161,13 +161,13 @@ class InsightAdmin(admin.ModelAdmin):
     @admin.action(description="Publish selected (students receive them)")
     def publish_selected(self, request, queryset):
         for insight in queryset:
-            publish(insight, request.user)
+            services.publish_insight(insight, request.user)
         self.message_user(request, f"Published {queryset.count()} item(s).")
 
     @admin.action(description="Retract selected (take them back)")
     def retract_selected(self, request, queryset):
         for insight in queryset:
-            archive(insight, request.user)
+            services.retract_insight(insight, request.user)
         self.message_user(request, f"Retracted {queryset.count()} item(s).")
 
 

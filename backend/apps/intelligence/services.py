@@ -18,7 +18,8 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from apps.audiences.models import Audience
 from apps.publishing.models import PublisherType
-from apps.publishing.services import publish
+from apps.publishing.services import archive, publish
+from apps.timetable.changes import propose_changes, retract_changes
 
 from . import whatsapp_export
 from .models import UNSURE, Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
@@ -205,5 +206,19 @@ def save_ai_insight(
         for message, quote in evidence
     )
     if confidence >= UNSURE and not hold:
-        publish(insight, None)
+        publish_insight(insight, None)
+    return insight
+
+
+def publish_insight(insight: Insight, user) -> Insight:
+    """Deliver an insight; a timetable change becomes a proposal students can confirm."""
+    publish(insight, user)
+    propose_changes(insight)
+    return insight
+
+
+def retract_insight(insight: Insight, user) -> Insight:
+    """Take an insight back; its timetable proposals leave every timetable."""
+    archive(insight, user)
+    retract_changes(insight)
     return insight

@@ -1,5 +1,5 @@
 """Student timetable API (/api/v1/timetable/): browse sections, my sections, add a class,
-and my classes today or this week.
+my classes today or this week, and confirming or rejecting class changes.
 
 Students only ever change their own enrolments; shared sections created by hand are
 never edited afterwards by students (see services.py).
@@ -7,7 +7,7 @@ never edited afterwards by students (see services.py).
 
 from datetime import date
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, filters, generics, status
@@ -16,10 +16,11 @@ from rest_framework.views import APIView
 
 from apps.accounts import semesters
 
-from . import services
+from . import changes, services
 from .models import ClassMeeting, CourseSection, SectionEnrollment
 from .serializers import (
     AddSectionSerializer,
+    ClassChangeSerializer,
     JoinSectionSerializer,
     SectionSerializer,
     TimetableDaysSerializer,
@@ -156,3 +157,34 @@ class WeekView(APIView):
             raise exceptions.ValidationError({"date": ["Use the format YYYY-MM-DD."]}) from None
         data = services.classes_for_days(request.user, services.week_of(day))
         return Response(TimetableDaysSerializer(data).data)
+
+
+def my_changes(user):
+    return changes.changes_for(user).prefetch_related("insight__evidence__message__source")
+
+
+@extend_schema(tags=["timetable"])
+class ClassChangeListView(generics.ListAPIView):
+    """GET timetable/changes/ — changes to my classes from today on, answered or not."""
+
+    serializer_class = ClassChangeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        services.require_student(self.request.user)
+        today = semesters.today()
+        return my_changes(self.request.user).filter(Q(date__gte=today) | Q(new_date__gte=today))
+
+
+@extend_schema(tags=["timetable"], request=None, responses=ClassChangeSerializer)
+class ClassChangeDecisionView(APIView):
+    """POST timetable/changes/{id}/confirm/ or .../reject/ — my answer, for my timetable
+    only. I can change my mind later."""
+
+    confirm = True  # set in urls.py
+
+    def post(self, request, change_id):
+        services.require_student(request.user)
+        change = generics.get_object_or_404(my_changes(request.user), pk=change_id)
+        changes.decide(request.user, change, confirmed=self.confirm)
+        return Response(ClassChangeSerializer(my_changes(request.user).get(pk=change.pk)).data)

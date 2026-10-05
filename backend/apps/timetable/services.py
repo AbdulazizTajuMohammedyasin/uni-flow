@@ -1,5 +1,5 @@
 """Timetable actions for students: which term is theirs, joining sections, adding a class,
-and their classes for today or a week.
+and their classes for today or a week (with the class changes they confirmed).
 
 Sections are shared: a section added by one student is the one everyone else picks.
 Existing sections and their weekly classes are never changed by a student.
@@ -14,6 +14,7 @@ from apps.academics.models import Course, Term
 from apps.accounts import semesters
 from apps.accounts.models import UserRole
 
+from .changes import apply_changes
 from .models import ClassMeeting, CourseSection, SectionEnrollment
 
 
@@ -95,6 +96,7 @@ def _class_slots(user, term: Term) -> dict[int, list[dict]]:
         by_weekday[meeting.weekday].append(
             {
                 "section_id": section.id,
+                "meeting_id": meeting.id,
                 "course_code": section.course.code,
                 "course_name": section.course.name,
                 "section_code": section.code,
@@ -104,27 +106,30 @@ def _class_slots(user, term: Term) -> dict[int, list[dict]]:
                 "meeting_type": meeting.meeting_type,
                 "building": meeting.building,
                 "room": meeting.room,
+                "change": None,
             }
         )
     return by_weekday
 
 
 def classes_for_days(user, days: list[date]) -> dict:
-    """The student's classes on each of `days` (empty outside the current term)."""
+    """The student's classes on each of `days`: the weekly classes of the current term
+    (none outside it) plus the class changes they confirmed (see changes.py)."""
     require_student(user)
     term = current_term_for(user)
     slots = _class_slots(user, term) if term else {}
+    by_day = {
+        day: [dict(slot) for slot in slots[day.weekday()]]
+        if term and term.starts_on <= day <= term.ends_on
+        else []
+        for day in days
+    }
+    apply_changes(user, by_day)
     return {
         "term": {"id": term.id, "name": term.name} if term else None,
         "days": [
-            {
-                "date": day,
-                "weekday": day.weekday(),
-                "classes": slots[day.weekday()]
-                if term and term.starts_on <= day <= term.ends_on
-                else [],
-            }
-            for day in days
+            {"date": day, "weekday": day.weekday(), "classes": classes}
+            for day, classes in by_day.items()
         ],
     }
 

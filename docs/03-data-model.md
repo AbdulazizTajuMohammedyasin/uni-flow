@@ -231,8 +231,8 @@ The **normal timetable is read by the AI** from timetables shared in groups or u
 
 | Model | Fields | Notes |
 |---|---|---|
-| `ClassChange` | insight O2O, section FK, meeting FK null (null for an extra session), date, kind (`moved`, `cancelled`, `room_changed`, `extra_session`), new_start, new_end, new_room (all null when unchanged), status (`proposed`, `retracted`) | One proposal per detected change. Never edits `ClassMeeting`. Index on `(section, date)`. |
-| `ClassChangeConfirmation` | change FK, user FK, status (`pending`, `confirmed`, `rejected`, `withdrawn`), decided_at | `unique(change, user)`. Created for every affected student. `withdrawn` when the change is retracted. |
+| `ClassChange` | insight FK, section FK, meeting FK null (null for an extra session), date, new_date (null unless moved to another day), kind (`class_moved`, `class_cancelled`, `room_changed`, `extra_session`, the same values as the insight), new_start, new_end (null when unchanged), new_room (blank when unchanged), status (`proposed`, `retracted`) | One proposal per insight **and section** (`unique(insight, section)`): one message can change several sections. Created when the insight is published, retracted when it is taken back. Never edits `ClassMeeting`. Index on `(section, date)`. |
+| `ClassChangeConfirmation` | change FK, user FK, status (`confirmed`, `rejected`), decided_at | `unique(change, user)`. Saved when the student answers; no row means "not answered yet" (pending). The student can change their answer. A retraction leaves the answers as a record; the change itself is marked `retracted`. |
 
 *[Later]*: lecturer-confirmed changes that apply to everyone in the section without individual confirmation.
 

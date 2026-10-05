@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from apps.academics.models import Course
 
-from .models import ClassMeeting, CourseSection
+from .models import ClassChange, ClassMeeting, CourseSection
 
 
 class MeetingSerializer(serializers.ModelSerializer):
@@ -60,6 +60,14 @@ class AddSectionSerializer(serializers.Serializer):
     meetings = MeetingSerializer(many=True, allow_empty=False)
 
 
+class ChangeFlagSerializer(serializers.Serializer):
+    """A class change on this class: confirmed (applied) or pending (not answered yet)."""
+
+    id = serializers.IntegerField()
+    kind = serializers.ChoiceField(choices=ClassChange.Kind.choices)
+    status = serializers.ChoiceField(choices=["confirmed", "pending"])
+
+
 class ClassSlotSerializer(serializers.Serializer):
     """One class on one day."""
 
@@ -73,6 +81,7 @@ class ClassSlotSerializer(serializers.Serializer):
     meeting_type = serializers.CharField()
     building = serializers.CharField()
     room = serializers.CharField()
+    change = ChangeFlagSerializer(allow_null=True)
 
 
 class DaySerializer(serializers.Serializer):
@@ -91,3 +100,59 @@ class TimetableDaysSerializer(serializers.Serializer):
 
     term = TermBriefSerializer(allow_null=True)
     days = DaySerializer(many=True)
+
+
+class EvidenceSerializer(serializers.Serializer):
+    """The message a change was found in (the quote stays after the 60-day clean-up)."""
+
+    quote = serializers.CharField()
+    group = serializers.CharField(source="message.source.title")
+    sender_name = serializers.CharField(source="message.sender_name")
+    sent_at = serializers.DateTimeField(source="message.sent_at")
+
+
+class ClassChangeSerializer(serializers.ModelSerializer):
+    """GET timetable/changes/ — a proposed change, the original class and my answer."""
+
+    course_code = serializers.CharField(source="section.course.code")
+    course_name = serializers.CharField(source="section.course.name")
+    section_code = serializers.CharField(source="section.code")
+    title = serializers.CharField(source="insight.title")
+    summary = serializers.CharField(source="insight.summary")
+    not_confirmed = serializers.BooleanField(
+        source="insight.is_unconfirmed", help_text="The AI wasn't sure about it."
+    )
+    old_start = serializers.TimeField(
+        source="meeting.start_time", format="%H:%M", allow_null=True, default=None
+    )
+    old_end = serializers.TimeField(
+        source="meeting.end_time", format="%H:%M", allow_null=True, default=None
+    )
+    old_room = serializers.CharField(source="meeting.room", allow_null=True, default=None)
+    new_start = serializers.TimeField(format="%H:%M", allow_null=True)
+    new_end = serializers.TimeField(format="%H:%M", allow_null=True)
+    my_status = serializers.ChoiceField(choices=["pending", "confirmed", "rejected"])
+    evidence = EvidenceSerializer(source="insight.evidence.all", many=True)
+
+    class Meta:
+        model = ClassChange
+        fields = [
+            "id",
+            "kind",
+            "course_code",
+            "course_name",
+            "section_code",
+            "title",
+            "summary",
+            "not_confirmed",
+            "date",
+            "old_start",
+            "old_end",
+            "old_room",
+            "new_date",
+            "new_start",
+            "new_end",
+            "new_room",
+            "my_status",
+            "evidence",
+        ]

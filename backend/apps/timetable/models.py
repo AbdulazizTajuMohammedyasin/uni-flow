@@ -3,8 +3,11 @@
 - CourseSection: one group of a course in one term, e.g. CDE2313 Section A, 2025/26 Sem 1.
 - ClassMeeting: a weekly class of a section, e.g. Monday 10:00-12:00 in B2.
 - SectionEnrollment: a student is in a section.
+- ClassChange: a change to a section's class on one date, found by the AI in a message.
+- ClassChangeConfirmation: a student confirmed or rejected a change.
 Sections are shared: once one student (or the AI, or an admin) adds a section, everyone
-picks the same one. Changes detected in messages are stored separately (later, M5).
+picks the same one. Changes never edit ClassMeeting: each student's timetable shows the
+changes they confirmed.
 """
 
 from django.conf import settings
@@ -111,3 +114,74 @@ class SectionEnrollment(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.user} in {self.section}"
+
+
+class ClassChange(TimeStampedModel):
+    """A proposed change to one section's class on one date, e.g. "CDE2313 Section A on
+    Tue 6 Oct moves to 14:00". It comes from an AI insight (the message is its evidence);
+    one insight can propose the same change for several sections."""
+
+    class Kind(models.TextChoices):
+        CLASS_MOVED = "class_moved", "Class moved"
+        CLASS_CANCELLED = "class_cancelled", "Class cancelled"
+        ROOM_CHANGED = "room_changed", "Room changed"
+        EXTRA_SESSION = "extra_session", "Extra session"
+
+    class Status(models.TextChoices):
+        PROPOSED = "proposed", "Proposed"
+        RETRACTED = "retracted", "Taken back"
+
+    insight = models.ForeignKey(
+        "intelligence.Insight", on_delete=models.CASCADE, related_name="class_changes"
+    )
+    section = models.ForeignKey(CourseSection, on_delete=models.CASCADE, related_name="changes")
+    meeting = models.ForeignKey(
+        ClassMeeting,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text="The weekly class it changes (empty for an extra session).",
+    )
+    kind = models.CharField(max_length=20, choices=Kind)
+    date = models.DateField(help_text="The day of the class that changes.")
+    new_date = models.DateField(null=True, blank=True, help_text="Moved to another day.")
+    new_start = models.TimeField(null=True, blank=True)
+    new_end = models.TimeField(null=True, blank=True)
+    new_room = models.CharField(max_length=50, blank=True)
+    status = models.CharField(max_length=20, choices=Status, default=Status.PROPOSED)
+
+    class Meta:
+        ordering = ["date", "id"]
+        indexes = [models.Index(fields=["section", "date"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["insight", "section"], name="timetable_change_insight_section"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_kind_display()}: {self.section} on {self.date}"
+
+
+class ClassChangeConfirmation(TimeStampedModel):
+    """A student's answer to a proposed change. No row yet = they haven't decided."""
+
+    class Status(models.TextChoices):
+        CONFIRMED = "confirmed", "Confirmed"
+        REJECTED = "rejected", "Rejected"
+
+    change = models.ForeignKey(ClassChange, on_delete=models.CASCADE, related_name="confirmations")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="class_change_answers"
+    )
+    status = models.CharField(max_length=20, choices=Status)
+    decided_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["change", "user"], name="timetable_confirmation_unique")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} {self.status} {self.change}"

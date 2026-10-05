@@ -96,6 +96,7 @@ def test_a_moved_class_is_found_and_published_to_its_section(group, cde):
         "meeting_id": meeting.id,
         "date": "2026-10-06",
         "weekday": 1,
+        "new_date": "",
         "old_start": "10:00",
         "new_start": "14:00",
         "new_end": "16:00",

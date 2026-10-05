@@ -3,7 +3,13 @@ classes are added and fixed."""
 
 from django.contrib import admin
 
-from .models import ClassMeeting, CourseSection, SectionEnrollment
+from .models import (
+    ClassChange,
+    ClassChangeConfirmation,
+    ClassMeeting,
+    CourseSection,
+    SectionEnrollment,
+)
 
 
 class ClassMeetingInline(admin.TabularInline):
@@ -37,3 +43,28 @@ class SectionEnrollmentAdmin(admin.ModelAdmin):
     list_select_related = ("user", "section__course", "section__term")
     autocomplete_fields = ("section",)
     raw_id_fields = ("user",)
+
+
+class ClassChangeConfirmationInline(admin.TabularInline):
+    model = ClassChangeConfirmation
+    extra = 0
+    can_delete = False
+    readonly_fields = ("user", "status", "decided_at")
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ClassChange)
+class ClassChangeAdmin(admin.ModelAdmin):
+    """Changes the AI proposed (read-only: publish or retract the insight instead)."""
+
+    list_display = ("date", "kind", "section", "new_start", "new_room", "status", "insight")
+    list_filter = ("kind", "status")
+    search_fields = ("section__course__code", "insight__title")
+    list_select_related = ("section__course", "section__term", "insight")
+    readonly_fields = [field.name for field in ClassChange._meta.fields]
+    inlines = [ClassChangeConfirmationInline]
+
+    def has_add_permission(self, request):
+        return False

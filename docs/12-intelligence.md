@@ -167,7 +167,8 @@ See [07](07-notifications.md). Direct attention, action required and important u
 - The official weekly timetable is never edited by the AI.
 - A student's view of a day = official meetings + their **confirmed** changes.
 - Pending proposals appear on the timetable page as a banner with the evidence, and in the feed as an important update.
-- If a later message retracts the change ("sorry, class stays at 10"), the proposal is marked `retracted` and pending confirmations are withdrawn; confirmed students are told.
+- If the insight is retracted (in the admin now; from a later message such as "sorry, class stays at 10" from M7), its proposals are marked `retracted` and leave every timetable; confirmed students are told (M8).
+- **Built (M5.7):** `apps/timetable/changes.py`. Publishing a timetable insight (`publish_insight`) creates one proposal per section; a student's answer is saved only when they confirm or reject. A moved class with only a new start keeps its length. A draft (for example an unknown course) has no proposal until it is published.
 
 ## Reading timetables
 
