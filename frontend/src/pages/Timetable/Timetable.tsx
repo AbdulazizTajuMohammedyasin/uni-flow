@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { PageLoading } from '@/components/PageLoading'
 import { SectionPicker } from '@/components/SectionPicker'
+import { TimetableImportBox } from '@/components/TimetableImport'
 import { Button } from '@/components/ui/button'
 import { useLeaveSection, useMySections, useToday, useWeek } from '@/hooks/useTimetable'
 import { formatDay, meetingText, shiftDate } from '@/lib/timetable'
@@ -16,7 +17,7 @@ export function TimetablePage() {
   const [params, setParams] = useSearchParams()
   const view = params.get('view') === 'week' ? 'week' : 'today'
   const mySections = useMySections()
-  const [panel, setPanel] = useState<'none' | 'pick' | 'add'>('none')
+  const [panel, setPanel] = useState<'none' | 'import' | 'pick' | 'add'>('none')
   const hasSections = (mySections.data?.length ?? 0) > 0
 
   const show = (next: 'today' | 'week') => setParams(next === 'week' ? { view: 'week' } : {})
@@ -40,12 +41,12 @@ export function TimetablePage() {
       ) : !hasSections ? (
         <EmptyState
           title="You haven't added your classes yet"
-          description="Choose your sections, or add a class that isn't in UniFlow yet. (Soon: upload your timetable and UniFlow reads it for you.)"
+          description="Upload your timetable and UniFlow reads it for you, or choose your sections yourself."
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button onClick={() => setPanel('pick')}>Choose sections</Button>
-              <Button variant="outline" onClick={() => setPanel('add')}>
-                Add a missing class
+              <Button onClick={() => setPanel('import')}>Add my timetable</Button>
+              <Button variant="outline" onClick={() => setPanel('pick')}>
+                Choose sections
               </Button>
             </div>
           }
@@ -60,6 +61,9 @@ export function TimetablePage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">My sections</h2>
           <div className="flex gap-2">
+            <Button size="sm" variant={panel === 'import' ? 'default' : 'outline'} onClick={() => setPanel(panel === 'import' ? 'none' : 'import')}>
+              Add my timetable
+            </Button>
             <Button size="sm" variant={panel === 'pick' ? 'default' : 'outline'} onClick={() => setPanel(panel === 'pick' ? 'none' : 'pick')}>
               Choose sections
             </Button>
@@ -73,6 +77,7 @@ export function TimetablePage() {
           <SectionPicker mySectionIds={mySections.data?.map((section) => section.id) ?? []} />
         )}
         {panel === 'add' && <AddClassForm />}
+        {panel === 'import' && <TimetableImportBox />}
       </section>
     </div>
   )

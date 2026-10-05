@@ -17,6 +17,11 @@ vi.mock('@/api/timetable', () => ({
   addSectionByHand: vi.fn(),
   getToday: vi.fn(),
   getWeek: vi.fn(),
+  startImport: vi.fn(),
+  getImport: vi.fn(),
+  chooseImportTab: vi.fn(),
+  confirmImport: vi.fn(),
+  discardImport: vi.fn(),
 }))
 
 const section: Section = {

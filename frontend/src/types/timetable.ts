@@ -67,3 +67,31 @@ export type Page<T> = {
   previous: string | null
   results: T[]
 }
+
+/** One class as read from a timetable file (before it is saved). */
+export type ImportRow = {
+  course_code: string
+  course_name: string
+  section: string
+  lecturer: string
+  meetings: { day: string; start: string; end: string; type: string; room: string }[]
+}
+
+/** "Is this your timetable?" — GET timetable/imports/{id}/ */
+export type TimetableImport = {
+  id: number
+  status: 'reading' | 'ready' | 'confirmed' | 'discarded' | 'failed'
+  file_name: string
+  tab: string
+  tabs: string[]
+  rows: ImportRow[]
+  report: {
+    created_sections?: string[]
+    existing_sections?: string[]
+    differences?: string[]
+    errors?: string[]
+    enrolled?: string[]
+  }
+  error: string
+  created_at: string
+}

@@ -2,14 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   addSectionByHand,
+  chooseImportTab,
+  confirmImport,
+  discardImport,
+  getImport,
   getMySections,
   getSections,
   getToday,
   getWeek,
   joinSection,
   leaveSection,
+  startImport,
 } from '@/api/timetable'
-import type { AddSectionData } from '@/types/timetable'
+import type { AddSectionData, ImportRow } from '@/types/timetable'
 
 // Every timetable query starts with 'timetable', so one invalidation refreshes them all.
 export const timetableKeys = {
@@ -18,6 +23,7 @@ export const timetableKeys = {
   week: (date: string | undefined) => ['timetable', 'week', date ?? 'this'] as const,
   mySections: ['timetable', 'my-sections'] as const,
   sections: (search: string) => ['timetable', 'sections', search] as const,
+  timetableImport: (id: number) => ['timetable', 'import', id] as const,
 }
 
 export function useToday() {
@@ -49,3 +55,21 @@ export const useJoinSection = () => useTimetableChange((id: number) => joinSecti
 export const useLeaveSection = () => useTimetableChange((id: number) => leaveSection(id))
 export const useAddSection = () =>
   useTimetableChange((data: AddSectionData) => addSectionByHand(data))
+
+/** One "Add my timetable" import; checked every 2 seconds while the AI is reading it. */
+export function useTimetableImport(id: number | null) {
+  return useQuery({
+    queryKey: timetableKeys.timetableImport(id ?? 0),
+    queryFn: () => getImport(id as number),
+    enabled: id !== null,
+    refetchInterval: (query) => (query.state.data?.status === 'reading' ? 2000 : false),
+  })
+}
+
+export const useStartImport = () =>
+  useTimetableChange((input: { file: File } | { link: string }) => startImport(input))
+export const useChooseImportTab = () =>
+  useTimetableChange(({ id, tab }: { id: number; tab: string }) => chooseImportTab(id, tab))
+export const useConfirmImport = () =>
+  useTimetableChange(({ id, rows }: { id: number; rows: ImportRow[] }) => confirmImport(id, rows))
+export const useDiscardImport = () => useTimetableChange((id: number) => discardImport(id))
