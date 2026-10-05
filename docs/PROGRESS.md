@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M5.3 is done ✅. New messages are automatically **sorted by the AI** into "academic information" or "noise" (tested on the real Gemini).
-**Next up:** M5.4, **reading timetables**: the AI turns a timetable image, PDF or Excel sheet into classes the student confirms.
+**Now:** M5.4 is done ✅. The AI can **read a timetable** (image, PDF or Excel, tab by tab) into classes; they're saved only when the student confirms (tested on the real Gemini).
+**Next up:** M5.5, the **"Add my timetable"** screen: upload a file or paste a link, check the classes, confirm.
 
 ---
 
@@ -119,7 +119,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M5.1 | **The AI connection.** One small module talks to **Gemini** (Google), using Google's official library: a fast model (`gemini-3.1-flash-lite`) for "is this message academic?" and a smarter one (`gemini-3.5-flash`) that can also read timetable images and PDFs. Both can be changed in `.env`. When Gemini says "too many requests" (the free tier has limits), the job will wait and retry. Tests use a **fake AI**, so they never use your quota. | Put `GEMINI_API_KEY=…` in `backend/.env` and save, then run `pipenv run python manage.py check_ai` | ✅ Done |
 | M5.2 | **Insights.** An **insight** is one piece of information ("CDE2313 class moved to 2 PM"): kind, title, summary, importance, action needed, dates and link, who it's for, and **how sure the AI was**. It links to the **original messages** with a short **quote** that stays after the 60-day clean-up. The rule: **sure** (80%+) → shown; **unsure** (50–80%) → shown but marked "Not confirmed"; **very unsure** → kept as a draft. **Official staff posts** are insights too: write one in the Django admin (leave "audience" empty for all students), then use **Publish**. | `pipenv run python manage.py migrate`; `/django-admin/` → Intelligence → Insights → Add | ✅ Done |
 | M5.3 | **Triage.** As soon as messages arrive, a background job sends them to the **fast model** in batches of up to 30 (one request per batch) and marks each one **academic** or **noise** (greetings, thanks, selling things…). Messages with a file count as academic and emptied ones as noise, without asking the AI. If Gemini says "too many requests", the job waits 1, 2, 4… minutes and tries again. Messages are sent as data, so a message saying "ignore your instructions" can't change the rules (checked on the real Gemini). | With Redis and the worker running, paste messages on the Groups page, then `/django-admin/` → Intelligence → Messages (the "Triage" column). Or select a group in Sources → **Sort new messages now** | ✅ Done |
-| **M5.4** | **Reading timetables:** the AI turns a timetable image, PDF or Excel sheet into classes the student confirms | – | ⏭️ **Next** |
+| M5.4 | **Reading timetables.** The smart AI model reads a timetable **image, PDF or Excel file** into a list of classes (course, section, lecturer, day, time, type, room). An Excel file is read **tab by tab, once**, and reused for every student. Each student gets **the tab matching their programme and intake** (e.g. "BCS Oct 2025"). Nothing is saved until the student **confirms**; then missing courses, sections and classes are created (shared with classmates), existing ones are **never changed**, and the student is enrolled. Section names like "Grp A" or "Section A" all become "A". Tested on the real Gemini with a sample timetable grid: all classes, days, times and rooms read correctly. | `pipenv run python manage.py migrate`; the screen comes in M5.5. `/django-admin/` → Intelligence → Timetable imports | ✅ Done |
+| **M5.5** | **"Add my timetable" screen:** upload a file or paste a link, check the classes, confirm | – | ⏭️ **Next** |
 
 ---
 
@@ -159,7 +160,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `apps/academics/` | University structure: schools, programmes and intakes, and `manage_views.py` (admins edit them) |
 | `apps/audiences/` | Who a post is for (`Audience`), and `selectors.py` (who sees what) |
 | `apps/timetable/` | Sections, weekly classes and which students are in each section |
-| `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages, `whatsapp_export.py` (reads WhatsApp's text formats), `services.py` (paste and upload rules) and `files.py` (timetable files and Drive links). Insights come in M5. |
+| `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages, `whatsapp_export.py` (reads WhatsApp's text formats), `services.py` (paste and upload rules), `files.py` (timetable files and Drive links), `providers.py` (the AI), `triage.py` (academic or noise) and `timetable_reading.py` (reading timetables). Insights come in M5. |
 | `apps/publishing/` | The shared base for every post (status, publisher, expiry), the publish / archive actions, and `policies.py` (the school boundary) |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |

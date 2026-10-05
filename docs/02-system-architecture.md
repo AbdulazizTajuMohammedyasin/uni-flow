@@ -70,7 +70,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | Filtering | `django-filter` | Approved | M2.2 |
 | File type checking | `filetype` (pure Python) | Approved (M4.4) | M4.4 |
 | Images | Pillow | Not needed: timetable images are stored with `FileField` and sent to the model as they are | Later, only for resizing |
-| Spreadsheets | `openpyxl` | **Needs approval**, only if timetables arrive as `.xlsx` (turns them into text for the model) | M5 |
+| Spreadsheets | `openpyxl` | Approved (M5.4): turns each tab of an `.xlsx` timetable into text for the model | M5.4 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `google-genai` (Google's official Gemini library) | Approved (M5.1): the developer chose Gemini | M5.1 |
 | Background jobs | `celery` (5.6) and `redis` (the Python client), with a Redis server | Approved before M4.1 | M4.1 |

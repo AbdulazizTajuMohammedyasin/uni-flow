@@ -240,15 +240,15 @@ The **normal timetable is read by the AI** from timetables shared in groups or u
 
 | Model | Fields | Notes |
 |---|---|---|
-| `TimetableImport` | user FK (who reviews it), message_file FK (the file the classes were read from), tab (the spreadsheet tab chosen for this student; blank for images and PDFs), term FK, status (`reading`, `ready`, `confirmed`, `discarded`, `failed`), rows (JSON: the `SectionRow`s for this student), report (JSON: the dry-run result), confirmed_at | One per student per timetable. A timetable shared in a group creates one `ready` import for each member who has no sections yet, so each of them only has to confirm. |
+| `TimetableImport` *(in the `intelligence` app, because it points at a `MessageFile`)* | user FK (who reviews it), message_file FK (the file the classes were read from), tab (the spreadsheet tab chosen for this student; blank for images and PDFs), term FK, status (`reading`, `ready`, `confirmed`, `discarded`, `failed`), rows (JSON: the `SectionRow`s for this student), report (JSON: the dry-run result), confirmed_at | One per student per timetable. A timetable shared in a group creates one `ready` import for each member who has no sections yet, so each of them only has to confirm. |
 
 The AI reads the image, PDF or spreadsheet into the same `SectionRow` structure the import service already uses; see below and [12](12-intelligence.md#reading-timetables). A spreadsheet is usually a whole school with **one tab per batch**: the AI's reading of each tab is stored **once on the `MessageFile`** (`MessageFile.reading`, JSON: tab name → rows, added in M5.4) and reused for every student's `TimetableImport`.
 
 ### Import service (MVP), independent of the file format
 
-`timetable/importing.py` defines plain data classes, `SectionRow(course_code, section_code, lecturer_name, external_ref, meetings: list[MeetingRow])`, and one service:
+`timetable/importing.py` defines plain data classes, `SectionRow(course_code, course_name, section_code, lecturer_name, meetings: list[MeetingRow])`, `rows_from_json` (checks AI or student input and drops invalid classes; "Grp A", "Group A" and "Section A" all become section "A"), and one service:
 
-`apply_timetable_rows(term, rows, *, user, dry_run=True) -> ImportReport`
+`apply_timetable_rows(term, rows, *, user, school, enroll=False, dry_run=False) -> ImportReport`
 
 The report lists what would be created, updated or left unchanged, plus errors with row numbers. Sections are matched by `external_ref` if the data has one, and otherwise by `(course, term, code)`. The student (or an admin) reviews the dry-run report before anything is applied. Existing shared meetings are never overwritten by an import; differences are reported to the admin. Whatever format the university uses, an **adapter** only has to turn that file into `SectionRow`s, so choosing the format later touches one small module and one upload screen.
 

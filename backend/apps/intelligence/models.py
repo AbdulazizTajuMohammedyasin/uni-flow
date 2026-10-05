@@ -7,6 +7,8 @@
   Drive link). Stored privately; deleted with the message text after the retention period.
 - Insight: one piece of information (found by the AI, or posted by staff), with
   InsightEvidence linking it to the original messages.
+- TimetableImport: one student's classes read from a timetable file, waiting for them to
+  confirm (it lives here, not in timetable, because it points at a MessageFile).
 """
 
 import uuid
@@ -15,7 +17,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from apps.academics.models import Course, Intake, Programme, School
+from apps.academics.models import Course, Intake, Programme, School, Term
 from apps.accounts.models import InfoType
 from apps.publishing.models import TargetedModel
 from apps.timetable.models import CourseSection
@@ -171,6 +173,9 @@ class MessageFile(TimeStampedModel):
     mime_type = models.CharField(max_length=100)
     size_bytes = models.PositiveIntegerField()
     file_deleted_at = models.DateTimeField(null=True, blank=True)
+    # The AI's reading of a timetable file, done once and reused for every student:
+    # {"tabs": {"<tab name>": [<class rows>], ...}} ("" for an image or PDF).
+    reading = models.JSONField(default=dict, blank=True)
 
     def __str__(self) -> str:
         return self.original_name or self.source_url or f"File {self.pk}"
@@ -280,3 +285,32 @@ class InsightEvidence(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.quote
+
+
+class TimetableImport(TimeStampedModel):
+    """One student's "Is this your timetable?": classes read from a file, saved only when
+    the student confirms (then the shared sections are created and they are enrolled)."""
+
+    class Status(models.TextChoices):
+        READING = "reading", "Being read"
+        READY = "ready", "Ready to confirm"
+        CONFIRMED = "confirmed", "Confirmed"
+        DISCARDED = "discarded", "Discarded"
+        FAILED = "failed", "Could not be read"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="timetable_imports"
+    )
+    message_file = models.ForeignKey(MessageFile, on_delete=models.PROTECT, related_name="imports")
+    tab = models.CharField(max_length=100, blank=True, help_text="The spreadsheet tab chosen.")
+    term = models.ForeignKey(
+        Term, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    status = models.CharField(max_length=20, choices=Status, default=Status.READING)
+    rows = models.JSONField(default=list, blank=True, help_text="This student's classes.")
+    report = models.JSONField(default=dict, blank=True, help_text="What confirming changed.")
+    error = models.CharField(max_length=300, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"Timetable import {self.pk} for {self.user} ({self.status})"

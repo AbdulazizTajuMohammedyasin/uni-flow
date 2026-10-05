@@ -15,6 +15,7 @@ celery = "<6,>=5.5"
 redis = "<7,>=5"
 filetype = "<2,>=1.2"
 google-genai = "<3,>=1"
+openpyxl = "<4,>=3.1"
 
 [dev-packages]
 pytest = ">=9.1,<10"

@@ -8,7 +8,15 @@ from django.utils import timezone
 from apps.audiences.models import Audience
 from apps.publishing.services import archive, publish
 
-from .models import Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
+from .models import (
+    Insight,
+    InsightEvidence,
+    Message,
+    MessageFile,
+    Source,
+    SourceMember,
+    TimetableImport,
+)
 from .tasks import triage_source
 
 # Links typed without "https://" are read as https (Django 6.0's default, chosen now).
@@ -161,3 +169,16 @@ class InsightAdmin(admin.ModelAdmin):
         for insight in queryset:
             archive(insight, request.user)
         self.message_user(request, f"Retracted {queryset.count()} item(s).")
+
+
+@admin.register(TimetableImport)
+class TimetableImportAdmin(admin.ModelAdmin):
+    """Students' "Is this your timetable?" imports (read-only: students confirm them)."""
+
+    list_display = ("created_at", "user", "status", "tab", "term", "confirmed_at")
+    list_filter = ("status",)
+    search_fields = ("user__email", "tab")
+    readonly_fields = [field.name for field in TimetableImport._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
