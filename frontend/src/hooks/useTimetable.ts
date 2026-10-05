@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   addSectionByHand,
+  answerChange,
   chooseImportTab,
   confirmImport,
   discardImport,
+  getChanges,
   getImport,
   getMySections,
   getSections,
@@ -24,6 +26,7 @@ export const timetableKeys = {
   mySections: ['timetable', 'my-sections'] as const,
   sections: (search: string) => ['timetable', 'sections', search] as const,
   timetableImport: (id: number) => ['timetable', 'import', id] as const,
+  changes: ['timetable', 'changes'] as const,
 }
 
 export function useToday() {
@@ -73,3 +76,13 @@ export const useChooseImportTab = () =>
 export const useConfirmImport = () =>
   useTimetableChange(({ id, rows }: { id: number; rows: ImportRow[] }) => confirmImport(id, rows))
 export const useDiscardImport = () => useTimetableChange((id: number) => discardImport(id))
+
+export function useClassChanges() {
+  return useQuery({ queryKey: timetableKeys.changes, queryFn: getChanges })
+}
+
+/** Confirm or reject a change; today and the week are refreshed to show it. */
+export const useAnswerChange = () =>
+  useTimetableChange(({ id, answer }: { id: number; answer: 'confirm' | 'reject' }) =>
+    answerChange(id, answer),
+  )

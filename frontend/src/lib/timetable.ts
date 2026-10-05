@@ -1,4 +1,4 @@
-import type { Meeting } from '@/types/timetable'
+import type { ChangeFlag, ClassChange, Meeting } from '@/types/timetable'
 
 /** "Mon 10:00–12:00 · B2" */
 export function meetingText(meeting: Meeting): string {
@@ -22,4 +22,33 @@ export function shiftDate(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T00:00:00Z`)
   date.setUTCDate(date.getUTCDate() + days)
   return date.toISOString().slice(0, 10)
+}
+
+/** The label on a changed class in Today/Week. */
+export function changeLabel(change: ChangeFlag): string {
+  if (change.status === 'pending') return 'Change waiting'
+  return {
+    class_moved: 'Moved',
+    class_cancelled: 'Cancelled',
+    room_changed: 'Room changed',
+    extra_session: 'Extra class',
+  }[change.kind]
+}
+
+/** What a change does, e.g. "10:00–12:00 → 14:00–16:00" or "Room B2 → C3". */
+export function changeText(change: ClassChange): string {
+  const was = change.old_start ? `${change.old_start}–${change.old_end}` : ''
+  const now = change.new_start ? `${change.new_start}–${change.new_end ?? ''}` : ''
+  const room = change.new_room ? ` · ${change.new_room}` : ''
+  switch (change.kind) {
+    case 'class_cancelled':
+      return was ? `${was} class cancelled` : 'Class cancelled'
+    case 'room_changed':
+      return `Room ${change.old_room || '?'} → ${change.new_room}`
+    case 'extra_session':
+      return `Extra class ${now}${room}`.trim()
+    case 'class_moved':
+      if (change.new_date) return `Moved to ${formatDay(change.new_date)} ${now || was}${room}`
+      return `${was || 'Class'} → ${now || 'a new time'}${room}`
+  }
 }

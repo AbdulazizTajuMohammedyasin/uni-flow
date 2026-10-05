@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as timetableApi from '@/api/timetable'
 import { createQueryClient } from '@/lib/queryClient'
-import type { Section, TimetableDays } from '@/types/timetable'
+import type { ClassChange, ClassSlot, Section, TimetableDays } from '@/types/timetable'
 
 import { TimetablePage } from './Timetable'
 
@@ -22,6 +22,8 @@ vi.mock('@/api/timetable', () => ({
   chooseImportTab: vi.fn(),
   confirmImport: vi.fn(),
   discardImport: vi.fn(),
+  getChanges: vi.fn(),
+  answerChange: vi.fn(),
 }))
 
 const section: Section = {
@@ -44,7 +46,7 @@ const section: Section = {
   ],
 }
 
-const slot = {
+const slot: ClassSlot = {
   section_id: 5,
   course_code: 'CDE2313',
   course_name: 'Data Structures',
@@ -52,9 +54,38 @@ const slot = {
   lecturer_name: 'Dr Lee',
   start_time: '10:00',
   end_time: '12:00',
-  meeting_type: 'lecture' as const,
+  meeting_type: 'lecture',
   building: '',
   room: 'B2',
+  change: null,
+}
+
+const moved: ClassChange = {
+  id: 7,
+  kind: 'class_moved',
+  course_code: 'CDE2313',
+  course_name: 'Data Structures',
+  section_code: 'A',
+  title: 'CDE2313 class moved',
+  summary: "Today's class moves to 2 PM.",
+  not_confirmed: false,
+  date: '2026-03-30',
+  old_start: '10:00',
+  old_end: '12:00',
+  old_room: 'B2',
+  new_date: null,
+  new_start: '14:00',
+  new_end: '16:00',
+  new_room: '',
+  my_status: 'pending',
+  evidence: [
+    {
+      quote: 'CDE2313 Sec A: class moves to 2pm today',
+      group: 'CDE2313 Sec A',
+      sender_name: 'Dr Lee',
+      sent_at: '2026-03-30T01:00:00Z',
+    },
+  ],
 }
 
 function week(monday: string): TimetableDays {
@@ -91,6 +122,7 @@ beforeEach(() => {
     previous: null,
     results: [section],
   })
+  vi.mocked(timetableApi.getChanges).mockResolvedValue([])
 })
 
 describe('Timetable page', () => {
@@ -195,5 +227,81 @@ describe('Timetable page', () => {
 
     expect(await screen.findByText('Must end after it starts.')).toBeTruthy()
     expect(timetableApi.addSectionByHand).not.toHaveBeenCalled()
+  })
+
+  it('shows a change waiting for me, with the message it came from', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValue([moved])
+    renderTimetable()
+
+    expect(await screen.findByText('A class may have changed')).toBeTruthy()
+    expect(screen.getByText('10:00–12:00 → 14:00–16:00')).toBeTruthy()
+    expect(screen.getByText('“CDE2313 Sec A: class moves to 2pm today”')).toBeTruthy()
+    expect(screen.getByText('Dr Lee in CDE2313 Sec A')).toBeTruthy()
+  })
+
+  it('confirming updates the timetable', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValueOnce([moved]).mockResolvedValue([])
+    vi.mocked(timetableApi.answerChange).mockResolvedValue({ ...moved, my_status: 'confirmed' })
+    renderTimetable()
+    vi.mocked(timetableApi.getToday).mockResolvedValue({
+      term: { id: 2, name: '2025/2026 Semester 2' },
+      days: [
+        {
+          date: '2026-03-30',
+          weekday: 0,
+          classes: [
+            {
+              ...slot,
+              start_time: '14:00',
+              end_time: '16:00',
+              change: { id: 7, kind: 'class_moved', status: 'confirmed' },
+            },
+          ],
+        },
+      ],
+    })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm change to CDE2313 Section A' }))
+
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm'))
+    expect(await screen.findByText('14:00–16:00')).toBeTruthy()
+    expect(screen.getByText('Moved')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText('A class may have changed')).toBeNull())
+  })
+
+  it('can reject a change', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValue([moved])
+    vi.mocked(timetableApi.answerChange).mockResolvedValue({ ...moved, my_status: 'rejected' })
+    renderTimetable()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Reject change to CDE2313 Section A' }))
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'reject'))
+  })
+
+  it('marks a class with a change waiting, and a cancelled class', async () => {
+    vi.mocked(timetableApi.getToday).mockResolvedValue({
+      term: { id: 2, name: '2025/2026 Semester 2' },
+      days: [
+        {
+          date: '2026-03-30',
+          weekday: 0,
+          classes: [
+            { ...slot, change: { id: 7, kind: 'class_moved', status: 'pending' } },
+            {
+              ...slot,
+              section_id: 6,
+              start_time: '16:00',
+              end_time: '18:00',
+              change: { id: 8, kind: 'class_cancelled', status: 'confirmed' },
+            },
+          ],
+        },
+      ],
+    })
+    renderTimetable()
+
+    expect(await screen.findByText('Change waiting')).toBeTruthy()
+    expect(screen.getByText('Cancelled')).toBeTruthy()
+    expect(screen.getByText('16:00–18:00').className).toContain('line-through')
   })
 })

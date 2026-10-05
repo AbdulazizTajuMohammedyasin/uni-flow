@@ -1,5 +1,6 @@
 import type {
   AddSectionData,
+  ClassChange,
   ImportRow,
   Page,
   Section,
@@ -115,6 +116,24 @@ export async function confirmImport(id: number, rows: ImportRow[]): Promise<Time
 export async function discardImport(id: number): Promise<TimetableImport> {
   try {
     return (await api.post<TimetableImport>(`/timetable/imports/${id}/discard/`)).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Changes to my classes from today on (answered or not). */
+export async function getChanges(): Promise<ClassChange[]> {
+  try {
+    return (await api.get<ClassChange[]>('/timetable/changes/')).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** My answer to a change: it changes only my own timetable, and I can change my mind. */
+export async function answerChange(id: number, answer: 'confirm' | 'reject'): Promise<ClassChange> {
+  try {
+    return (await api.post<ClassChange>(`/timetable/changes/${id}/${answer}/`)).data
   } catch (error) {
     throw toApiError(error)
   }

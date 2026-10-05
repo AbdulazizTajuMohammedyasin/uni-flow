@@ -23,6 +23,11 @@ export type Section = {
   meetings: Meeting[]
 }
 
+export type ChangeKind = 'class_moved' | 'class_cancelled' | 'room_changed' | 'extra_session'
+
+/** A class change on a class: confirmed (applied) or pending (not answered yet). */
+export type ChangeFlag = { id: number; kind: ChangeKind; status: 'confirmed' | 'pending' }
+
 /** One class on one day (today/week). */
 export type ClassSlot = {
   section_id: number
@@ -35,6 +40,7 @@ export type ClassSlot = {
   meeting_type: MeetingType
   building: string
   room: string
+  change: ChangeFlag | null
 }
 
 /** GET timetable/today/ (one day) and timetable/week/ (Monday to Sunday). */
@@ -94,4 +100,26 @@ export type TimetableImport = {
   }
   error: string
   created_at: string
+}
+
+/** GET timetable/changes/ — a change the AI found in a group message, for my section. */
+export type ClassChange = {
+  id: number
+  kind: ChangeKind
+  course_code: string
+  course_name: string
+  section_code: string
+  title: string
+  summary: string
+  not_confirmed: boolean // the AI wasn't sure
+  date: string // the day of the class that changes
+  old_start: string | null
+  old_end: string | null
+  old_room: string | null
+  new_date: string | null // moved to another day
+  new_start: string | null
+  new_end: string | null
+  new_room: string
+  my_status: 'pending' | 'confirmed' | 'rejected'
+  evidence: { quote: string; group: string; sender_name: string; sent_at: string }[]
 }

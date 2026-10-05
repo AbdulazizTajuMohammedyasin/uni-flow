@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 
 import { AddClassForm } from '@/components/AddClassForm'
+import { ClassChanges } from '@/components/ClassChanges'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { PageLoading } from '@/components/PageLoading'
 import { SectionPicker } from '@/components/SectionPicker'
 import { TimetableImportBox } from '@/components/TimetableImport'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLeaveSection, useMySections, useToday, useWeek } from '@/hooks/useTimetable'
-import { formatDay, meetingText, shiftDate } from '@/lib/timetable'
+import { changeLabel, formatDay, meetingText, shiftDate } from '@/lib/timetable'
 import type { ClassSlot, TimetableDays } from '@/types/timetable'
 
 /** /timetable — my classes today or this week, my sections, and adding classes. */
@@ -35,6 +37,8 @@ export function TimetablePage() {
           </Button>
         </div>
       </div>
+
+      {hasSections && <ClassChanges />}
 
       {mySections.isPending ? (
         <PageLoading />
@@ -133,14 +137,20 @@ function DayList({ days, emptyText }: { days: TimetableDays['days']; emptyText: 
 
 function ClassCard({ slot }: { slot: ClassSlot }) {
   const place = [slot.building, slot.room].filter(Boolean).join(' ')
+  const cancelled = slot.change?.kind === 'class_cancelled' && slot.change.status === 'confirmed'
   return (
     <li className="flex gap-4 rounded-xl bg-card p-3 shadow-sm ring-1 ring-border">
-      <p className="w-24 shrink-0 text-sm font-semibold tabular-nums">
+      <p className={`w-24 shrink-0 text-sm font-semibold tabular-nums ${cancelled ? 'text-muted-foreground line-through' : ''}`}>
         {slot.start_time}–{slot.end_time}
       </p>
       <div className="min-w-0">
-        <p className="font-medium">
+        <p className="flex flex-wrap items-center gap-2 font-medium">
           {slot.course_code} · Section {slot.section_code}
+          {slot.change && (
+            <Badge variant={slot.change.status === 'pending' ? 'outline' : 'secondary'}>
+              {changeLabel(slot.change)}
+            </Badge>
+          )}
         </p>
         <p className="truncate text-sm text-muted-foreground">
           {slot.course_name}
