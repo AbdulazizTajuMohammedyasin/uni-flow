@@ -4,7 +4,7 @@ import logging
 
 from celery import shared_task
 
-from . import services, timetable_reading, triage
+from . import extraction, services, timetable_reading, triage
 from .models import Source, TimetableImport
 from .providers import AIError, AIRateLimited
 
@@ -37,7 +37,30 @@ def triage_source(self, source_id: int) -> dict[str, int] | None:
         logger.warning("Triage of source %s failed: %s", source_id, error)
         return None
     logger.info("Triage of source %s: %s", source_id, result)
+    if result["relevant"]:
+        extract_source.delay(source_id)  # next step: understand the academic messages
     return result
+
+
+@shared_task(bind=True, max_retries=6)
+def extract_source(self, source_id: int) -> int | None:
+    """Find timetable changes in a group's new academic messages (the smart AI model).
+
+    Same retry rule as triage; on any other AI problem the messages stay "not looked at
+    yet" for the next run.
+    """
+    source = Source.objects.filter(pk=source_id).first()
+    if source is None:
+        return None
+    try:
+        created = extraction.extract_source(source)
+    except AIRateLimited as error:
+        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+    except AIError as error:
+        logger.warning("Extraction for source %s failed: %s", source_id, error)
+        return None
+    logger.info("Extraction for source %s: %s insights", source_id, created)
+    return created
 
 
 @shared_task(bind=True, max_retries=6)

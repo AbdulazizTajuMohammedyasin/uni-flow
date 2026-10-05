@@ -126,6 +126,8 @@ class Message(TimeStampedModel):
     triage = models.CharField(max_length=20, choices=Triage, default=Triage.PENDING)
     processed_at = models.DateTimeField(null=True, blank=True)
     text_deleted_at = models.DateTimeField(null=True, blank=True)
+    # When the AI looked for timetable changes (and later other information) in it.
+    extracted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["sent_at"]

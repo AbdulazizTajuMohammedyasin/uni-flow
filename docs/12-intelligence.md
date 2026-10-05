@@ -54,6 +54,8 @@ Messages are never read alone. The model receives:
 - the message being replied to, if any,
 - the source's context: its name and scope (for example "CDE2313 Section A group, School of Computing").
 
+**Built so far (M5.6):** `apps/intelligence/extraction.py` handles the four timetable kinds (`class_moved`, `class_cancelled`, `room_changed`, `extra_session`). Up to 10 new academic messages (marked `*`) are sent with the earlier messages of the last 24 hours (up to 30) to the smart model. Every change must quote a message that was shown, or it is rejected; dates like "tomorrow" are worked out from the message's own date. Each message is marked `extracted_at` so it is never sent twice. The reply-to message and the other kinds come in M7.1.
+
 It returns **structured output** that must match a fixed schema, for example:
 
 ```json

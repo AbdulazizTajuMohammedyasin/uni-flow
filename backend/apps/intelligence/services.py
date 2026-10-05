@@ -176,10 +176,12 @@ def save_ai_insight(
     confidence: float,
     evidence: list[tuple[Message, str]],
     audience: dict | None = None,
+    hold: bool = False,
     **fields,
 ) -> Insight:
     """Store what the AI found, linked to its messages, and apply the "how sure" rule:
-    sure (>= CONFIDENT) or unsure (>= UNSURE) -> published; very unsure -> draft."""
+    sure (>= CONFIDENT) or unsure (>= UNSURE) -> published; very unsure -> draft.
+    hold=True keeps it as a draft anyway (e.g. the course couldn't be identified)."""
     audience = audience or {}
     target = Audience.objects.create(
         semester_min=audience.get("semester_min"), semester_max=audience.get("semester_max")
@@ -202,6 +204,6 @@ def save_ai_insight(
         InsightEvidence(insight=insight, message=message, quote=quote[:500])
         for message, quote in evidence
     )
-    if confidence >= UNSURE:
+    if confidence >= UNSURE and not hold:
         publish(insight, None)
     return insight
