@@ -225,6 +225,7 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 ## Quality and evaluation
 
 - An **evaluation set** of real, anonymized messages with the expected results is kept in the repository (`apps/intelligence/tests/eval/`). A command runs the pipeline against it and reports accuracy per kind. It is re-run when prompts or models change.
+- **Built (M5.9):** `pipenv run python manage.py evaluate_intelligence` (add `--only changes` or `--only timetables`). The set starts with 15 made-up conversations in the style of AIU groups (every change kind, plus a rumour, a question, an "ignore the rules" message, a change taken back, and an answer that needs the question before it) and 2 timetable sheets (grid and list layouts). It prints OK or WRONG for each example, then right/total per kind. Nothing is saved.
 - Unit tests never call the real provider: the provider module is replaced by a fake that returns fixed outputs.
 - In the pilot, you check drafts and fix or retract insights in the **Django admin**; corrections are recorded (`corrected_by`) and added to the evaluation set. React review pages come after the pilot.
 

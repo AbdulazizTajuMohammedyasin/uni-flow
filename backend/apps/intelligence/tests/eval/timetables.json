@@ -1,0 +1,22 @@
+[
+  {
+    "name": "grid layout",
+    "tab": "BCS Oct 2025",
+    "text": "SCHOOL OF COMPUTING AND INFORMATICS - SEMESTER 1 2026/2027 - BCS OCT 2025 INTAKE\nDay | 08:00-10:00 | 10:00-12:00 | 14:00-16:00\nMonday |  | CDE2313 (Grp A) Data Structures - Dr Lee - B2\nTuesday | MTH1013 (G1) Discrete Mathematics - Ms Aina - A1-04 |  | CDE2313 (Grp A) Data Structures LAB - Lab 3\nWednesday |  | GEN1001 Ethics and Society - Hall 1\nThursday |  |  | MTH1013 (G1) Discrete Mathematics TUTORIAL - A1-04\nFriday | LUNCH / FRIDAY PRAYER\nNote: Exam week 15-19 Feb 2027",
+    "expected": [
+      {"course_code": "CDE2313", "section": "A", "meetings": [["monday", "10:00", "12:00"], ["tuesday", "14:00", "16:00"]]},
+      {"course_code": "MTH1013", "section": "G1", "meetings": [["tuesday", "08:00", "10:00"], ["thursday", "14:00", "16:00"]]},
+      {"course_code": "GEN1001", "section": "", "meetings": [["wednesday", "10:00", "12:00"]]}
+    ]
+  },
+  {
+    "name": "list layout",
+    "tab": "BCS Mar 2025",
+    "text": "Course Code | Course Name | Section | Day | Time | Venue | Lecturer\nCDE3101 | Operating Systems | 1 | Mon | 2.00pm - 4.00pm | C2-05 | Dr Tan\nCDE3101 | Operating Systems | 1 | Thu | 9.00am - 11.00am | Lab 2 | Dr Tan\nCDE3205 | Computer Networks | 2 | Wed | 11.00am - 1.00pm | B1-10 | Ms Aina\nCDE3310 | Software Engineering | 1 | Fri | 8.30am - 10.30am | B2-01 | Dr Lee",
+    "expected": [
+      {"course_code": "CDE3101", "section": "1", "meetings": [["monday", "14:00", "16:00"], ["thursday", "09:00", "11:00"]]},
+      {"course_code": "CDE3205", "section": "2", "meetings": [["wednesday", "11:00", "13:00"]]},
+      {"course_code": "CDE3310", "section": "1", "meetings": [["friday", "08:30", "10:30"]]}
+    ]
+  }
+]
