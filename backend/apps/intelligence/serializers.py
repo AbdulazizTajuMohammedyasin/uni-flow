@@ -110,3 +110,44 @@ class ConfirmImportSerializer(serializers.Serializer):
     """POST timetable/imports/{id}/confirm/ — optionally the classes to keep."""
 
     rows = serializers.ListField(child=serializers.DictField(), required=False)
+
+
+# --- The WhatsApp connector (/api/v1/internal/, connector.py) ---------------------------
+
+
+class PendingSourceSerializer(serializers.ModelSerializer):
+    """A group the connector should join."""
+
+    class Meta:
+        model = Source
+        fields = ["id", "title", "invite_url"]
+
+
+class JoinedSerializer(serializers.Serializer):
+    """POST internal/sources/joined/ — the connector is in a group now."""
+
+    external_id = serializers.CharField(max_length=100, help_text="WhatsApp's group id.")
+    title = serializers.CharField(max_length=200, allow_blank=True, default="")
+    source_id = serializers.IntegerField(required=False, allow_null=True)
+    notice_sent = serializers.BooleanField(default=False)
+
+
+class ConnectorMessageSerializer(serializers.Serializer):
+    """POST internal/messages/ — one new group message."""
+
+    source_external_id = serializers.CharField(max_length=100)
+    message_id = serializers.CharField(max_length=100)
+    sender_ref = serializers.CharField(max_length=200, allow_blank=True, default="")
+    sender_name = serializers.CharField(max_length=150, allow_blank=True, default="")
+    text = serializers.CharField(allow_blank=True, default="", trim_whitespace=False)
+    sent_at = serializers.DateTimeField()
+    reply_to = serializers.CharField(
+        max_length=100, allow_blank=True, allow_null=True, default=None
+    )
+    has_files = serializers.BooleanField(default=False)
+
+
+class ConnectorFileSerializer(serializers.Serializer):
+    """POST internal/messages/{id}/files/ — a file attached to a group message."""
+
+    file = serializers.FileField()

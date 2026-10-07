@@ -68,6 +68,7 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 - A **separate small process** (`connectors/whatsapp/`, outside Django), because WhatsApp libraries keep a long-lived connection. Candidate libraries: Baileys (Node.js) or whatsmeow through neonize (Python). **The library is chosen and approved in the connector task** (see [11](11-roadmap.md)).
 - It does three things: join a group from an invite link, receive new group messages (with image, PDF and spreadsheet attachments), and send them to the backend. It ignores private messages and never reads members' phone numbers.
 - It sends messages to `POST /api/v1/internal/messages/`, signed with a shared secret (`CONNECTOR_SECRET`). It has no database of its own.
+- **Built so far (M6.2):** the Django side, `apps/intelligence/connector.py` (addresses and signing in [04](04-api.md)). The connector asks for groups to join, reports each join (and whether the notice was sent), sends each message once with a sender id that UniFlow hashes again (so a phone number is never stored), then uploads any files. The connector program itself is M6.3.
 - It is run as a systemd service next to Django ([10](10-testing-and-deployment.md)).
 
 ## The Telegram bot

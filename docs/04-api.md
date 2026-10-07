@@ -85,10 +85,12 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 | Method | Path | Who | Purpose |
 |---|---|---|---|
 | POST | `integrations/telegram/webhook/` | Telegram | Checked with the `X-Telegram-Bot-Api-Secret-Token` header (wrong or missing → 403). Stores new group and channel messages once each, and follows the bot being added or removed. Always 200 for a valid secret, so Telegram doesn't resend. Not in the public API docs (M6.1). |
-| POST | `internal/messages/` | The WhatsApp connector | Signed with `CONNECTOR_SECRET`. Body: `{source_external_id, message_id, sender_ref, sender_name, text, sent_at, reply_to}`. Idempotent per `(source, message_id)`. |
-| POST | `internal/sources/joined/` | The WhatsApp connector | Reports that the connector joined a group (its id and title), so the pending `Source` becomes active. |
-| GET | `internal/sources/pending/` | The WhatsApp connector | Invite links waiting to be joined. |
-| POST | `internal/messages/{id}/files/` | The WhatsApp connector | Uploads an image, PDF or spreadsheet attached to a group message. |
+| POST | `internal/messages/` | The WhatsApp connector | Body: `{source_external_id, message_id, sender_ref, sender_name, text, sent_at, reply_to, has_files}`. **201** `{id, created: true}`, or **200** with `created: false` when already stored (idempotent per `(source, message_id)`); **404** if the join wasn't reported. With `has_files`, the AI sorts it after its file arrives. |
+| POST | `internal/sources/joined/` | The WhatsApp connector | Body: `{external_id, title, source_id?, notice_sent?}`. The pending `Source` (`source_id`) becomes active; without `source_id` (UniFlow's number added directly) a new active source is created; if the group is already connected, the pending one is merged into it. |
+| GET | `internal/sources/pending/` | The WhatsApp connector | `[{id, title, invite_url}]`: WhatsApp groups students added that aren't joined yet. |
+| POST | `internal/messages/{id}/files/` | The WhatsApp connector | Multipart `file`: an image, PDF or spreadsheet of that message (`id` from `internal/messages/`), checked by real contents and size. **201** `{id, kind}`. |
+
+**Signing (M6.2):** every `internal/` request has `X-UniFlow-Timestamp` (Unix seconds) and `X-UniFlow-Signature` (hex HMAC-SHA256 of `<timestamp>.<METHOD>.<path>.<raw body>` with `CONNECTOR_SECRET`). Missing, wrong, or more than 5 minutes off → **403**. See `apps/intelligence/connector.py`.
 
 `internal/` endpoints are only reachable from the server itself (nginx does not expose them) and are excluded from the public API docs.
 

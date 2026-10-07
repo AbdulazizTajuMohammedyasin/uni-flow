@@ -19,6 +19,7 @@ urlpatterns = [
         TelegramWebhookView.as_view(),
         name="telegram-webhook",
     ),
+    path("internal/", include("apps.intelligence.internal_urls")),
     # Staff area (each address checks the matching capability).
     path("manage/academics/", include("apps.academics.manage_urls")),
     path("manage/", include("apps.accounts.manage_urls")),

@@ -269,3 +269,8 @@ AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-3.5-flash")  # understanding,
 # webhook secret is any long random text, checked on every update Telegram sends.
 TELEGRAM_BOT_TOKEN = env_str("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_WEBHOOK_SECRET = env_str("TELEGRAM_WEBHOOK_SECRET", "")
+
+
+# The WhatsApp connector (connectors/whatsapp/, M6.3) signs every request to
+# /api/v1/internal/ with this secret (apps/intelligence/connector.py). Long random text.
+CONNECTOR_SECRET = env_str("CONNECTOR_SECRET", "")

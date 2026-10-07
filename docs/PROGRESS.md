@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M6.1 is done ✅. UniFlow can receive messages from **Telegram** groups and channels through its own bot (ready to switch on once UniFlow is online).
-**Next up:** M6.2, the private address the **WhatsApp connector** will use to hand messages to UniFlow (signed, so nobody else can).
+**Now:** M6.2 is done ✅. UniFlow has the private, signed addresses the **WhatsApp connector** will use to hand over messages and files.
+**Next up:** M6.3, the **WhatsApp connector** program itself. It needs your approval first: which WhatsApp library, and a dedicated WhatsApp number.
 
 ---
 
@@ -133,7 +133,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M6.1 | **Telegram bot.** A group admin adds UniFlow's Telegram bot to a group (or makes it admin of a channel), and Telegram sends every new message to UniFlow. A secret checks it's really Telegram (anything else gets "403 refused"). The group appears in UniFlow by itself; each message is stored **once**, with who sent it and what it replies to; photos, PDFs and Excel files are downloaded; then the AI sorts them like any other message. Removing the bot disconnects the group. **No new library.** | Tests only for now: Telegram needs UniFlow online at an **https** address. Setup steps: [08](08-messaging-integrations.md#the-telegram-bot) | ✅ Done |
-| **M6.2** | **Connector address:** the private, signed address the WhatsApp connector will use | – | ⏭️ **Next** |
+| M6.2 | **Private addresses for the WhatsApp connector.** Four addresses the connector (M6.3) will use: "which groups should I join?", "I joined this group", "here's a new message", and "here's its file". Every request is **signed** with a shared secret and the time: a forged or changed request, or an old one sent again later (over 5 minutes), gets "403 refused". A message sent twice is stored once; the sender's WhatsApp id is scrambled again on UniFlow's side, so a **phone number is never stored**; files are checked like uploads. If two students' links lead to the same group, it stays one group with both as members. **No new library.** | Tests only (the connector comes in M6.3). Add `CONNECTOR_SECRET` to `backend/.env` when the connector is set up | ✅ Done |
+| **M6.3** | **WhatsApp connector:** the program running UniFlow's WhatsApp number (**needs your approval** of a library and a number first) | – | ⏭️ **Next** |
 
 ---
 

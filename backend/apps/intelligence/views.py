@@ -1,7 +1,8 @@
 """Sources API (/api/v1/sources/): my groups, a group for pasted messages, pasting, and
 uploading a WhatsApp "Export chat" file. Connecting real groups comes in M6.
 Also "Add my timetable" (/api/v1/timetable/imports/): a file or link read by the AI,
-and the Telegram bot's webhook (/api/v1/integrations/telegram/webhook/).
+the Telegram bot's webhook (/api/v1/integrations/telegram/webhook/), and the WhatsApp
+connector's private addresses (/api/v1/internal/, see connector.py).
 """
 
 import hmac
@@ -10,21 +11,25 @@ import logging
 from django.conf import settings
 from django.db.models import Count
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import generics, status
+from rest_framework import exceptions, generics, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from . import files, services, telegram, timetable_reading
-from .models import Source, TimetableImport
+from . import connector, files, services, telegram, timetable_reading
+from .models import Message, Source, TimetableImport
 from .serializers import (
     ConfirmImportSerializer,
+    ConnectorFileSerializer,
+    ConnectorMessageSerializer,
     CreateSourceSerializer,
     ExportSerializer,
     ImportResultSerializer,
+    JoinedSerializer,
     PasteSerializer,
+    PendingSourceSerializer,
     SourceSerializer,
     StartImportSerializer,
     TimetableImportSerializer,
@@ -210,3 +215,70 @@ class TelegramWebhookView(APIView):
         except (KeyError, TypeError, ValueError):
             logger.exception("Telegram update %s not understood", request.data.get("update_id"))
         return Response({"ok": True})
+
+
+class ConnectorView(APIView):
+    """Base for /api/v1/internal/: only signed requests from the WhatsApp connector."""
+
+    authentication_classes = []
+    permission_classes = [connector.ConnectorSignature]
+    throttle_classes = []
+
+
+@extend_schema(exclude=True)
+class PendingSourcesView(ConnectorView):
+    """GET internal/sources/pending/ — groups to join, from students' invite links."""
+
+    def get(self, request):
+        return Response(PendingSourceSerializer(connector.pending_sources(), many=True).data)
+
+
+@extend_schema(exclude=True)
+class JoinedView(ConnectorView):
+    """POST internal/sources/joined/ — the connector joined a group; it becomes active."""
+
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        serializer = JoinedSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source = connector.mark_joined(**serializer.validated_data)
+        return Response({"id": source.id, "status": source.status})
+
+
+@extend_schema(exclude=True)
+class ConnectorMessageView(ConnectorView):
+    """POST internal/messages/ — a new group message (sending it again changes nothing).
+    404 if UniFlow hasn't been told it joined that group (internal/sources/joined/)."""
+
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        serializer = ConnectorMessageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            message, created = connector.store_message(serializer.validated_data)
+        except Source.DoesNotExist:
+            raise exceptions.NotFound(
+                "UniFlow isn't in this group (report the join first)."
+            ) from None
+        return Response(
+            {"id": message.id, "created": created},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+@extend_schema(exclude=True)
+class ConnectorFileView(ConnectorView):
+    """POST internal/messages/{id}/files/ — an image, PDF or Excel file of a message."""
+
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, message_id):
+        message = generics.get_object_or_404(
+            Message, pk=message_id, source__platform=Source.Platform.WHATSAPP_GROUP
+        )
+        serializer = ConnectorFileSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        stored = connector.attach_file(message, serializer.validated_data["file"])
+        return Response({"id": stored.id, "kind": stored.kind}, status=status.HTTP_201_CREATED)
