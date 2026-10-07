@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M5 is done ✅. Last step (M5.9): a **test set** and a command that shows how often the AI gets things right.
-**Next up:** M6.1, UniFlow receives messages from **Telegram** groups and channels (its bot is added to the group).
+**Now:** M6.1 is done ✅. UniFlow can receive messages from **Telegram** groups and channels through its own bot (ready to switch on once UniFlow is online).
+**Next up:** M6.2, the private address the **WhatsApp connector** will use to hand messages to UniFlow (signed, so nobody else can).
 
 ---
 
@@ -20,7 +20,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
 | **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ✅ Done |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ✅ Done |
-| **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ⏳ |
+| **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | 🔄 In progress |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
 | **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
@@ -128,6 +128,15 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 ---
 
+## M6 Connectors: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M6.1 | **Telegram bot.** A group admin adds UniFlow's Telegram bot to a group (or makes it admin of a channel), and Telegram sends every new message to UniFlow. A secret checks it's really Telegram (anything else gets "403 refused"). The group appears in UniFlow by itself; each message is stored **once**, with who sent it and what it replies to; photos, PDFs and Excel files are downloaded; then the AI sorts them like any other message. Removing the bot disconnects the group. **No new library.** | Tests only for now: Telegram needs UniFlow online at an **https** address. Setup steps: [08](08-messaging-integrations.md#the-telegram-bot) | ✅ Done |
+| **M6.2** | **Connector address:** the private, signed address the WhatsApp connector will use | – | ⏭️ **Next** |
+
+---
+
 ## Where things are
 
 | I want to... | Look at |
@@ -164,7 +173,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `apps/academics/` | University structure: schools, programmes and intakes, and `manage_views.py` (admins edit them) |
 | `apps/audiences/` | Who a post is for (`Audience`), and `selectors.py` (who sees what) |
 | `apps/timetable/` | Sections, weekly classes and which students are in each section |
-| `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages, `whatsapp_export.py` (reads WhatsApp's text formats), `services.py` (paste and upload rules), `files.py` (timetable files and Drive links), `providers.py` (the AI), `triage.py` (academic or noise) and `timetable_reading.py` (reading timetables). Insights come in M5. |
+| `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages, `whatsapp_export.py` (reads WhatsApp's text formats), `services.py` (paste and upload rules), `files.py` (timetable files and Drive links), `providers.py` (the AI), `triage.py` (academic or noise), `timetable_reading.py` (reading timetables), `extraction.py` (timetable changes in messages) and `telegram.py` (the Telegram bot) |
 | `apps/publishing/` | The shared base for every post (status, publisher, expiry), the publish / archive actions, and `policies.py` (the school boundary) |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
@@ -206,6 +215,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **Gemini free or paid tier.** For now UniFlow uses Gemini's **free tier**. On the free tier Google may use the messages sent to it to improve its products (the paid tier doesn't). Decide before real students' group messages are processed (pilot checklist, M9.7).
 - **WhatsApp connector library and a dedicated WhatsApp number.** Needed before M6.3.
+- **The UniFlow Telegram bot** (create it with @BotFather; choose its name). Needed to switch Telegram on, together with hosting.
 - **University approval** for reading academic groups. Needed before the pilot (M9.7).
 - The university's official timetable format (optional import). Not blocking.
 - Hosting (must keep the WhatsApp connector online). Needed before M9.6.

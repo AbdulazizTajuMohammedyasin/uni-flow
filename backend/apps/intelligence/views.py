@@ -1,16 +1,23 @@
 """Sources API (/api/v1/sources/): my groups, a group for pasted messages, pasting, and
 uploading a WhatsApp "Export chat" file. Connecting real groups comes in M6.
-Also "Add my timetable" (/api/v1/timetable/imports/): a file or link read by the AI.
+Also "Add my timetable" (/api/v1/timetable/imports/): a file or link read by the AI,
+and the Telegram bot's webhook (/api/v1/integrations/telegram/webhook/).
 """
 
+import hmac
+import logging
+
+from django.conf import settings
 from django.db.models import Count
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from . import files, services, timetable_reading
+from . import files, services, telegram, timetable_reading
 from .models import Source, TimetableImport
 from .serializers import (
     ConfirmImportSerializer,
@@ -173,3 +180,33 @@ class DiscardImportView(APIView):
             request.user, my_import(request, import_id)
         )
         return Response(import_data(timetable_import))
+
+
+logger = logging.getLogger(__name__)
+
+
+@extend_schema(exclude=True)  # for Telegram's servers only, not part of the public API
+class TelegramWebhookView(APIView):
+    """POST integrations/telegram/webhook/ — updates from the UniFlow Telegram bot.
+
+    Telegram sends the secret we gave it (set_telegram_webhook) in a header; anything
+    without it is refused with 403. A valid update always gets 200, even one UniFlow
+    ignores or can't understand, otherwise Telegram keeps sending it again.
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    throttle_classes = []
+    parser_classes = [JSONParser]
+
+    def post(self, request):
+        secret = settings.TELEGRAM_WEBHOOK_SECRET
+        given = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if not secret or not hmac.compare_digest(given.encode(), secret.encode()):
+            raise PermissionDenied("Wrong secret.")
+        try:
+            if isinstance(request.data, dict):
+                telegram.handle_update(request.data)
+        except (KeyError, TypeError, ValueError):
+            logger.exception("Telegram update %s not understood", request.data.get("update_id"))
+        return Response({"ok": True})

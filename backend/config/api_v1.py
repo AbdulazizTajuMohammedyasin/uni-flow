@@ -4,6 +4,7 @@ from django.conf import settings
 from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from apps.intelligence.views import TelegramWebhookView
 from core.views import api_not_found, health
 
 urlpatterns = [
@@ -13,6 +14,11 @@ urlpatterns = [
     path("timetable/imports/", include("apps.intelligence.timetable_urls")),
     path("timetable/", include("apps.timetable.urls")),
     path("sources/", include("apps.intelligence.urls")),
+    path(
+        "integrations/telegram/webhook/",
+        TelegramWebhookView.as_view(),
+        name="telegram-webhook",
+    ),
     # Staff area (each address checks the matching capability).
     path("manage/academics/", include("apps.academics.manage_urls")),
     path("manage/", include("apps.accounts.manage_urls")),

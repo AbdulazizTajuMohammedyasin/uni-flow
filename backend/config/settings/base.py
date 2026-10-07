@@ -263,3 +263,9 @@ AI_PROVIDER = env_str("AI_PROVIDER", "gemini")  # "gemini", or "fake" in tests
 GEMINI_API_KEY = env_str("GEMINI_API_KEY", "")
 AI_FAST_MODEL = env_str("AI_FAST_MODEL", "gemini-3.1-flash-lite")  # "is this academic?"
 AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-3.5-flash")  # understanding, timetables
+
+
+# The UniFlow Telegram bot (apps/intelligence/telegram.py). Create it with @BotFather; the
+# webhook secret is any long random text, checked on every update Telegram sends.
+TELEGRAM_BOT_TOKEN = env_str("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_WEBHOOK_SECRET = env_str("TELEGRAM_WEBHOOK_SECRET", "")

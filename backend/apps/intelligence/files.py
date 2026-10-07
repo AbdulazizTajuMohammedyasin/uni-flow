@@ -49,8 +49,11 @@ def _check_contents(data: bytes, field: str) -> tuple[str, str, str, set[str]]:
     return kind, guess.mime, extension, name_extensions
 
 
-def _save(data: bytes, *, user, kind, mime, extension, original_name="", source_url=""):
+def _save(
+    data: bytes, *, user, kind, mime, extension, original_name="", source_url="", message=None
+):
     stored = MessageFile(
+        message=message,
         uploaded_by=user,
         kind=kind,
         original_name=original_name[:255],

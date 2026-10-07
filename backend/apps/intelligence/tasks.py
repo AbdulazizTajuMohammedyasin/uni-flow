@@ -4,8 +4,8 @@ import logging
 
 from celery import shared_task
 
-from . import extraction, services, timetable_reading, triage
-from .models import Source, TimetableImport
+from . import extraction, services, telegram, timetable_reading, triage
+from .models import Message, Source, TimetableImport
 from .providers import AIError, AIRateLimited
 
 logger = logging.getLogger(__name__)
@@ -89,3 +89,19 @@ def read_timetable_import(self, import_id: int) -> str | None:
         )
         timetable_import.save(update_fields=["status", "error", "updated_at"])
     return timetable_import.status
+
+
+@shared_task(bind=True, max_retries=3)
+def fetch_telegram_file(self, message_id: int, file_id: str, name: str) -> None:
+    """Download a photo or document from a Telegram message, then let the AI sort the
+    message. If Telegram can't be reached, try again in a minute (3 times at most)."""
+    message = Message.objects.filter(pk=message_id).first()
+    if message is None:
+        return
+    try:
+        telegram.fetch_file(message, file_id, name)
+    except telegram.TelegramError as error:
+        if self.request.retries < self.max_retries:
+            raise self.retry(exc=error, countdown=60) from error
+        logger.warning("Telegram file for message %s not downloaded: %s", message_id, error)
+    triage_source.delay(message.source_id)

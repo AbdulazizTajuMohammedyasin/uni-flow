@@ -465,7 +465,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 
 | # | Task | Verify | Commit |
 |---|---|---|---|
-| M6.1 | Telegram webhook: group and channel messages and their files; `setWebhook` command | Wrong secret → 403; duplicates stored once | `feat(intelligence): add telegram bot webhook` |
+| M6.1 ✅ | Telegram webhook: group and channel messages and their files; `setWebhook` command (`intelligence/telegram.py`, `TelegramWebhookView`, task `fetch_telegram_file`, `manage.py set_telegram_webhook <https://site> | --info | --delete`; the bot added or removed sets the source active or disconnected; supergroup upgrades keep the source; Python's urllib, no new library) | Wrong secret → 403; duplicates stored once | `feat(intelligence): add telegram bot webhook` |
 | M6.2 | Internal connector API: messages, files, pending invites, joined; signed requests | Bad signature → 403; old timestamp rejected | `feat(intelligence): add internal connector endpoints` |
 | M6.3 | The WhatsApp connector process (`connectors/whatsapp/`): join by invite (or wait for admin approval), join notice, messages and files | Manual test on a test group; a restart resumes without duplicates | `feat(connectors): add whatsapp connector` |
 | M6.4 | Add-a-group API and page (invite link, suggested scope, joining an already-connected group, pending state) | Already-connected groups are not joined twice; wrong hosts refused | `feat(intelligence): add a group flow` |

@@ -84,7 +84,7 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 
 | Method | Path | Who | Purpose |
 |---|---|---|---|
-| POST | `integrations/telegram/webhook/` | Telegram | Checked with the `X-Telegram-Bot-Api-Secret-Token` header. Stores new group and channel messages. |
+| POST | `integrations/telegram/webhook/` | Telegram | Checked with the `X-Telegram-Bot-Api-Secret-Token` header (wrong or missing → 403). Stores new group and channel messages once each, and follows the bot being added or removed. Always 200 for a valid secret, so Telegram doesn't resend. Not in the public API docs (M6.1). |
 | POST | `internal/messages/` | The WhatsApp connector | Signed with `CONNECTOR_SECRET`. Body: `{source_external_id, message_id, sender_ref, sender_name, text, sent_at, reply_to}`. Idempotent per `(source, message_id)`. |
 | POST | `internal/sources/joined/` | The WhatsApp connector | Reports that the connector joined a group (its id and title), so the pending `Source` becomes active. |
 | GET | `internal/sources/pending/` | The WhatsApp connector | Invite links waiting to be joined. |

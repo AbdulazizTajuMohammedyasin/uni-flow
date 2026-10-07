@@ -74,9 +74,12 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 
 - One UniFlow bot, created through @BotFather, using the official Bot API.
 - Updates arrive at `POST /api/v1/integrations/telegram/webhook/`, checked with Telegram's `secret_token` header. No separate process is needed.
-- **Groups:** a group admin adds the bot; privacy mode must be off (or the bot made admin) so it receives all messages. **Channels:** the bot is added as a channel admin and receives `channel_post` updates.
+- **Groups:** the bot does **not** need to be an admin. Turn privacy mode off once in @BotFather (`/setprivacy` → Disable) and it sees every message as a normal member. The setting only applies to groups the bot joins afterwards, so remove and re-add it in older groups. Someone in the group must add it (a bot can't join by invite link); some groups only let admins add members. **Channels:** Telegram only allows bots in a channel as admins, but every admin permission can be switched off (read-only). It receives `channel_post` updates.
+- *Considered:* a normal Telegram user account run by a program ("userbot") could join by invite link without anyone adding it, but it needs its own phone number and a new library, and can be banned like the WhatsApp number. Kept as an option if many group admins refuse to add the bot.
 - A bot only receives messages sent **after** it joins. Earlier history can be added with a manual chat export where available.
 - Docs: https://core.telegram.org/bots/api and https://core.telegram.org/bots/features#privacy-mode
+- **Built (M6.1):** `apps/intelligence/telegram.py`. The first message (or the bot being added) creates the group's `Source` (active); removing the bot marks it disconnected and its messages are then ignored. Each message is stored once (Telegram's message id), with the sender's name and a hash of their Telegram id, its reply, and its text or caption; joins, stickers and private chats are ignored. A photo, PDF or Excel file is downloaded in the background (`getFile`, checked by real contents, same size limit as uploads) before the AI sorts the message. Edited messages are not used yet.
+- **Setting it up:** create the bot with @BotFather; put `TELEGRAM_BOT_TOKEN` and a random `TELEGRAM_WEBHOOK_SECRET` in `backend/.env`; turn privacy mode off (`/setprivacy` → Disable); then, where UniFlow is online over https, run `pipenv run python manage.py set_telegram_webhook https://<site>` (`--info` shows the state, `--delete` stops it). Telegram can't reach a laptop without a public https address.
 
 ## Staff posts
 
