@@ -65,10 +65,12 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 
 ### How it is built
 
-- A **separate small process** (`connectors/whatsapp/`, outside Django), because WhatsApp libraries keep a long-lived connection. Candidate libraries: Baileys (Node.js) or whatsmeow through neonize (Python). **The library is chosen and approved in the connector task** (see [11](11-roadmap.md)).
+- A **separate small process** (`connectors/whatsapp/`, outside Django), because WhatsApp libraries keep a long-lived connection. The library is **Baileys** (Node.js), approved in M6.3; neonize (Python) was the alternative.
 - It does three things: join a group from an invite link, receive new group messages (with image, PDF and spreadsheet attachments), and send them to the backend. It ignores private messages and never reads members' phone numbers.
 - It sends messages to `POST /api/v1/internal/messages/`, signed with a shared secret (`CONNECTOR_SECRET`). It has no database of its own.
 - **Built so far (M6.2):** the Django side, `apps/intelligence/connector.py` (addresses and signing in [04](04-api.md)). The connector asks for groups to join, reports each join (and whether the notice was sent), sends each message once with a sender id that UniFlow hashes again (so a phone number is never stored), then uploads any files. The connector program itself is M6.3.
+- **Built (M6.3):** `connectors/whatsapp/` (`src/index.js` WhatsApp side, `src/messages.js` message conversion and the join notice, `src/uniflow.js` signed requests; setup in its `README.md`). It logs in once with a **pairing code** (session in the git-ignored `auth/` folder), asks for groups to join every 5 minutes and joins **one per round** (each link at most once an hour), posts the notice, reports the join, forwards messages and then their files, stays "offline", and ignores private chats, status updates and its own messages. After a restart WhatsApp delivers what was missed and the backend stores each message once.
+- **Known issue (October 2026):** Baileys 7.0.0-rc14 can fail to link ("Couldn't link device"). Its built-in WhatsApp Web version is out of date (fixed: the connector fetches the current one), and since late July 2026 WhatsApp sends a `companion_reg_refresh` step Baileys doesn't handle yet ([Baileys #2737](https://github.com/WhiskeySockets/Baileys/issues/2737); unreleased fix). If linking still fails, either wait for the next Baileys release or apply that fix as a patch (needs approval).
 - It is run as a systemd service next to Django ([10](10-testing-and-deployment.md)).
 
 ## The Telegram bot

@@ -1,0 +1,17 @@
+{
+  "name": "uniflow-whatsapp-connector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runs UniFlow's WhatsApp number: joins groups and forwards their messages to the backend.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "baileys": "7.0.0-rc14"
+  }
+}

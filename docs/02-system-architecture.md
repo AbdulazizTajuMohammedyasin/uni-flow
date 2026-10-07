@@ -74,7 +74,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `google-genai` (Google's official Gemini library) | Approved (M5.1): the developer chose Gemini | M5.1 |
 | Background jobs | `celery` (5.6) and `redis` (the Python client), with a Redis server | Approved before M4.1 | M4.1 |
-| WhatsApp connector | Baileys (Node.js) or neonize/whatsmeow (Python) | **Needs approval** in the connector task. Lives in `connectors/whatsapp/`, outside Django. | Connectors milestone |
+| WhatsApp connector | **Baileys 7.0.0-rc14** (Node.js 24) | **Approved** in M6.3 (chosen over neonize: more used, fixed faster). Lives in `connectors/whatsapp/`, outside Django. | M6.3 |
 
 ### Layering inside each app
 

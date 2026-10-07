@@ -1,0 +1,6 @@
+# Installed packages
+node_modules/
+# Local settings (the secret and the WhatsApp number): never committed
+.env
+# WhatsApp login session: anyone with these files is logged in as UniFlow's number
+auth/
