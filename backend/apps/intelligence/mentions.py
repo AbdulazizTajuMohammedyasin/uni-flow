@@ -15,6 +15,7 @@ from django.db.models import Q
 
 from apps.accounts.models import User, UserRole
 
+from .delivery import deliver
 from .models import Insight, InsightMention, Source
 
 # Words people put before a name ("Bro Ali", "Sis Sara") that aren't part of it.
@@ -91,4 +92,6 @@ def record_mentions(insight: Insight, names: list[str], source: Source) -> list[
                 insight=insight, user=user, defaults={"matched_text": name[:100]}
             )
             mentions.append(mention)
+    if mentions:
+        deliver(insight)  # the named students go to "Direct attention"
     return mentions

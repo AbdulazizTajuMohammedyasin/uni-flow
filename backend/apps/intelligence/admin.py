@@ -9,6 +9,7 @@ from apps.audiences.models import Audience
 
 from . import services
 from .models import (
+    Delivery,
     Insight,
     InsightEvidence,
     InsightMention,
@@ -196,6 +197,20 @@ class TimetableImportAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("user__email", "tab")
     readonly_fields = [field.name for field in TimetableImport._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(Delivery)
+class DeliveryAdmin(admin.ModelAdmin):
+    """Who got which insight, at which level and why (read-only: worked out by code)."""
+
+    list_display = ("insight", "user", "tier", "relevance", "reason", "read_at")
+    list_filter = ("tier",)
+    search_fields = ("user__email", "insight__title")
+    list_select_related = ("insight", "user")
+    readonly_fields = [field.name for field in Delivery._meta.fields]
 
     def has_add_permission(self, request):
         return False

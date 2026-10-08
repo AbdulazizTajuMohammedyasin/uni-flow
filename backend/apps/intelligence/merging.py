@@ -17,6 +17,7 @@ from django.utils import timezone
 from apps.publishing.models import Status
 from apps.timetable.models import ClassChange
 
+from .delivery import deliver
 from .models import UNSURE, Insight, InsightEvidence, Message
 from .services import publish_insight
 
@@ -109,4 +110,6 @@ def add_evidence(
     held = "course_id" in insight.data and insight.data["course_id"] is None
     if insight.status == Status.DRAFT and insight.confidence >= UNSURE and not held:
         publish_insight(insight, None)
+    else:
+        deliver(insight)  # the copy's group members get it too
     return insight

@@ -25,6 +25,7 @@ from apps.publishing.services import archive, publish
 from apps.timetable.changes import propose_changes, retract_changes
 
 from . import whatsapp_export
+from .delivery import deliver
 from .models import UNSURE, Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
 from .whatsapp_export import ParsedMessage
 
@@ -265,9 +266,11 @@ def save_ai_insight(
 
 
 def publish_insight(insight: Insight, user) -> Insight:
-    """Deliver an insight; a timetable change becomes a proposal students can confirm."""
+    """Deliver an insight to the students it matters to (each with their own level and
+    reason); a timetable change also becomes a proposal students can confirm."""
     publish(insight, user)
     propose_changes(insight)
+    deliver(insight)
     return insight
 
 

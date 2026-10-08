@@ -308,6 +308,43 @@ class InsightMention(TimeStampedModel):
         return f"{self.user} mentioned as {self.matched_text!r}"
 
 
+class Delivery(TimeStampedModel):
+    """One insight for one student: how relevant it is to them, which level of their feed
+    it goes in, and why (worked out in plain code by delivery.py, docs/12 step 6). The
+    student's "For you" feed is a list of these."""
+
+    class Tier(models.TextChoices):
+        DIRECT = "direct", "Direct attention"
+        ACTION = "action", "Action required"
+        IMPORTANT = "important", "Important update"
+        DIGEST = "digest", "Digest"
+
+    class Feedback(models.TextChoices):
+        NOT_RELEVANT = "not_relevant", "Not relevant to me"
+
+    insight = models.ForeignKey(Insight, on_delete=models.CASCADE, related_name="deliveries")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="deliveries"
+    )
+    relevance = models.PositiveSmallIntegerField(help_text="0-100, for this student.")
+    tier = models.CharField(max_length=20, choices=Tier)
+    reason = models.CharField(max_length=200, help_text='e.g. "You are in CDE2313 Section A"')
+    notified_at = models.DateTimeField(null=True, blank=True)
+    digested_at = models.DateTimeField(null=True, blank=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+    dismissed_at = models.DateTimeField(null=True, blank=True)
+    feedback = models.CharField(max_length=20, choices=Feedback, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "tier", "created_at"])]
+        constraints = [
+            models.UniqueConstraint(fields=["insight", "user"], name="intelligence_delivery_unique")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.insight} for {self.user} ({self.tier})"
+
+
 class TimetableImport(TimeStampedModel):
     """One student's "Is this your timetable?": classes read from a file, saved only when
     the student confirms (then the shared sections are created and they are enrolled)."""
