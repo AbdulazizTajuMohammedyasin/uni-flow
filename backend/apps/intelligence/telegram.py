@@ -25,7 +25,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from . import files
+from . import files, timetable_reading
 from .models import Message, Source
 from .services import queue_triage
 
@@ -211,7 +211,7 @@ def fetch_file(message: Message, file_id: str, name: str) -> None:
     except ValidationError:
         logger.info("Telegram file for message %s is not a type UniFlow reads.", message.id)
         return
-    files._save(
+    stored = files._save(
         data,
         user=None,
         kind=kind,
@@ -220,3 +220,4 @@ def fetch_file(message: Message, file_id: str, name: str) -> None:
         original_name=name,
         message=message,
     )
+    timetable_reading.offer_when_saved(stored)  # maybe a timetable for the group

@@ -19,6 +19,7 @@ vi.mock('@/api/timetable', () => ({
   getWeek: vi.fn(),
   startImport: vi.fn(),
   getImport: vi.fn(),
+  getImports: vi.fn(),
   chooseImportTab: vi.fn(),
   confirmImport: vi.fn(),
   discardImport: vi.fn(),
@@ -123,6 +124,7 @@ beforeEach(() => {
     results: [section],
   })
   vi.mocked(timetableApi.getChanges).mockResolvedValue([])
+  vi.mocked(timetableApi.getImports).mockResolvedValue([])
 })
 
 describe('Timetable page', () => {
@@ -303,5 +305,45 @@ describe('Timetable page', () => {
     expect(await screen.findByText('Change waiting')).toBeTruthy()
     expect(screen.getByText('Cancelled')).toBeTruthy()
     expect(screen.getByText('16:00–18:00').className).toContain('line-through')
+  })
+
+  it('offers a timetable shared in one of my groups', async () => {
+    const shared = {
+      id: 4,
+      status: 'ready' as const,
+      file_name: 'SCI timetable.xlsx',
+      group: 'SCI Year 1',
+      tab: 'BCS Oct 2025',
+      tabs: ['BCS Oct 2025'],
+      rows: [
+        {
+          course_code: 'CDE2313',
+          course_name: 'Data Structures',
+          section: 'A',
+          lecturer: '',
+          meetings: [{ day: 'monday', start: '10:00', end: '12:00', type: 'lecture', room: 'B2' }],
+        },
+      ],
+      report: {},
+      error: '',
+      created_at: '2025-11-01T00:00:00Z',
+    }
+    vi.mocked(timetableApi.getMySections).mockResolvedValue([])
+    vi.mocked(timetableApi.getImports).mockResolvedValueOnce([shared]).mockResolvedValue([])
+    vi.mocked(timetableApi.confirmImport).mockResolvedValue({ ...shared, status: 'confirmed' })
+    renderTimetable()
+
+    expect(await screen.findByText('SCI Year 1')).toBeTruthy()
+    expect(screen.getByText('Is this your timetable?')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm 1 class' }))
+
+    await waitFor(() => expect(timetableApi.confirmImport).toHaveBeenCalledWith(4, shared.rows))
+    await waitFor(() => expect(screen.queryByText('SCI Year 1')).toBeNull())
+  })
+
+  it('shows nothing when no group timetable is waiting', async () => {
+    renderTimetable()
+    expect(await screen.findByText('10:00–12:00')).toBeTruthy()
+    expect(screen.queryByText('Is this your timetable?')).toBeNull()
   })
 })

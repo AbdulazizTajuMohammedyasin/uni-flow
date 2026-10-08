@@ -23,7 +23,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import BasePermission
 
-from . import files
+from . import files, timetable_reading
 from .models import Message, MessageFile, Source, SourceMember
 from .services import queue_triage
 
@@ -138,4 +138,5 @@ def attach_file(message: Message, uploaded_file) -> MessageFile:
         message=message,
     )
     queue_triage(message.source)
+    timetable_reading.offer_when_saved(stored)  # maybe a timetable for the group
     return stored

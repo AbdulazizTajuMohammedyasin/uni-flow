@@ -88,6 +88,7 @@ export type TimetableImport = {
   id: number
   status: 'reading' | 'ready' | 'confirmed' | 'discarded' | 'failed'
   file_name: string
+  group: string // the group it was shared in; blank for my own upload
   tab: string
   tabs: string[]
   rows: ImportRow[]

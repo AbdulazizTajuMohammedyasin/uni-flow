@@ -8,6 +8,7 @@ import {
   discardImport,
   getChanges,
   getImport,
+  getImports,
   getMySections,
   getSections,
   getToday,
@@ -26,6 +27,7 @@ export const timetableKeys = {
   mySections: ['timetable', 'my-sections'] as const,
   sections: (search: string) => ['timetable', 'sections', search] as const,
   timetableImport: (id: number) => ['timetable', 'import', id] as const,
+  imports: ['timetable', 'imports'] as const,
   changes: ['timetable', 'changes'] as const,
 }
 
@@ -67,6 +69,10 @@ export function useTimetableImport(id: number | null) {
     enabled: id !== null,
     refetchInterval: (query) => (query.state.data?.status === 'reading' ? 2000 : false),
   })
+}
+
+export function useTimetableImports() {
+  return useQuery({ queryKey: timetableKeys.imports, queryFn: getImports })
 }
 
 export const useStartImport = () =>

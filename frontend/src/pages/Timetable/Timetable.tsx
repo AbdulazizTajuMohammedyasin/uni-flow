@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { PageLoading } from '@/components/PageLoading'
 import { SectionPicker } from '@/components/SectionPicker'
-import { TimetableImportBox } from '@/components/TimetableImport'
+import { GroupTimetableOffer, TimetableImportBox } from '@/components/TimetableImport'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useLeaveSection, useMySections, useToday, useWeek } from '@/hooks/useTimetable'
@@ -38,6 +38,7 @@ export function TimetablePage() {
         </div>
       </div>
 
+      <GroupTimetableOffer />
       {hasSections && <ClassChanges />}
 
       {mySections.isPending ? (

@@ -85,6 +85,7 @@ class TimetableImportSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     status = serializers.CharField(help_text="reading, ready, confirmed, discarded or failed")
     file_name = serializers.CharField()
+    group = serializers.CharField(help_text="The group it was shared in (blank: my upload).")
     tab = serializers.CharField(help_text="The spreadsheet tab shown (blank for an image or PDF).")
     tabs = serializers.ListField(child=serializers.CharField(), help_text="Tabs with classes.")
     rows = serializers.JSONField(help_text="The classes read (course, section, meetings…).")

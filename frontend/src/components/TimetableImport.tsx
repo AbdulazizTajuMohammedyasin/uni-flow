@@ -10,6 +10,7 @@ import {
   useDiscardImport,
   useStartImport,
   useTimetableImport,
+  useTimetableImports,
 } from '@/hooks/useTimetable'
 import type { ImportRow, TimetableImport } from '@/types/timetable'
 
@@ -71,6 +72,24 @@ export function TimetableImportBox() {
     default:
       return <StartForm onStarted={setImportId} />
   }
+}
+
+/** A timetable someone shared in one of my groups, already read for me (M6.5). */
+export function GroupTimetableOffer() {
+  const imports = useTimetableImports()
+  const offer = imports.data?.find((item) => item.status === 'ready' && item.group)
+  if (!offer) return null
+  return (
+    <section
+      aria-label="Timetable shared in a group"
+      className="space-y-3 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-primary/40"
+    >
+      <p className="text-sm text-muted-foreground">
+        A timetable was shared in <span className="font-medium text-foreground">{offer.group}</span>.
+      </p>
+      <Review timetableImport={offer} onDone={() => imports.refetch()} />
+    </section>
+  )
 }
 
 function StartForm({ onStarted }: { onStarted: (id: number) => void }) {

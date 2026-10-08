@@ -125,6 +125,7 @@ def import_data(timetable_import: TimetableImport) -> dict:
             "id": timetable_import.id,
             "status": timetable_import.status,
             "file_name": file.original_name or "Google Drive file",
+            "group": file.message.source.title if file.message_id else "",
             "tab": timetable_import.tab,
             "tabs": timetable_reading.tab_names(timetable_import),
             "rows": timetable_import.rows,
@@ -137,7 +138,9 @@ def import_data(timetable_import: TimetableImport) -> dict:
 
 def my_import(request, import_id: int) -> TimetableImport:
     return generics.get_object_or_404(
-        TimetableImport.objects.select_related("message_file"), pk=import_id, user=request.user
+        TimetableImport.objects.select_related("message_file__message__source"),
+        pk=import_id,
+        user=request.user,
     )
 
 
@@ -149,7 +152,9 @@ class TimetableImportListView(APIView):
 
     @extend_schema(responses=TimetableImportSerializer(many=True))
     def get(self, request):
-        imports = TimetableImport.objects.filter(user=request.user).select_related("message_file")
+        imports = TimetableImport.objects.filter(user=request.user).select_related(
+            "message_file__message__source"
+        )
         return Response([import_data(item) for item in imports.order_by("-created_at")[:10]])
 
     @extend_schema(request=StartImportSerializer, responses={201: TimetableImportSerializer})

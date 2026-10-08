@@ -5,7 +5,7 @@ import logging
 from celery import shared_task
 
 from . import extraction, services, telegram, timetable_reading, triage
-from .models import Message, Source, TimetableImport
+from .models import Message, MessageFile, Source, TimetableImport
 from .providers import AIError, AIRateLimited
 
 logger = logging.getLogger(__name__)
@@ -105,3 +105,20 @@ def fetch_telegram_file(self, message_id: int, file_id: str, name: str) -> None:
             raise self.retry(exc=error, countdown=60) from error
         logger.warning("Telegram file for message %s not downloaded: %s", message_id, error)
     triage_source.delay(message.source_id)
+
+
+@shared_task(bind=True, max_retries=6)
+def offer_group_timetable(self, file_id: int) -> int | None:
+    """A file shared in a group: "Is this your timetable?" for members without classes."""
+    message_file = MessageFile.objects.select_related("message__source").filter(pk=file_id).first()
+    if message_file is None:
+        return None
+    try:
+        offered = timetable_reading.offer_to_group(message_file)
+    except AIRateLimited as error:
+        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+    except (timetable_reading.ImportProblem, AIError) as error:
+        logger.warning("Group timetable %s not offered: %s", file_id, error)
+        return None
+    logger.info("Group timetable %s offered to %s students", file_id, len(offered))
+    return len(offered)

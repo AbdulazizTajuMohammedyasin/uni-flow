@@ -36,6 +36,7 @@ const ready: TimetableImport = {
   id: 3,
   status: 'ready',
   file_name: 'SCI timetable.xlsx',
+  group: '',
   tab: 'BCS Oct 2025',
   tabs: ['BBA Mar 2025', 'BCS Oct 2025'],
   rows: [cde, mth],

@@ -86,6 +86,15 @@ export async function startImport(input: { file: File } | { link: string }): Pro
   }
 }
 
+/** My latest timetable imports, including timetables shared in my groups. */
+export async function getImports(): Promise<TimetableImport[]> {
+  try {
+    return (await api.get<TimetableImport[]>('/timetable/imports/')).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
 export async function getImport(id: number): Promise<TimetableImport> {
   try {
     return (await api.get<TimetableImport>(`/timetable/imports/${id}/`)).data

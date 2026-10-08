@@ -6,6 +6,8 @@
 2. best_tab(): picks the tab matching the student's programme and intake.
 3. A TimetableImport holds that student's classes until they confirm or discard it;
    confirming applies them with the timetable import service and enrols the student.
+4. offer_to_group(): a timetable shared in a group becomes a ready import for each member
+   who has no classes yet this term (M6.5).
 """
 
 import re
@@ -18,12 +20,14 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
+from apps.accounts.models import UserRole
 from apps.timetable.importing import (
     WEEKDAYS,
     apply_timetable_rows,
     rows_from_json,
     rows_to_json,
 )
+from apps.timetable.models import SectionEnrollment
 from apps.timetable.services import current_term_for
 
 from .models import MessageFile, TimetableImport
@@ -269,3 +273,44 @@ def discard_import(user, timetable_import: TimetableImport) -> TimetableImport:
     timetable_import.status = TimetableImport.Status.DISCARDED
     timetable_import.save(update_fields=["status", "updated_at"])
     return timetable_import
+
+
+# --- A timetable shared in a group ---------------------------------------------------------
+
+
+def _has_classes(user) -> bool:
+    term = current_term_for(user)
+    return SectionEnrollment.objects.filter(user=user, section__term=term).exists()
+
+
+def offer_to_group(message_file: MessageFile) -> list[TimetableImport]:
+    """A file shared in a group: a ready "Is this your timetable?" for each member (a
+    student who added the group) with no classes yet this term. The AI reads the file once,
+    and only if someone needs it; a file without classes (not a timetable) is ignored."""
+    if message_file.message_id is None:
+        return []  # a student's own upload
+    members = [
+        member.user
+        for member in message_file.message.source.members.select_related("user")
+        if member.user.role == UserRole.STUDENT
+        and not _has_classes(member.user)
+        and not message_file.imports.filter(user=member.user).exists()
+    ]
+    if not members:
+        return []
+    if not any(read_file(message_file).values()):
+        return []  # not a timetable
+    offered = []
+    for user in members:
+        timetable_import = TimetableImport.objects.create(
+            user=user, message_file=message_file, term=current_term_for(user)
+        )
+        offered.append(read_import(timetable_import))  # ready, with this student's tab
+    return offered
+
+
+def offer_when_saved(message_file: MessageFile) -> None:
+    """Called when a group file is saved: offer it to the members in the background."""
+    from .tasks import offer_group_timetable  # tasks imports this module
+
+    transaction.on_commit(lambda: offer_group_timetable.delay(message_file.id))
