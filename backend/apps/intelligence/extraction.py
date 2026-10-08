@@ -25,6 +25,7 @@ from apps.accounts.models import Interest
 from apps.timetable.importing import section_code
 from apps.timetable.models import ClassMeeting, CourseSection
 
+from . import merging
 from .mentions import record_mentions
 from .models import Insight, Message, Source
 from .providers import get_provider
@@ -340,6 +341,10 @@ def save(change: Change, source: Source) -> Insight:
         else {}
     )
     start = change.new_start or change.old_start
+    key = merging.timetable_key(change.kind, found["data"])
+    duplicate = merging.find_duplicate(kind=change.kind, merge_key=key, title="", day=None)
+    if duplicate:  # the same change, forwarded from another group
+        return merging.add_evidence(duplicate, change.evidence, change.confidence)
     return save_ai_insight(
         source=source,
         kind=change.kind,
@@ -354,6 +359,7 @@ def save(change: Change, source: Source) -> Insight:
         starts_at=_aware(change.new_date or change.day, start) if start else None,
         location=change.new_room,
         data=found["data"],
+        merge_key=key,
         model_version=settings.AI_SMART_MODEL,
         prompt_version=PROMPT_VERSION,
     )
@@ -472,6 +478,20 @@ def item_audience(item: Item, source: Source) -> dict:
 
 
 def save_item(item: Item, source: Source) -> Insight:
+    key = merging.link_key(item.kind, item.link)
+    when = item.deadline_at or item.starts_at
+    duplicate = merging.find_duplicate(
+        kind=item.kind,
+        merge_key=key,
+        title=item.title,
+        day=timezone.localtime(when).date() if when else None,
+    )
+    if duplicate:  # the same announcement, forwarded from another group
+        merging.add_evidence(
+            duplicate, item.evidence, item.confidence, merge_key=key, link=item.link
+        )
+        record_mentions(duplicate, item.names, source)
+        return duplicate
     insight = save_ai_insight(
         source=source,
         kind=item.kind,
@@ -495,6 +515,7 @@ def save_item(item: Item, source: Source) -> Insight:
             "school_codes": item.school_codes,
             "programme_codes": item.programme_codes,
         },
+        merge_key=key,
         model_version=settings.AI_SMART_MODEL,
         prompt_version=PROMPT_VERSION,
     )

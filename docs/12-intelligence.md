@@ -105,6 +105,11 @@ Output that does not match the schema, or refers to messages outside the window,
 
 The same announcement is often forwarded to many groups. A new insight is compared with recent insights of the same kind (same course and date for timetable kinds; similar title and link for others). A match adds the message as **extra evidence** and can raise confidence; it does not create a second card or a second notification.
 
+**Built (M7.3):** `apps/intelligence/merging.py`, checked before each AI insight is saved, against AI insights of the same kind from the last 14 days (retracted ones excluded):
+- **Timetable changes** merge only on the exact `merge_key`: course, sections, date, new date, new start and end, new room. "Moved to 2 PM" and "moved to 3 PM" stay two insights, so a conflict is visible.
+- **Other kinds** merge on the same link (`kind|link`); otherwise on the same date (deadline or event) and a similar title (60% of words in common; 75% when neither has a date). An item with a different link never merges, and a copy's link is adopted by an insight that had none.
+- The insight keeps the **higher confidence**; an unsure draft that reaches the "unsure" threshold this way is published (a timetable change with an unknown course still waits for an admin). Names in the copy are matched as mentions too.
+
 ### How sure must the AI be?
 
 Every AI insight has a `confidence` from 0 to 1. It decides what students see:
