@@ -153,6 +153,7 @@ class InsightAdmin(admin.ModelAdmin):
     def get_inlines(self, request, obj):
         # A new staff post has no mentions yet: only show them on an existing insight.
         return self.inlines if obj else [InsightEvidenceInline]
+
     actions = ["publish_selected", "retract_selected"]
 
     def get_form(self, request, obj=None, **kwargs):
