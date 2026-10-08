@@ -5,7 +5,7 @@ from rest_framework import serializers
 from apps.academics.models import Course, Intake, Programme, School
 from apps.timetable.models import CourseSection
 
-from .models import Source
+from .models import Delivery, Source
 
 
 class SourceSerializer(serializers.ModelSerializer):
@@ -158,3 +158,77 @@ class ConnectorFileSerializer(serializers.Serializer):
     """POST internal/messages/{id}/files/ — a file attached to a group message."""
 
     file = serializers.FileField()
+
+
+# --- The "For you" feed (/api/v1/feed/, feed.py) ----------------------------------------
+
+
+class FeedItemSerializer(serializers.Serializer):
+    """One item of my feed (a Delivery: the insight, plus my level, score and reason)."""
+
+    id = serializers.IntegerField(source="insight.id", help_text="The insight's id.")
+    kind = serializers.CharField(source="insight.kind")
+    tier = serializers.ChoiceField(choices=Delivery.Tier.choices)
+    title = serializers.CharField(source="insight.title")
+    summary = serializers.CharField(source="insight.summary")
+    importance = serializers.IntegerField(source="insight.importance")
+    relevance = serializers.IntegerField()
+    reason = serializers.CharField(help_text='Why I see it, e.g. "You are in CDE2313 Section A"')
+    action_required = serializers.BooleanField(source="insight.action_required")
+    action_text = serializers.CharField(source="insight.action_text")
+    starts_at = serializers.DateTimeField(source="insight.starts_at", allow_null=True)
+    deadline_at = serializers.DateTimeField(source="insight.deadline_at", allow_null=True)
+    location = serializers.CharField(source="insight.location")
+    link = serializers.CharField(source="insight.link")
+    not_confirmed = serializers.BooleanField(
+        source="insight.is_unconfirmed", help_text="The AI was not sure about it."
+    )
+    official = serializers.SerializerMethodField(help_text="Posted by staff, not found by AI.")
+    read = serializers.SerializerMethodField()
+    published_at = serializers.DateTimeField(source="insight.published_at")
+
+    def get_official(self, delivery) -> bool:
+        return delivery.insight.origin == delivery.insight.Origin.STAFF
+
+    def get_read(self, delivery) -> bool:
+        return delivery.read_at is not None
+
+
+class FeedGroupSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    platform = serializers.CharField()
+    title = serializers.CharField()
+
+
+class FeedEvidenceSerializer(serializers.Serializer):
+    """An original message the item came from."""
+
+    group = FeedGroupSerializer(source="message.source")
+    sender_name = serializers.CharField(source="message.sender_name")
+    sent_at = serializers.DateTimeField(source="message.sent_at")
+    quote = serializers.CharField(help_text="Kept after the message text is deleted.")
+    open_url = serializers.CharField(help_text="Opens the original, where possible.")
+
+
+class FeedTimetableChangeSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    my_status = serializers.CharField(help_text="pending, confirmed or rejected")
+
+
+class FeedDetailSerializer(FeedItemSerializer):
+    """GET feed/{insight_id}/ - the item with its details and evidence."""
+
+    data = serializers.JSONField(source="insight.data")
+    topics = serializers.ListField(source="insight.topics", child=serializers.CharField())
+    evidence = FeedEvidenceSerializer(many=True)
+    timetable_change = FeedTimetableChangeSerializer(allow_null=True)
+    dismissed = serializers.SerializerMethodField()
+
+    def get_dismissed(self, delivery) -> bool:
+        return delivery.dismissed_at is not None
+
+
+class FeedbackSerializer(serializers.Serializer):
+    """POST feed/{insight_id}/feedback/"""
+
+    feedback = serializers.ChoiceField(choices=Delivery.Feedback.choices)

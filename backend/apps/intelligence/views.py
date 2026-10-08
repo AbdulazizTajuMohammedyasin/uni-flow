@@ -2,7 +2,8 @@
 uploading a WhatsApp "Export chat" file. Connecting real groups comes in M6.
 Also "Add my timetable" (/api/v1/timetable/imports/): a file or link read by the AI,
 the Telegram bot's webhook (/api/v1/integrations/telegram/webhook/), and the WhatsApp
-connector's private addresses (/api/v1/internal/, see connector.py).
+connector's private addresses (/api/v1/internal/, see connector.py), and the student's
+"For you" feed (/api/v1/feed/, see feed.py).
 """
 
 import hmac
@@ -10,7 +11,7 @@ import logging
 
 from django.conf import settings
 from django.db.models import Count
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, generics, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -18,8 +19,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from . import connector, files, services, telegram, timetable_reading
-from .models import Message, Source, TimetableImport
+from . import connector, feed, files, services, telegram, timetable_reading
+from .models import Delivery, Message, Source, TimetableImport
 from .serializers import (
     ConfirmImportSerializer,
     ConnectorFileSerializer,
@@ -27,6 +28,9 @@ from .serializers import (
     ConnectSourceSerializer,
     CreateSourceSerializer,
     ExportSerializer,
+    FeedbackSerializer,
+    FeedDetailSerializer,
+    FeedItemSerializer,
     ImportResultSerializer,
     JoinedSerializer,
     PasteSerializer,
@@ -308,3 +312,73 @@ class ConnectorFileView(ConnectorView):
         serializer.is_valid(raise_exception=True)
         stored = connector.attach_file(message, serializer.validated_data["file"])
         return Response({"id": stored.id, "kind": stored.kind}, status=status.HTTP_201_CREATED)
+
+
+# --- The "For you" feed -------------------------------------------------------------------
+
+
+@extend_schema_view(
+    get=extend_schema(
+        parameters=[
+            OpenApiParameter("tier", str, enum=Delivery.Tier.values, description="Only this level.")
+        ]
+    )
+)
+@extend_schema(tags=["feed"])
+class FeedListView(generics.ListAPIView):
+    """GET feed/ - my feed: Direct attention, Action required, Important, then Digest;
+    newest first within each. Dismissed and "not relevant" items are hidden."""
+
+    serializer_class = FeedItemSerializer
+
+    def get_queryset(self):
+        tier = self.request.query_params.get("tier")
+        if tier and tier not in Delivery.Tier.values:
+            choices = ", ".join(Delivery.Tier.values)
+            raise exceptions.ValidationError({"tier": [f"Use one of: {choices}."]})
+        return feed.my_feed(self.request.user, tier)
+
+
+@extend_schema(tags=["feed"], responses=FeedDetailSerializer)
+class FeedDetailView(APIView):
+    """GET feed/{insight_id}/ - one of my items, why I see it, and the original messages.
+    404 if it was not delivered to me."""
+
+    def get(self, request, insight_id):
+        delivery = feed.my_item(request.user, insight_id)
+        delivery.evidence = [
+            {"message": e.message, "quote": e.quote, "open_url": feed.open_url(e.message)}
+            for e in delivery.insight.evidence.all()
+        ]
+        delivery.timetable_change = feed.my_timetable_change(request.user, delivery)
+        return Response(FeedDetailSerializer(delivery).data)
+
+
+@extend_schema(tags=["feed"], request=None, responses={204: None})
+class FeedReadView(APIView):
+    """POST feed/{insight_id}/read/"""
+
+    def post(self, request, insight_id):
+        feed.mark_read(feed.my_item(request.user, insight_id))
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["feed"], request=None, responses={204: None})
+class FeedDismissView(APIView):
+    """POST feed/{insight_id}/dismiss/ - hide it from my feed."""
+
+    def post(self, request, insight_id):
+        feed.dismiss(feed.my_item(request.user, insight_id))
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["feed"], request=FeedbackSerializer, responses={204: None})
+class FeedFeedbackView(APIView):
+    """POST feed/{insight_id}/feedback/ - {"feedback": "not_relevant"}: hide it, and
+    remember it to improve relevance later."""
+
+    def post(self, request, insight_id):
+        serializer = FeedbackSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        feed.not_relevant(feed.my_item(request.user, insight_id))
+        return Response(status=status.HTTP_204_NO_CONTENT)

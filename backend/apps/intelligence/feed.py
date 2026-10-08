@@ -1,0 +1,92 @@
+"""A student's "For you" feed (docs/04-api.md, "Feed"): their own deliveries only.
+
+- my_feed(): what is shown — published, not expired, not dismissed, not marked
+  "not relevant"; Direct attention first, then Action required, Important, Digest, newest
+  first within each level.
+- my_item(): one item for its detail page (404 if it wasn't delivered to this student).
+- open_url(): where "Open original" goes for a message.
+- read / dismiss / not relevant: the student's own buttons.
+"""
+
+from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
+from apps.publishing.models import Status
+from apps.timetable.changes import changes_for
+
+from .models import Delivery, Message, Source
+
+TIER_ORDER = [
+    Delivery.Tier.DIRECT,
+    Delivery.Tier.ACTION,
+    Delivery.Tier.IMPORTANT,
+    Delivery.Tier.DIGEST,
+]
+
+
+def _visible(user) -> QuerySet[Delivery]:
+    now = timezone.now()
+    return Delivery.objects.filter(
+        Q(insight__expires_at__isnull=True) | Q(insight__expires_at__gt=now),
+        user=user,
+        insight__status=Status.PUBLISHED,  # a retracted item disappears from every feed
+    ).select_related("insight")
+
+
+def my_feed(user, tier: str | None = None) -> QuerySet[Delivery]:
+    deliveries = _visible(user).filter(dismissed_at__isnull=True, feedback="")
+    if tier:
+        deliveries = deliveries.filter(tier=tier)
+    rank = Case(
+        *[When(tier=value, then=Value(index)) for index, value in enumerate(TIER_ORDER)],
+        output_field=IntegerField(),
+    )
+    return deliveries.annotate(rank=rank).order_by("rank", "-insight__published_at", "-id")
+
+
+def my_item(user, insight_id: int) -> Delivery:
+    """One of my items (dismissed ones too, e.g. from a notification); 404 otherwise."""
+    return get_object_or_404(
+        _visible(user).prefetch_related("insight__evidence__message__source"),
+        insight_id=insight_id,
+    )
+
+
+def open_url(message: Message) -> str:
+    """Telegram has a link to each message; WhatsApp only to the group (docs/08)."""
+    source = message.source
+    if source.platform in (Source.Platform.TELEGRAM_GROUP, Source.Platform.TELEGRAM_CHANNEL):
+        username = (message.raw.get("chat") or {}).get("username")
+        if username:
+            return f"https://t.me/{username}/{message.external_id}"
+        if (source.external_id or "").startswith("-100"):  # a private group or channel
+            return f"https://t.me/c/{source.external_id[4:]}/{message.external_id}"
+        return ""
+    if source.platform == Source.Platform.WHATSAPP_GROUP:
+        return source.invite_url
+    return ""
+
+
+def my_timetable_change(user, delivery: Delivery) -> dict | None:
+    """For a timetable change: the proposal for my section and my answer to it."""
+    change = changes_for(user).filter(insight=delivery.insight).first()
+    return {"id": change.id, "my_status": change.my_status} if change else None
+
+
+def mark_read(delivery: Delivery) -> None:
+    if delivery.read_at is None:
+        delivery.read_at = timezone.now()
+        delivery.save(update_fields=["read_at", "updated_at"])
+
+
+def dismiss(delivery: Delivery) -> None:
+    delivery.dismissed_at = delivery.dismissed_at or timezone.now()
+    delivery.save(update_fields=["dismissed_at", "updated_at"])
+
+
+def not_relevant(delivery: Delivery) -> None:
+    """The student said it isn't relevant to them: hidden, and remembered for later."""
+    delivery.feedback = Delivery.Feedback.NOT_RELEVANT
+    delivery.dismissed_at = delivery.dismissed_at or timezone.now()
+    delivery.save(update_fields=["feedback", "dismissed_at", "updated_at"])
