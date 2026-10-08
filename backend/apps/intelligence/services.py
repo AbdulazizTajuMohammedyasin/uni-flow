@@ -1,5 +1,6 @@
-"""Getting messages into UniFlow by hand: groups for pasted messages, pasting, and
-uploading a WhatsApp "Export chat" file. The connectors (M6) reuse store_messages().
+"""Getting messages into UniFlow: groups for pasted messages, pasting, uploading a WhatsApp
+"Export chat" file, and connecting a WhatsApp group by its invite link (UniFlow's number
+then joins it, see connector.py).
 Also the daily privacy clean-up of old message text and files (clear_old_messages), and
 saving what the AI found (save_ai_insight).
 
@@ -8,7 +9,9 @@ text) as its id, so pasting or uploading the same chat again adds nothing.
 """
 
 import hashlib
+import re
 from datetime import timedelta
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import transaction
@@ -45,6 +48,57 @@ def create_manual_source(user, *, title: str, **scope) -> Source:
     )
     SourceMember.objects.create(source=source, user=user)
     return source
+
+
+TELEGRAM_HOSTS = {"t.me", "telegram.me", "www.t.me", "www.telegram.me"}
+TELEGRAM_HELP = (
+    "UniFlow can't join Telegram groups by link. Ask the group's admin to add the UniFlow "
+    "bot to the group (or as an admin of a channel); the group then appears by itself."
+)
+
+
+def whatsapp_invite(link: str) -> str:
+    """A WhatsApp group invite link in one standard form, or a clear error. Only
+    https://chat.whatsapp.com/… is accepted, so fake or phishing links are refused."""
+    parsed = urlparse(link.strip())
+    if parsed.hostname in TELEGRAM_HOSTS:
+        raise ValidationError({"invite_url": TELEGRAM_HELP})
+    found = re.fullmatch(r"/(?:invite/)?([A-Za-z0-9]{10,40})/?", parsed.path)
+    if parsed.scheme != "https" or parsed.hostname != "chat.whatsapp.com" or not found:
+        raise ValidationError(
+            {"invite_url": "Paste a WhatsApp group invite link (https://chat.whatsapp.com/…)."}
+        )
+    return f"https://chat.whatsapp.com/{found.group(1)}"
+
+
+@transaction.atomic
+def connect_group(user, *, invite_url: str, title: str, **scope) -> tuple[Source, bool]:
+    """Add a WhatsApp group by its invite link. Returns (group, created).
+
+    A group UniFlow already knows by this link isn't joined twice: the student is added to
+    its members. (Two different links to the same group are merged when UniFlow's number
+    joins, see connector.mark_joined.)"""
+    link = whatsapp_invite(invite_url)
+    existing = Source.objects.filter(
+        platform=Source.Platform.WHATSAPP_GROUP, invite_url=link
+    ).first()
+    if existing and existing.status == Source.Status.DISCONNECTED:
+        raise ValidationError(
+            {"invite_url": "This group was disconnected from UniFlow. Ask an admin about it."}
+        )
+    if existing:
+        SourceMember.objects.get_or_create(source=existing, user=user)
+        return existing, False
+    source = Source.objects.create(
+        platform=Source.Platform.WHATSAPP_GROUP,
+        title=title.strip(),
+        invite_url=link,
+        status=Source.Status.PENDING,  # until UniFlow's number joins it
+        connected_by=user,
+        **scope,
+    )
+    SourceMember.objects.create(source=source, user=user)
+    return source, True
 
 
 def require_member(user, source: Source) -> None:

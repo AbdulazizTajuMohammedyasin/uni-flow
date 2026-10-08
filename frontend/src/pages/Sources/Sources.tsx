@@ -7,7 +7,13 @@ import { PageLoading } from '@/components/PageLoading'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useCreateSource, useMySources, usePasteMessages, useUploadExport } from '@/hooks/useSources'
+import {
+  useConnectSource,
+  useCreateSource,
+  useMySources,
+  usePasteMessages,
+  useUploadExport,
+} from '@/hooks/useSources'
 import type { ImportResult, Source } from '@/types/sources'
 
 /** The backend's own explanation (e.g. "Upload the .txt file…"), not just "Invalid input.". */
@@ -33,8 +39,8 @@ export function SourcesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Groups</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add the academic WhatsApp and Telegram groups you're in. For now, paste messages or
-          upload a WhatsApp chat export; soon UniFlow will join your groups by itself.
+          Add the academic WhatsApp groups you're in with their invite link, and UniFlow's own
+          number joins them. You can also paste messages or upload a WhatsApp chat export.
         </p>
       </div>
 
@@ -47,7 +53,7 @@ export function SourcesPage() {
       ) : sources.data.length === 0 ? (
         <EmptyState
           title="No groups yet"
-          description="Add a group above, then paste its messages or upload its WhatsApp export."
+          description="Add a group above with its invite link, or paste its messages by hand."
         />
       ) : (
         <ul className="space-y-3">
@@ -60,36 +66,84 @@ export function SourcesPage() {
   )
 }
 
+/** Name + optional WhatsApp invite link. With a link UniFlow's number joins the group;
+ * without one it's a group for pasting messages by hand. */
 function AddGroupForm() {
   const [title, setTitle] = useState('')
+  const [inviteUrl, setInviteUrl] = useState('')
   const create = useCreateSource()
+  const connect = useConnectSource()
+  const busy = create.isPending || connect.isPending
+  const error = connect.error ?? create.error
+  const done = connect.data
+  const clear = () => {
+    setTitle('')
+    setInviteUrl('')
+  }
 
   function onSubmit(event: FormEvent) {
     event.preventDefault()
-    if (title.trim()) create.mutate(title.trim(), { onSuccess: () => setTitle('') })
+    if (!title.trim()) return
+    if (inviteUrl.trim()) {
+      create.reset()
+      connect.mutate({ inviteUrl: inviteUrl.trim(), title: title.trim() }, { onSuccess: clear })
+    } else {
+      connect.reset()
+      create.mutate(title.trim(), { onSuccess: clear })
+    }
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
-      <div className="min-w-56 flex-1 space-y-1.5">
-        <Label htmlFor="group-name">Group name</Label>
-        <Input
-          id="group-name"
-          placeholder="e.g. CDE2313 Section A"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-        />
+    <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+      <h2 className="font-semibold">Add a group</h2>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="group-name">Group name</Label>
+          <Input
+            id="group-name"
+            placeholder="What is it for? e.g. CDE2313 Section A"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="group-link">WhatsApp invite link (optional)</Label>
+          <Input
+            id="group-link"
+            placeholder="https://chat.whatsapp.com/…"
+            value={inviteUrl}
+            onChange={(event) => setInviteUrl(event.target.value)}
+          />
+        </div>
       </div>
-      <Button type="submit" disabled={create.isPending || !title.trim()}>
+      <p className="text-xs text-muted-foreground">
+        In WhatsApp: open the group → tap its name → Invite via link → Copy link. Without a
+        link, you can still paste the group's messages by hand.
+      </p>
+      <Button type="submit" disabled={busy || !title.trim()}>
         Add group
       </Button>
-      {create.isError && (
-        <p role="alert" className="w-full text-sm text-destructive">
-          {errorText(create.error)}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorText(error)}
+        </p>
+      )}
+      {done && !error && (
+        <p role="status" className="text-sm text-emerald-700">
+          {done.status === 'pending'
+            ? `Added "${done.title}". UniFlow's number will join it soon.`
+            : `UniFlow already reads "${done.title}"; it's now in your groups.`}
         </p>
       )}
     </form>
   )
+}
+
+/** "Waiting to join" etc. next to the platform name. */
+function statusText(source: Source): string {
+  if (source.status === 'pending') return ' · Waiting for UniFlow to join'
+  if (source.status === 'disconnected') return ' · Disconnected'
+  return ''
 }
 
 function GroupCard({ source }: { source: Source }) {
@@ -104,6 +158,7 @@ function GroupCard({ source }: { source: Source }) {
           <p className="text-sm text-muted-foreground">
             {source.platform_label} · {source.message_count} message
             {source.message_count === 1 ? '' : 's'}
+            {statusText(source)}
           </p>
         </div>
         <div className="flex gap-2">

@@ -12,6 +12,7 @@ import { SourcesPage } from './Sources'
 vi.mock('@/api/sources', () => ({
   getMySources: vi.fn(),
   createSource: vi.fn(),
+  connectSource: vi.fn(),
   pasteMessages: vi.fn(),
   uploadExport: vi.fn(),
 }))
@@ -64,6 +65,57 @@ describe('Groups page', () => {
 
     await waitFor(() => expect(sourcesApi.createSource).toHaveBeenCalledWith('SCI notices'))
     await waitFor(() => expect((screen.getByLabelText('Group name') as HTMLInputElement).value).toBe(''))
+  })
+
+  it('adds a WhatsApp group by its invite link', async () => {
+    vi.mocked(sourcesApi.connectSource).mockResolvedValue({
+      ...group,
+      id: 9,
+      title: 'CDE2313 Section A',
+      platform: 'whatsapp_group',
+      platform_label: 'WhatsApp group',
+      status: 'pending',
+      message_count: 0,
+    })
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'CDE2313 Section A' } })
+    fireEvent.change(screen.getByLabelText('WhatsApp invite link (optional)'), {
+      target: { value: ' https://chat.whatsapp.com/AbCdEf123456 ' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
+
+    await waitFor(() =>
+      expect(sourcesApi.connectSource).toHaveBeenCalledWith('https://chat.whatsapp.com/AbCdEf123456', 'CDE2313 Section A'),
+    )
+    expect(await screen.findByText(`Added "CDE2313 Section A". UniFlow's number will join it soon.`)).toBeTruthy()
+    expect(sourcesApi.createSource).not.toHaveBeenCalled()
+  })
+
+  it('shows a group waiting for UniFlow to join', async () => {
+    vi.mocked(sourcesApi.getMySources).mockResolvedValue([
+      { ...group, platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'pending', message_count: 0 },
+    ])
+    renderPage()
+    expect(await screen.findByText(/WhatsApp group · 0 messages · Waiting for UniFlow to join/)).toBeTruthy()
+  })
+
+  it("explains a link UniFlow can't use", async () => {
+    vi.mocked(sourcesApi.connectSource).mockRejectedValue(
+      new ApiError({
+        status: 400,
+        code: 'validation_error',
+        message: 'Invalid input.',
+        fields: { invite_url: ["UniFlow can't join Telegram groups by link. Ask the group's admin to add the UniFlow bot…"] },
+      }),
+    )
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'SCI channel' } })
+    fireEvent.change(screen.getByLabelText('WhatsApp invite link (optional)'), { target: { value: 'https://t.me/+abc' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
+
+    expect(await screen.findByText(/add the UniFlow bot/, { selector: '[role="alert"]' })).toBeTruthy()
   })
 
   it('pastes messages and says how many were new', async () => {

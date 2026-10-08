@@ -2,10 +2,11 @@
 
 from django.urls import path
 
-from .views import ExportView, PasteView, SourceListView
+from .views import ConnectSourceView, ExportView, PasteView, SourceListView
 
 urlpatterns = [
     path("", SourceListView.as_view(), name="sources"),
+    path("connect/", ConnectSourceView.as_view(), name="source-connect"),
     path("<int:source_id>/paste/", PasteView.as_view(), name="source-paste"),
     path("<int:source_id>/export/", ExportView.as_view(), name="source-export"),
 ]

@@ -21,6 +21,16 @@ export async function createSource(title: string): Promise<Source> {
   }
 }
 
+/** A WhatsApp group by its invite link: UniFlow's number joins it ("pending" until then).
+ * If UniFlow already knows the group, I'm added to it instead. */
+export async function connectSource(inviteUrl: string, title: string): Promise<Source> {
+  try {
+    return (await api.post<Source>('/sources/connect/', { invite_url: inviteUrl, title })).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
 /** Messages copied from WhatsApp (or one plain message). */
 export async function pasteMessages(sourceId: number, text: string): Promise<ImportResult> {
   try {

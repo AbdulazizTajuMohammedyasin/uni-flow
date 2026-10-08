@@ -24,6 +24,7 @@ from .serializers import (
     ConfirmImportSerializer,
     ConnectorFileSerializer,
     ConnectorMessageSerializer,
+    ConnectSourceSerializer,
     CreateSourceSerializer,
     ExportSerializer,
     ImportResultSerializer,
@@ -65,6 +66,26 @@ class SourceListView(generics.ListCreateAPIView):
         source = services.create_manual_source(request.user, **serializer.validated_data)
         source.message_count = 0
         return Response(SourceSerializer(source).data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    tags=["sources"],
+    request=ConnectSourceSerializer,
+    responses={201: SourceSerializer, 200: SourceSerializer},
+)
+class ConnectSourceView(APIView):
+    """POST sources/connect/ — add a WhatsApp group by its invite link. 201: UniFlow's number
+    will join it ("pending"). 200: UniFlow already knows it; you're added to it."""
+
+    def post(self, request):
+        serializer = ConnectSourceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source, created = services.connect_group(request.user, **serializer.validated_data)
+        source.message_count = source.messages.count()
+        return Response(
+            SourceSerializer(source).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["sources"], request=PasteSerializer, responses={201: ImportResultSerializer})

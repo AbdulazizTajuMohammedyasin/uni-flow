@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { createSource, getMySources, pasteMessages, uploadExport } from '@/api/sources'
+import { connectSource, createSource, getMySources, pasteMessages, uploadExport } from '@/api/sources'
 
 const mySourcesKey = ['sources', 'mine'] as const
 
@@ -18,6 +18,10 @@ function useSourcesChange<Input, Result>(change: (input: Input) => Promise<Resul
 }
 
 export const useCreateSource = () => useSourcesChange((title: string) => createSource(title))
+export const useConnectSource = () =>
+  useSourcesChange(({ inviteUrl, title }: { inviteUrl: string; title: string }) =>
+    connectSource(inviteUrl, title),
+  )
 export const usePasteMessages = () =>
   useSourcesChange(({ id, text }: { id: number; text: string }) => pasteMessages(id, text))
 export const useUploadExport = () =>

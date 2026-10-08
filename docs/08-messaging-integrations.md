@@ -34,6 +34,8 @@ Trust is stored on the `Source` and affects importance, never who is allowed to 
 
 A group that is already connected is not joined again; the student is simply added to its members.
 
+**Built (M6.4):** `POST /api/v1/sources/connect/` and the **Add a group** form on the Groups page (name + optional WhatsApp invite link; without a link it is a group for pasted messages). The link is stored in one standard form (`https://chat.whatsapp.com/<code>`), so the same link written differently is recognised; two *different* links to the same group are merged when UniFlow's number joins (M6.2). Telegram links are answered with how to add the bot. Choosing the scope (course, section…) in the page comes later; the API already accepts it.
+
 ## Who is in each group
 
 UniFlow knows a group's members from the **students who added that group in the app** (`SourceMember`). It does not read WhatsApp's member list and never asks students for their phone numbers. Every student who adds a group they are in helps UniFlow tell who a message affects and who "Abdulaziz" is, so the app encourages students to add all their academic groups.

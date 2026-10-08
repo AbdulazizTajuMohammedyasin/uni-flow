@@ -52,6 +52,12 @@ class CreateSourceSerializer(serializers.Serializer):
     )
 
 
+class ConnectSourceSerializer(CreateSourceSerializer):
+    """POST sources/connect/ — a WhatsApp group by its invite link, and what it is for."""
+
+    invite_url = serializers.CharField(max_length=500)
+
+
 class PasteSerializer(serializers.Serializer):
     """POST sources/{id}/paste/ — text copied from WhatsApp, or one plain message."""
 
