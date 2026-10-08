@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M7.1 is done ✅. The AI now finds **every kind** of information in group messages (internships, notices, deadlines, compulsory events, requests to named students), in the same single request as timetable changes. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M7.2, when a message names a student ("Ali, please see me"), UniFlow works out **which student** that is.
+**Now:** M7.2 is done ✅. When a message asks a named student to do something ("Ali, please see me"), UniFlow works out **which student** that is, and never guesses. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M7.3, the same announcement **forwarded to many groups** becomes one item with extra proof, not ten copies.
 
 ---
 
@@ -144,7 +144,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M7.1 | **Every kind of information.** Besides timetable changes, the AI now finds **opportunities** (internships, bootcamps, industry visits, competitions, scholarships), **notices** (academic, student affairs, compulsory events, deadlines) and **requests to named students** ("Ali and Sara, please see me"). For each: a title, a one-line summary, **how important** it is, whether you must **act** and what to do, the **deadline** and event date, place, link, topics (like AI or cybersecurity), and **who it's for** ("BCS Year 3" becomes the BCS programme, semesters 7–9). It's the **same single AI request** as before, so no extra quota. Bad answers are thrown away or cleaned (e.g. only real web links). Checked on the real Gemini: an internship, a request to two students and a compulsory briefing were found; an advert and an "ignore your rules" message were ignored. | Nothing for students yet (the "For you" page is M7.6). With the worker running, paste messages on the Groups page, then `/django-admin/` → Intelligence → Insights | ✅ Done |
-| **M7.2** | **Mentions:** a name in a message is matched to the right student | – | ⏭️ **Next** |
+| M7.2 | **Who is "Ali"?** When the AI finds a request to named students, each name is matched to a real student: first among the students **who added that group**, then among the students the group is **for** (its school, programme, course…). "Ali" matches "Ali Hassan"; "Bro Ali" too; a **nickname** from the profile works. If two students fit (two Alis), it's **not** matched: UniFlow never guesses. Lecturers and staff are never matched. Each match is saved as a **mention** (it will put the message at the top of that student's feed and send an alert, in M7.4 and M8). | `pipenv run python manage.py migrate`; then a request found in a group shows its mentioned students at the bottom of the insight in `/django-admin/` → Intelligence → Insights | ✅ Done |
+| **M7.3** | **Duplicates:** the same announcement forwarded to many groups becomes one item with more proof | – | ⏭️ **Next** |
 ---
 
 ## Where things are

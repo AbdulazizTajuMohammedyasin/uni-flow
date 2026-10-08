@@ -11,6 +11,7 @@ from . import services
 from .models import (
     Insight,
     InsightEvidence,
+    InsightMention,
     Message,
     MessageFile,
     Source,
@@ -77,6 +78,17 @@ class InsightEvidenceInline(admin.TabularInline):
     can_delete = False
 
 
+class InsightMentionInline(admin.TabularInline):
+    model = InsightMention
+    extra = 0
+    fields = ("user", "matched_text")
+    readonly_fields = ("user", "matched_text")
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(Insight)
 class InsightAdmin(admin.ModelAdmin):
     """AI findings and official staff posts. In the pilot, staff posts are written here:
@@ -136,7 +148,11 @@ class InsightAdmin(admin.ModelAdmin):
         "model_version",
         "data",
     )
-    inlines = [InsightEvidenceInline]
+    inlines = [InsightEvidenceInline, InsightMentionInline]
+
+    def get_inlines(self, request, obj):
+        # A new staff post has no mentions yet: only show them on an existing insight.
+        return self.inlines if obj else [InsightEvidenceInline]
     actions = ["publish_selected", "retract_selected"]
 
     def get_form(self, request, obj=None, **kwargs):

@@ -25,6 +25,7 @@ from apps.accounts.models import Interest
 from apps.timetable.importing import section_code
 from apps.timetable.models import ClassMeeting, CourseSection
 
+from .mentions import record_mentions
 from .models import Insight, Message, Source
 from .providers import get_provider
 from .services import save_ai_insight
@@ -471,7 +472,7 @@ def item_audience(item: Item, source: Source) -> dict:
 
 
 def save_item(item: Item, source: Source) -> Insight:
-    return save_ai_insight(
+    insight = save_ai_insight(
         source=source,
         kind=item.kind,
         title=item.title,
@@ -489,7 +490,7 @@ def save_item(item: Item, source: Source) -> Insight:
         location=item.location,
         link=item.link,
         data={
-            "names": item.names,  # resolved to students in M7.2
+            "names": item.names,
             "course_codes": item.course_codes,
             "school_codes": item.school_codes,
             "programme_codes": item.programme_codes,
@@ -497,6 +498,8 @@ def save_item(item: Item, source: Source) -> Insight:
         model_version=settings.AI_SMART_MODEL,
         prompt_version=PROMPT_VERSION,
     )
+    record_mentions(insight, item.names, source)  # which students the names mean
+    return insight
 
 
 # --- One batch of a source's new academic messages ---------------------------------------

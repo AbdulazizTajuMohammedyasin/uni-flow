@@ -289,6 +289,25 @@ class InsightEvidence(TimeStampedModel):
         return self.quote
 
 
+class InsightMention(TimeStampedModel):
+    """A student named in the message(s) behind an insight ("Ali, please see me"), matched
+    by mentions.py. Puts the insight at the top of that student's feed (M7.4)."""
+
+    insight = models.ForeignKey(Insight, on_delete=models.CASCADE, related_name="mentions")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="mentions"
+    )
+    matched_text = models.CharField(max_length=100, help_text="The name as written.")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["insight", "user"], name="intelligence_mention_unique")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} mentioned as {self.matched_text!r}"
+
+
 class TimetableImport(TimeStampedModel):
     """One student's "Is this your timetable?": classes read from a file, saved only when
     the student confirms (then the shared sections are created and they are enrolled)."""

@@ -204,6 +204,7 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 - WhatsApp @-mentions are matched by the name shown in the message, like any other name; UniFlow never uses phone numbers.
 - A name that matches two people in the group is **not** a mention; it becomes a normal insight.
 - A matched mention creates a `direct_request` insight and an immediate notification.
+- **Built (M7.2):** `apps/intelligence/mentions.py`. For each name the AI copied from a `direct_request`, plain code looks among the students who added the group, then among the students the group is for (its school, programme, intake, course or section); a group with no scope is never searched beyond its members. A name matches when all its words are words of the student's full name ("Ali" → "Ali Hassan"; titles such as "Bro", "Sis", "Dr" are ignored) or it equals one of their nicknames. Two possible students at the first place found → no mention, and the search stops there. Each match is an `InsightMention`; the notification comes with M8.
 
 ## Summaries
 
