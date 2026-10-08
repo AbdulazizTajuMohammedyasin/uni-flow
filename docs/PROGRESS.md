@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M6.5 is done ✅. A timetable shared in a group is offered to the group's members who have no classes yet, as "Is this your timetable?". M6 is complete except the **real WhatsApp test** (M6.3), which waits for the new number.
-**Next up:** M7.1, the AI finds **every kind** of information (internships, notices, deadlines, requests to a student), not only timetable changes. Also: link the new WhatsApp number and test the connector (see `connectors/whatsapp/README.md`).
+**Now:** M7.1 is done ✅. The AI now finds **every kind** of information in group messages (internships, notices, deadlines, compulsory events, requests to named students), in the same single request as timetable changes. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M7.2, when a message names a student ("Ali, please see me"), UniFlow works out **which student** that is.
 
 ---
 
@@ -20,8 +20,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M3** Classes and preferences | UniFlow learns each student's courses, sections and interests (the semester is worked out from the intake); students see their timetable and can add a class | ✅ Done |
 | **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ✅ Done |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ✅ Done |
-| **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | 🔄 In progress |
-| **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ⏳ |
+| **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ✅ Done except the real WhatsApp test (waits for the new number) |
+| **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | 🔄 In progress |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
 | **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
 | **M10** Staff pages | After the pilot: pages for staff to check groups, fix AI mistakes and post official news | ⏳ |
@@ -138,6 +138,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M6.4 | **Add a group.** On the Groups page, one **Add a group** form: a name saying what the group is for, plus the group's **WhatsApp invite link** (optional). With a link, the group is saved as "Waiting for UniFlow to join" and UniFlow's number joins it in the background (M6.3). If another student already added the same group, it **isn't joined twice**: you're simply added to it. Only real WhatsApp links (`https://chat.whatsapp.com/…`) are accepted, so **fake or look-alike links are refused**; a Telegram link explains how to ask the admin to add the UniFlow bot. Without a link, it's a group for pasting messages, as before. | Run both servers, log in as a student → **Groups** → Add a group with a WhatsApp invite link | ✅ Done |
 | M6.5 | **Timetables shared in groups.** When a timetable file (Excel, PDF or photo) arrives in a group through Telegram or the WhatsApp connector, every member of that group (a student who added it) **without classes this term** gets it ready on the Timetable page: "A timetable was shared in *SCI Year 1*", with **their own tab** chosen, so they just press Confirm. Students who already have classes aren't bothered. The AI reads the file **only once**, and **only if someone needs it**; a file with no classes (e.g. a poster) is ignored. | Needs a real group (Telegram or the WhatsApp connector): share a timetable file, then open **Timetable** as a member without classes | ✅ Done |
 
+
+## M7 AI, full version: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M7.1 | **Every kind of information.** Besides timetable changes, the AI now finds **opportunities** (internships, bootcamps, industry visits, competitions, scholarships), **notices** (academic, student affairs, compulsory events, deadlines) and **requests to named students** ("Ali and Sara, please see me"). For each: a title, a one-line summary, **how important** it is, whether you must **act** and what to do, the **deadline** and event date, place, link, topics (like AI or cybersecurity), and **who it's for** ("BCS Year 3" becomes the BCS programme, semesters 7–9). It's the **same single AI request** as before, so no extra quota. Bad answers are thrown away or cleaned (e.g. only real web links). Checked on the real Gemini: an internship, a request to two students and a compulsory briefing were found; an advert and an "ignore your rules" message were ignored. | Nothing for students yet (the "For you" page is M7.6). With the worker running, paste messages on the Groups page, then `/django-admin/` → Intelligence → Insights | ✅ Done |
+| **M7.2** | **Mentions:** a name in a message is matched to the right student | – | ⏭️ **Next** |
 ---
 
 ## Where things are

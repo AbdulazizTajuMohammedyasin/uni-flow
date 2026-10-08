@@ -56,6 +56,8 @@ Messages are never read alone. The model receives:
 
 **Built so far (M5.6):** `apps/intelligence/extraction.py` handles the four timetable kinds (`class_moved`, `class_cancelled`, `room_changed`, `extra_session`). Up to 10 new academic messages (marked `*`) are sent with the earlier messages of the last 24 hours (up to 30) to the smart model. Every change must quote a message that was shown, or it is rejected; dates like "tomorrow" are worked out from the message's own date. Each message is marked `extracted_at` so it is never sent twice. The reply-to message and the other kinds come in M7.1.
 
+**Built (M7.1):** the same single request also returns `items`: every other kind (opportunities, notices, `direct_request`) with title, summary, importance (0–100), action needed and what to do, deadline and event date/time, place, link (only `http(s)`), topics (from the interest list), who it is for (course, school and programme codes and a semester range such as "Year 2" = 4–6) and, for requests, the names of the students asked. Plain code checks every field like user input; unknown codes are ignored; if the message names nobody, the group's own scope is used (or everyone, narrowed per student in M7.4). The message being replied to is added to the window even when it is older. Names are kept in the insight's `data` and matched to students in M7.2.
+
 It returns **structured output** that must match a fixed schema, for example:
 
 ```json
