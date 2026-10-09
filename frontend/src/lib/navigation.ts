@@ -8,12 +8,15 @@ export type NavItem = {
   shortLabel: string
   /** Match the path exactly (only needed for "/"). */
   end?: boolean
+  /** Show the number of unread alerts next to it. */
+  badge?: 'unread'
 }
 
 export const studentNavItems: NavItem[] = [
   { to: '/', label: 'For you', shortLabel: 'For you', end: true },
   { to: '/timetable', label: 'Timetable', shortLabel: 'Classes' },
   { to: '/sources', label: 'Groups', shortLabel: 'Groups' },
+  { to: '/notifications', label: 'Notifications', shortLabel: 'Alerts', badge: 'unread' },
 ]
 
 /** Staff-dashboard navigation. Each item shows only if the user has its capability. */

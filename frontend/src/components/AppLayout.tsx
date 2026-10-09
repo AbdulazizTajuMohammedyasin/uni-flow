@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
+import { useUnreadCount } from '@/hooks/useNotifications'
 
 import { canUseStaffArea } from '@/lib/capabilities'
 import { studentNavItems } from '@/lib/navigation'
@@ -30,6 +31,7 @@ export default function AppLayout() {
           {studentNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={sidebarLinkClass}>
               {item.label}
+              {item.badge && <UnreadBadge />}
             </NavLink>
           ))}
           <StaffDashboardLink className="mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100" />
@@ -60,15 +62,33 @@ export default function AppLayout() {
 
       <nav
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-slate-200 bg-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-slate-200 bg-white md:hidden"
       >
         {studentNavItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={bottomLinkClass}>
-            {item.shortLabel}
+            <span>
+              {item.shortLabel}
+              {item.badge && <UnreadBadge />}
+            </span>
           </NavLink>
         ))}
       </nav>
     </div>
+  )
+}
+
+/** The red number of unread alerts (checked every minute while the tab is visible). */
+function UnreadBadge() {
+  const unread = useUnreadCount()
+  const count = unread.data ?? 0
+  if (count === 0) return null
+  return (
+    <span
+      aria-label={`${count} unread`}
+      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
   )
 }
 
