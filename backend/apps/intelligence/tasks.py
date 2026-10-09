@@ -4,8 +4,8 @@ import logging
 
 from celery import shared_task
 
-from . import extraction, services, telegram, timetable_reading, triage
-from .models import Message, MessageFile, Source, TimetableImport
+from . import delivery, extraction, services, telegram, timetable_reading, triage
+from .models import Insight, Message, MessageFile, Source, TimetableImport
 from .providers import AIError, AIRateLimited
 
 logger = logging.getLogger(__name__)
@@ -122,3 +122,17 @@ def offer_group_timetable(self, file_id: int) -> int | None:
         return None
     logger.info("Group timetable %s offered to %s students", file_id, len(offered))
     return len(offered)
+
+
+@shared_task
+def notify_insight(insight_id: int) -> int:
+    """Alerts for an insight's Direct attention, Action required and Important deliveries."""
+    insight = Insight.objects.filter(pk=insight_id).first()
+    return delivery.notify_deliveries(insight) if insight else 0
+
+
+@shared_task
+def notify_retraction(insight_id: int) -> int:
+    """Tell the students who were alerted about a class change that it was taken back."""
+    insight = Insight.objects.filter(pk=insight_id).first()
+    return delivery.notify_retraction(insight) if insight else 0

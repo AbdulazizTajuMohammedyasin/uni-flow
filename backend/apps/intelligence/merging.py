@@ -111,5 +111,9 @@ def add_evidence(
     if insight.status == Status.DRAFT and insight.confidence >= UNSURE and not held:
         publish_insight(insight, None)
     else:
-        deliver(insight)  # the copy's group members get it too
+        # The copy's group members get it in their feed, but no alert: a forwarded copy
+        # is the same information, not news (docs/07).
+        before = set(insight.deliveries.values_list("id", flat=True))
+        deliver(insight)
+        insight.deliveries.exclude(id__in=before).update(notified_at=timezone.now())
     return insight

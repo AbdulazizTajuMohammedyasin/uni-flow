@@ -25,7 +25,7 @@ from apps.publishing.services import archive, publish
 from apps.timetable.changes import propose_changes, retract_changes
 
 from . import whatsapp_export
-from .delivery import deliver
+from .delivery import deliver, queue_notifications
 from .models import UNSURE, Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
 from .whatsapp_export import ParsedMessage
 
@@ -271,11 +271,16 @@ def publish_insight(insight: Insight, user) -> Insight:
     publish(insight, user)
     propose_changes(insight)
     deliver(insight)
+    queue_notifications(insight)
     return insight
 
 
 def retract_insight(insight: Insight, user) -> Insight:
-    """Take an insight back; its timetable proposals leave every timetable."""
+    """Take an insight back; its timetable proposals leave every timetable, and students
+    alerted about a class change are told it was taken back."""
     archive(insight, user)
     retract_changes(insight)
+    from .tasks import notify_retraction  # tasks imports this module
+
+    transaction.on_commit(lambda: notify_retraction.delay(insight.id))
     return insight

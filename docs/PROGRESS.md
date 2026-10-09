@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M8.1 is done ✅. UniFlow can **store alerts** for each user and has the addresses to list them, count unread ones, and mark them read (backend only). (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M8.2, UniFlow **sends** those alerts: when you're named, must act, or a change affects you, never twice.
+**Now:** M8.2 is done ✅. UniFlow **sends alerts** right away when you're named, must act, or something important affects you (including class changes to confirm), never twice. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M8.3, the **daily digest**: one summary a day of your "Digest" items, only if there's something new.
 
 ---
 
@@ -155,7 +155,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M8.1 | **Storing alerts.** A new backend app, `notifications` (the second app you chose with `intelligence`): each alert says **who** it's for, **what kind** (you were named, action required, important update, class change to confirm or taken back, daily digest, from UniFlow), a title and a short text, and **what it opens** (e.g. an item of your feed). The same alert can **never be stored twice**. Addresses to **list** my alerts (newest first), get the **unread count** (for the bell), **mark one read** and **mark all read**; you only ever see your own. Backend only: nothing creates alerts yet (M8.2) and the bell comes in M8.4. | `pipenv run python manage.py migrate`; `/api/v1/docs/` → **notifications**; `/django-admin/` → Notifications | ✅ Done |
-| **M8.2** | **Sending alerts:** when you're named, must act, or something important affects you; class changes to confirm; never twice | – | ⏭️ **Next** |
+| M8.2 | **Sending alerts.** When something is published (or a name in it is matched), the background worker sends an alert to every student for whom it's **Direct attention** (you were named), **Action required**, or **Important** (a **class change to confirm** gets its own alert). **Digest** items don't alert; they wait for the daily digest (M8.3). An alert is **never sent twice** (each student and item is marked once, and the database refuses duplicates). A **forwarded copy** puts the item in new students' feeds but sends **no alert**. If a class change is **taken back**, the students alerted about it get "Taken back: …". | With the worker running, publish an important staff post in the admin (importance 70+), then `/django-admin/` → Notifications (or `/api/v1/notifications/` as a student) | ✅ Done |
+| **M8.3** | **Daily digest:** one summary a day of your Digest items, only if there's something new | – | ⏭️ **Next** |
 ---
 
 ## Where things are

@@ -16,14 +16,21 @@ to each of them, which level of their feed it goes in, and why. Plain code, no A
    Important; otherwise Digest. Below DIGEST relevance it isn't shown to that student.
 Running it again (more evidence, a new mention) updates the score but never undoes
 "read" or "dismissed".
+4. Alerts (M8.2): Direct attention, Action required and Important alert right away (once
+   per student and insight); the Digest waits for the daily digest (M8.3).
 """
 
 from dataclasses import dataclass
+
+from django.db import transaction
+from django.utils import timezone
 
 from apps.academics.models import Term
 from apps.accounts import semesters
 from apps.accounts.models import Interest, User, UserRole
 from apps.audiences.selectors import students_matching
+from apps.notifications.models import Notification, NotificationKind
+from apps.notifications.services import send
 from apps.publishing.models import Status
 from apps.timetable.models import ClassChange, SectionEnrollment
 
@@ -182,3 +189,75 @@ def deliver(insight: Insight) -> int:
         )
         delivered += 1
     return delivered
+
+
+# --- Alerts (M8.2, docs/07-notifications.md) ---------------------------------------------
+
+# Levels that alert right away; the Digest waits for the daily digest (M8.3).
+IMMEDIATE = {
+    Delivery.Tier.DIRECT: NotificationKind.DIRECT_ATTENTION,
+    Delivery.Tier.ACTION: NotificationKind.ACTION_REQUIRED,
+    Delivery.Tier.IMPORTANT: NotificationKind.IMPORTANT_UPDATE,
+}
+
+
+def notify_deliveries(insight: Insight) -> int:
+    """Alert the students whose delivery is Direct attention, Action required or Important
+    and who haven't been alerted about this insight yet. A class change to confirm gets
+    its own kind. Each delivery is claimed (notified_at) so it never alerts twice."""
+    if insight.status != Status.PUBLISHED:
+        return 0
+    with transaction.atomic():
+        waiting = list(
+            Delivery.objects.select_for_update().filter(
+                insight=insight, notified_at__isnull=True, tier__in=list(IMMEDIATE)
+            )
+        )
+        if not waiting:
+            return 0
+        alerts = [
+            Notification(
+                recipient_id=delivery.user_id,
+                kind=NotificationKind.TIMETABLE_CHANGE_PROPOSED
+                if is_timetable(insight) and delivery.tier == Delivery.Tier.IMPORTANT
+                else IMMEDIATE[delivery.tier],
+                title=insight.title[:200],
+                body=insight.summary[:500],
+                target_type="insight",
+                target_id=insight.id,
+                dedupe_key=f"ins:{insight.id}:u:{delivery.user_id}",
+            )
+            for delivery in waiting
+        ]
+        send(alerts)
+        Delivery.objects.filter(pk__in=[d.pk for d in waiting]).update(notified_at=timezone.now())
+    return len(alerts)
+
+
+def notify_retraction(insight: Insight) -> int:
+    """A class change was taken back: tell the students who were alerted about it."""
+    if not is_timetable(insight):
+        return 0
+    alerted = Delivery.objects.filter(insight=insight, notified_at__isnull=False)
+    send(
+        [
+            Notification(
+                recipient_id=delivery.user_id,
+                kind=NotificationKind.TIMETABLE_CHANGE_RETRACTED,
+                title=f"Taken back: {insight.title}"[:200],
+                body="This class change was taken back. Your timetable is as before.",
+                target_type="insight",
+                target_id=insight.id,
+                dedupe_key=f"ins:{insight.id}:retract:u:{delivery.user_id}",
+            )
+            for delivery in alerted
+        ]
+    )
+    return alerted.count()
+
+
+def queue_notifications(insight: Insight) -> None:
+    """Send the alerts in the background, once the current save is committed."""
+    from .tasks import notify_insight  # tasks imports this module
+
+    transaction.on_commit(lambda: notify_insight.delay(insight.id))

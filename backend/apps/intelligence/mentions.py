@@ -15,7 +15,7 @@ from django.db.models import Q
 
 from apps.accounts.models import User, UserRole
 
-from .delivery import deliver
+from .delivery import deliver, queue_notifications
 from .models import Insight, InsightMention, Source
 
 # Words people put before a name ("Bro Ali", "Sis Sara") that aren't part of it.
@@ -93,5 +93,6 @@ def record_mentions(insight: Insight, names: list[str], source: Source) -> list[
             )
             mentions.append(mention)
     if mentions:
-        deliver(insight)  # the named students go to "Direct attention"
+        deliver(insight)  # the named students go to "Direct attention"…
+        queue_notifications(insight)  # …and are alerted
     return mentions

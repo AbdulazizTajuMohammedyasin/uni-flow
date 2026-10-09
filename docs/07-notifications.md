@@ -46,3 +46,11 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 | Retention | A monthly job that prunes read notifications older than 180 days |
 
 `notify_deliveries(insight)` stays the one entry point, so none of these additions change the code that calls it.
+
+## Built (M8.2)
+
+- `notify_deliveries(insight)` lives in `apps/intelligence/delivery.py` (not in `notifications`), so the `notifications` app never depends on `intelligence` (see [02](02-system-architecture.md)). The `notifications` app only provides `services.send(alerts)`, which any part of UniFlow can use.
+- It runs as a Celery job (`notify_insight`) after the save commits: when an insight is published, and when names in it are matched. Each delivery is claimed with `notified_at`, and every alert has a `dedupe_key` (`ins:{insight}:u:{user}`), so nothing is sent twice even if a job runs again.
+- A timetable change for the student's own section is sent as `timetable_change_proposed`; other Important deliveries as `important_update`.
+- Merged copies: the copy's group members get the insight in their feed, but their new deliveries are marked as already notified (no alert).
+- Retraction (`notify_retraction`): students who were alerted about a timetable change get `timetable_change_retracted` (`ins:{insight}:retract:u:{user}`).
