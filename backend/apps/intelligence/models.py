@@ -189,6 +189,22 @@ UNSURE = 0.5  # from here up to CONFIDENT: published, digest only, marked "Not c
 #               below UNSURE: kept as a draft until someone checks it
 
 
+class ExcludedSender(TimeStampedModel):
+    """Someone who asked UniFlow not to read their messages (docs/09-security.md). Their
+    messages are skipped wherever they come from, and the text already stored is erased.
+    Matched by the scrambled sender id (Message.sender_ref), never a phone number."""
+
+    sender_ref = models.CharField(max_length=64, unique=True)
+    sender_name = models.CharField(max_length=150, blank=True, help_text="As shown, for the admin.")
+    reason = models.CharField(max_length=200, blank=True)
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    def __str__(self) -> str:
+        return self.sender_name or self.sender_ref
+
+
 class Insight(TargetedModel):
     """One piece of information UniFlow found (or a staff member posted), e.g. "CDE2313 class
     moved to 2 PM tomorrow". Inherited from TargetedModel: audience (who it is for),

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import type { ReactNode } from 'react'
 
 import { ChangePasswordForm } from '@/components/ChangePasswordForm'
@@ -63,6 +63,16 @@ export function ProfilePage() {
 
       <Section title="Password">
         <ChangePasswordForm />
+      </Section>
+
+      <Section title="Privacy">
+        <p className="text-sm text-muted-foreground">
+          What UniFlow reads, what it keeps (message text for 60 days), how it uses AI, and how someone can ask
+          not to be read.{' '}
+          <Link to="/privacy" className="font-medium text-primary hover:underline">
+            Read the privacy notice
+          </Link>
+        </p>
       </Section>
 
       <Button variant="outline" onClick={handleLogout}>

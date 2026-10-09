@@ -26,7 +26,16 @@ from apps.timetable.changes import propose_changes, retract_changes
 
 from . import whatsapp_export
 from .delivery import deliver, queue_notifications
-from .models import UNSURE, Insight, InsightEvidence, Message, MessageFile, Source, SourceMember
+from .models import (
+    UNSURE,
+    ExcludedSender,
+    Insight,
+    InsightEvidence,
+    Message,
+    MessageFile,
+    Source,
+    SourceMember,
+)
 from .whatsapp_export import ParsedMessage
 
 MAX_EXPORT_BYTES = 5 * 1024 * 1024  # 5 MB of text is years of a busy group
@@ -122,6 +131,13 @@ def store_messages(source: Source, parsed: list[ParsedMessage]) -> tuple[int, in
         )
         for item in parsed
     ]
+    # People who asked not to be read are skipped (M9.3).
+    excluded = set(
+        ExcludedSender.objects.filter(
+            sender_ref__in={row.sender_ref for row in rows if row.sender_ref}
+        ).values_list("sender_ref", flat=True)
+    )
+    rows = [row for row in rows if row.sender_ref not in excluded]
     # Fingerprints already stored for this group, plus repeats inside this batch.
     known = set(
         Message.objects.filter(
@@ -160,6 +176,8 @@ def paste_messages(user, source: Source, *, text: str, sender_name: str = "") ->
 def _store_plain_message(source: Source, text: str, sender_name: str) -> tuple[int, int]:
     """A message without WhatsApp's date and time counts as sent "now". Its fingerprint
     leaves the time out, so pasting it again is still recognised."""
+    if is_excluded(_hash(sender_name)[:16] if sender_name else ""):
+        return 0, 0  # this person asked not to be read
     _, created = Message.objects.get_or_create(
         source=source,
         external_id="fp:" + _hash("plain", sender_name, text)[:60],
@@ -284,3 +302,32 @@ def retract_insight(insight: Insight, user) -> Insight:
 
     transaction.on_commit(lambda: notify_retraction.delay(insight.id))
     return insight
+
+
+# --- People who asked not to be read (M9.3) -----------------------------------------------
+
+REMOVED_QUOTE = "[Removed at the sender's request]"
+
+
+def is_excluded(sender_ref: str) -> bool:
+    return bool(sender_ref) and ExcludedSender.objects.filter(sender_ref=sender_ref).exists()
+
+
+@transaction.atomic
+def exclude_sender(message: Message, user, reason: str = "") -> ExcludedSender:
+    """Stop reading this message's sender: their future messages are skipped, and the text
+    of the ones already stored (and quotes from them) is erased. What UniFlow learned from
+    them (e.g. a class change students confirmed) stays, without their words."""
+    if not message.sender_ref:
+        raise ValidationError("This message has no sender to exclude.")
+    excluded, _ = ExcludedSender.objects.get_or_create(
+        sender_ref=message.sender_ref,
+        defaults={"sender_name": message.sender_name, "reason": reason[:200], "added_by": user},
+    )
+    Message.objects.filter(sender_ref=message.sender_ref).update(
+        text="", raw={}, text_deleted_at=timezone.now(), triage=Message.Triage.NOISE
+    )
+    InsightEvidence.objects.filter(message__sender_ref=message.sender_ref).update(
+        quote=REMOVED_QUOTE
+    )
+    return excluded

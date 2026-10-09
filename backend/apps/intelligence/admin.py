@@ -10,6 +10,7 @@ from apps.audiences.models import Audience
 from . import services
 from .models import (
     Delivery,
+    ExcludedSender,
     Insight,
     InsightEvidence,
     InsightMention,
@@ -56,10 +57,34 @@ class MessageAdmin(admin.ModelAdmin):
     date_hierarchy = "sent_at"
     raw_id_fields = ("source", "reply_to")
     list_select_related = ("source",)
+    actions = ["exclude_senders"]
 
     @admin.display(description="Text")
     def short_text(self, message):
         return message.text[:80]
+
+    @admin.action(description="Stop reading these senders (they asked not to be read)")
+    def exclude_senders(self, request, queryset):
+        excluded = {
+            services.exclude_sender(message, request.user, reason="Asked not to be read").pk
+            for message in queryset.exclude(sender_ref="")
+        }
+        self.message_user(
+            request, f"{len(excluded)} sender(s) excluded; their stored messages were erased."
+        )
+
+
+@admin.register(ExcludedSender)
+class ExcludedSenderAdmin(admin.ModelAdmin):
+    """People whose messages UniFlow skips. Add them with the action on Messages."""
+
+    list_display = ("sender_name", "reason", "added_by", "created_at")
+    search_fields = ("sender_name", "reason")
+    readonly_fields = ("sender_ref", "sender_name", "added_by", "created_at")
+    fields = ("sender_name", "sender_ref", "reason", "added_by", "created_at")
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(MessageFile)

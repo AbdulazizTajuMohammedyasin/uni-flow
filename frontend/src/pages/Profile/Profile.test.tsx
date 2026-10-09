@@ -75,6 +75,12 @@ beforeEach(() => {
 })
 
 describe('Profile page', () => {
+  it('links to the privacy notice', async () => {
+    renderProfile()
+    const link = await screen.findByRole('link', { name: 'Read the privacy notice' })
+    expect(link.getAttribute('href')).toBe('/privacy')
+  })
+
   it('shows the account and pre-fills the saved studies', async () => {
     renderProfile()
 

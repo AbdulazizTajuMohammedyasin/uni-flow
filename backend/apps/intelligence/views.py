@@ -296,6 +296,8 @@ class ConnectorMessageView(ConnectorView):
             raise exceptions.NotFound(
                 "UniFlow isn't in this group (report the join first)."
             ) from None
+        if message is None:  # the sender asked not to be read: nothing is stored
+            return Response({"id": None, "created": False, "skipped": True})
         return Response(
             {"id": message.id, "created": created},
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,

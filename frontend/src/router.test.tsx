@@ -142,6 +142,15 @@ describe('other areas', () => {
     expect(screen.queryByRole('navigation', { name: 'Sidebar' })).toBeNull()
   })
 
+  it('shows the privacy notice to anyone, logged in or not', async () => {
+    vi.mocked(authApi.restoreSession).mockResolvedValue(false)
+
+    const router = renderAt('/privacy')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Privacy notice' })).toBeTruthy()
+    expect(screen.getByText(/deleted after 60 days/)).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/privacy') // not sent to /login
+  })
+
   it('sends a logged-in user away from /login to For you', async () => {
     const router = renderAt('/login')
 

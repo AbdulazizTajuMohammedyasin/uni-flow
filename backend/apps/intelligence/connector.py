@@ -25,7 +25,7 @@ from rest_framework.permissions import BasePermission
 
 from . import files, timetable_reading
 from .models import Message, MessageFile, Source, SourceMember
-from .services import queue_triage
+from .services import is_excluded, queue_triage
 
 MAX_AGE_SECONDS = 5 * 60
 
@@ -93,9 +93,12 @@ def mark_joined(*, external_id: str, title: str, source_id=None, notice_sent=Fal
     return source
 
 
-def store_message(data: dict) -> tuple[Message, bool]:
-    """Save a group message once. Returns (message, created). A message whose files are
-    still coming is sorted by the AI after the last file arrives (attach_file)."""
+def store_message(data: dict) -> tuple[Message | None, bool]:
+    """Save a group message once. Returns (message, created); (None, False) when its sender
+    asked not to be read. A message whose files are still coming is sorted by the AI after
+    the last file arrives (attach_file)."""
+    if is_excluded(_hash_sender(data.get("sender_ref", ""))):
+        return None, False
     source = Source.objects.get(
         platform=Source.Platform.WHATSAPP_GROUP,
         external_id=data["source_external_id"],

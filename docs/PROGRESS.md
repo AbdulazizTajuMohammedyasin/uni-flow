@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M9.2 is done ✅. **Search**: find anything UniFlow showed you by typing a few words. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M9.3, a **privacy notice** (at registration and in the profile) and a list of **senders whose messages UniFlow skips**.
+**Now:** M9.3 is done ✅. A **privacy notice** anyone can read (linked from registration and the profile), and people who ask **not to be read** can be excluded from the admin. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M9.4, the **Django admin** set up for you as the operator: a queue of drafts to check, publish and retract, reviewing new groups, and how much the AI is used.
 
 ---
 
@@ -165,7 +165,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|---|---|
 | M9.1 | **Today at a glance.** A new address, `GET /api/v1/feed/home/`, gives everything the home screen needs in **one fast request** (15 database lookups at most): the first few Direct attention, Action required and Important items, **today's classes** (with changes you confirmed), **class changes waiting** for you, a digest preview and your unread alert count. It follows the same rules as the feed (you only see your own; dismissed, retracted and expired items are hidden). On the website, For you now starts with a **Today** box: your classes today (a cancelled one crossed out, a moved one marked) and "1 class change is waiting for you → Confirm or reject". Staff don't see the box. The mobile app will use the same address. | Run both servers, log in as a student with classes → **For you** | ✅ Done |
 | M9.2 | **Search.** "Search" is in the menu. Type a few words (e.g. "petronas internship") and UniFlow finds every item that was **delivered to you**, including ones you read, dismissed or got in a digest, newest first. It looks in titles, summaries, places, "what to do" and the **original messages**; with several words, an item must contain **all** of them. It **never** shows something that wasn't delivered to you, nor retracted or expired items. At least 2 characters. | Run both servers, log in as a student → **Search** | ✅ Done |
-| **M9.3** | **Privacy notice** and the list of senders whose messages are skipped | – | ⏭️ **Next** |
+| M9.3 | **Privacy.** A **privacy notice** page (`/privacy`) that anyone can open without logging in, linked from **registration** and the **profile**: what UniFlow reads (only academic groups students added; never private chats or phones), what it keeps (message text **60 days**, then only short quotes; senders by name and a scrambled id, never a phone number), that text goes to **Google's Gemini AI**, and how to ask not to be read. **Excluding a sender**: in the admin, select any of their messages → "**Stop reading these senders**". Their stored message text is **erased** (quotes from them become "[Removed at the sender's request]"), and their future messages are **skipped** everywhere: Telegram, the WhatsApp connector, pasting and chat exports. | `pipenv run python manage.py migrate`; open `/privacy`; `/django-admin/` → Intelligence → Messages → select → the action; then Excluded senders | ✅ Done |
+| **M9.4** | **The admin, set up for you:** drafts to check, publish/retract, new groups to review, AI usage | – | ⏭️ **Next** |
 ---
 
 ## Where things are
@@ -218,7 +219,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 - **UniFlow is an AI information assistant**, not a notice board. Messages from academic WhatsApp and Telegram groups are the main input. The AI **proposes**; normal code decides; the student **confirms** timetable changes.
 - **WhatsApp:** an **unofficial connector** (a dedicated UniFlow number joins groups), chosen knowingly. Risks: WhatsApp's rules, the number can be banned, members' consent. Safeguards and details: [08](08-messaging-integrations.md). Telegram uses the official bot. Pasting and chat export always work too.
 - **Staff posts stay** as one official source. The M2 code is kept and reused.
-- **The AI is Gemini, on the free tier for now**, using the **oldest models that still work for a new key** (`gemini-3.1-flash-lite` and `gemini-3.5-flash`; the 2.5 models are closed to new users), because older models usually allow many more free requests. Google may use what's sent on the free tier; decide on the paid tier before real students' messages are used.
+- **The AI is Gemini, on the free tier for now**, using the **oldest models that still work for a new key** (`gemini-3.1-flash-lite` and `gemini-3.5-flash`; the 2.5 models are closed to new users), because older models usually allow many more free requests. Google may use what's sent on the free tier; you decided (October 2026) to stay on it, and the privacy notice says so.
 - **Background work uses Celery with Redis** (your choice, over a simpler database table). Redis runs in WSL on your PC; tests need no Redis.
 - **When the AI isn't sure:** sure → shown; unsure → daily summary marked "Not confirmed"; very unsure → hidden until you check it.
 - **Staff posts and AI findings are one thing** in the code (no separate announcements part).
@@ -245,7 +246,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 - **Real email sending** (for example Gmail with an app password, or a university mailbox). For now emails are printed in the backend terminal. Set up before launch (M10); it needs 5 SMTP settings in `.env`.
 
-- **Gemini free or paid tier.** For now UniFlow uses Gemini's **free tier**. On the free tier Google may use the messages sent to it to improve its products (the paid tier doesn't). Decide before real students' group messages are processed (pilot checklist, M9.7).
+- **A contact address for the privacy notice** (an email students and group members can write to, e.g. to ask not to be read). The notice says "will be added before launch". Also consider adding the `/privacy` address to the WhatsApp join notice once UniFlow has its web address.
+- **Gemini free tier: decided, UniFlow stays on it** (October 2026). The privacy notice says plainly that Google may use the message text to improve its products. Still open: the free tier's **daily limits** (the smart model allowed only 20 requests a day in M5.9), which a few busy groups would use up. One idea: when a model's daily limit is used up, switch to another model that still has requests left.
 - **A dedicated WhatsApp number** (a new SIM, never a personal number: it can be banned). Needed to finish testing M6.3. *(The library is decided: Baileys.)*
 - **Patch Baileys if linking still fails?** WhatsApp changed linking in July 2026 and Baileys' fix isn't released yet. Options: apply the fix as a patch (a new tool, `patch-package`), or wait for the next Baileys release.
 - **The UniFlow Telegram bot** (create it with @BotFather; choose its name). Needed to switch Telegram on, together with hosting.

@@ -27,7 +27,7 @@ from rest_framework.exceptions import ValidationError
 
 from . import files, timetable_reading
 from .models import Message, Source
-from .services import queue_triage
+from .services import is_excluded, queue_triage
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +152,8 @@ def _store(source: Source, message: dict) -> Message | None:
     if not text.strip() and attachment is None:
         return None  # someone joined, a sticker, a poll…
     sender_name, sender_ref = _sender(message)
+    if is_excluded(sender_ref):
+        return None  # this person asked not to be read
     reply = message.get("reply_to_message")
     stored, created = Message.objects.get_or_create(
         source=source,

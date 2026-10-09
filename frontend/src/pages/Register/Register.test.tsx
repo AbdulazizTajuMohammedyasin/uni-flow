@@ -50,6 +50,12 @@ beforeEach(() => {
 })
 
 describe('Register page', () => {
+  it('links to the privacy notice', async () => {
+    renderRegister()
+    const link = await screen.findByRole('link', { name: 'Privacy notice' })
+    expect(link.getAttribute('href')).toBe('/privacy')
+  })
+
   it('only accepts AIU student emails', async () => {
     renderRegister()
     await fillForm({ 'Student email': 'ali@gmail.com' })

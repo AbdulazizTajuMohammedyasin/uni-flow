@@ -127,6 +127,10 @@ export function createAppRoutes(): RouteObject[] {
               },
             },
             {
+              path: '/privacy', // the privacy notice: public, also for people who aren't students
+              lazy: { Component: async () => (await import('./pages/Privacy/Privacy')).PrivacyPage },
+            },
+            {
               path: '/verify-email/:uid/:token', // the link in the activation email
               lazy: {
                 Component: async () =>
