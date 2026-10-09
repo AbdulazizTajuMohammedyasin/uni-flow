@@ -116,16 +116,19 @@ class SectionEnrollment(TimeStampedModel):
         return f"{self.user} in {self.section}"
 
 
+class ClassChangeKind(models.TextChoices):
+    CLASS_MOVED = "class_moved", "Class moved"
+    CLASS_CANCELLED = "class_cancelled", "Class cancelled"
+    ROOM_CHANGED = "room_changed", "Room changed"
+    EXTRA_SESSION = "extra_session", "Extra session"
+
+
 class ClassChange(TimeStampedModel):
     """A proposed change to one section's class on one date, e.g. "CDE2313 Section A on
     Tue 6 Oct moves to 14:00". It comes from an AI insight (the message is its evidence);
     one insight can propose the same change for several sections."""
 
-    class Kind(models.TextChoices):
-        CLASS_MOVED = "class_moved", "Class moved"
-        CLASS_CANCELLED = "class_cancelled", "Class cancelled"
-        ROOM_CHANGED = "room_changed", "Room changed"
-        EXTRA_SESSION = "extra_session", "Extra session"
+    Kind = ClassChangeKind  # ClassChange.Kind.CLASS_MOVED etc.
 
     class Status(models.TextChoices):
         PROPOSED = "proposed", "Proposed"

@@ -15,6 +15,7 @@ urlpatterns = [
     path("timetable/", include("apps.timetable.urls")),
     path("sources/", include("apps.intelligence.urls")),
     path("feed/", include("apps.intelligence.feed_urls")),
+    path("notifications/", include("apps.notifications.urls")),
     path(
         "integrations/telegram/webhook/",
         TelegramWebhookView.as_view(),

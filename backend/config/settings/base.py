@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.timetable",
     "apps.intelligence",
     "apps.publishing",
+    "apps.notifications",
 ]
 
 # Email-based custom user. Must be set before the first migration.
@@ -171,6 +172,8 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "UserRoleEnum": "apps.accounts.models.UserRole",
         "StaffRoleEnum": "apps.accounts.serializers.STAFF_ROLE_CHOICES",
+        "NotificationKindEnum": "apps.notifications.models.NotificationKind",
+        "ClassChangeKindEnum": "apps.timetable.models.ClassChangeKind",
     },
 }
 

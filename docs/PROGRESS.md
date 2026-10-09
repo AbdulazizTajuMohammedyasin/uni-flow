@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M7 is done ✅. The home page is now **"For you"**: what matters to you in four levels, each item with its reason and the original messages. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M8.1, **notifications** inside UniFlow (a list, an unread count, mark as read); the Notifications link joins the menu then.
+**Now:** M8.1 is done ✅. UniFlow can **store alerts** for each user and has the addresses to list them, count unread ones, and mark them read (backend only). (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M8.2, UniFlow **sends** those alerts: when you're named, must act, or a change affects you, never twice.
 
 ---
 
@@ -22,7 +22,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ✅ Done |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ✅ Done except the real WhatsApp test (waits for the new number) |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ✅ Done |
-| **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
+| **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | 🔄 In progress |
 | **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
 | **M10** Staff pages | After the pilot: pages for staff to check groups, fix AI mistakes and post official news | ⏳ |
 
@@ -149,6 +149,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M7.4 | **What matters to *you*.** When an item is published, UniFlow works out for **each student**: **who** gets it (the students it's for, the members of the groups it came from, anyone named; a timetable change only goes to that section; never staff), **how relevant** it is (0–100: named 100, your section 90, your course 85, your group 80, your programme 65…; your **interests** raise it, a kind of information you **switched off** lowers it a lot), the **level** (**Direct attention** if you were named, **Action required** if you must act, **Important** for e.g. a change to your own class, else the **Digest**; an item the AI wasn't sure about only goes in the digest), and a short **reason** ("You are in CDE2313 Section A", "Matches your interest: Artificial Intelligence"). Items that matter too little to someone aren't shown to them. Plain code, no AI, so no quota. | `pipenv run python manage.py migrate`; then `/django-admin/` → Intelligence → **Deliveries** (who got what, at which level, and why) | ✅ Done |
 | M7.5 | **Feed API.** The addresses the "For you" page will call: **my feed** (Direct attention first, then Action required, Important, Digest; newest first in each; or only one level), **one item** with why I see it and the **original messages** (sender, group, time, quote, and "open original": the exact Telegram post, or the WhatsApp group), whether I confirmed it if it's a timetable change, and buttons for **read**, **dismiss** and **"not relevant to me"**. You only ever see **your own** items (anything else: "not found"); retracted or expired items disappear. | `/api/v1/docs/` → **feed** (log in as a student with some deliveries) | ✅ Done |
 | M7.6 | **The "For you" page.** The home page (`/`) is now **For you**: your items in **four sections in order** (Direct attention, Action required, Important updates, Digest; empty ones hidden). Each card shows the title, summary, date or deadline, **why you see it**, an **Official** or **Not confirmed** tag, and a dot if unread. Clicking opens the **item page**: details, a **"What to do"** box, a link, the **original messages** with **Open original**, a link to your timetable for a class change, and **Dismiss** / **Not relevant to me**. Opening it marks it read. The menu is now **For you, Timetable, Groups** (Profile stays at the bottom of the sidebar); the old "Announcements" and "Events" placeholders are gone. **Notifications** joins the menu with M8. | Run both servers, log in as a student → **For you** (items appear once groups bring in messages, or after you publish a staff post in the admin) | ✅ Done |
+
+## M8 Notifications: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M8.1 | **Storing alerts.** A new backend app, `notifications` (the second app you chose with `intelligence`): each alert says **who** it's for, **what kind** (you were named, action required, important update, class change to confirm or taken back, daily digest, from UniFlow), a title and a short text, and **what it opens** (e.g. an item of your feed). The same alert can **never be stored twice**. Addresses to **list** my alerts (newest first), get the **unread count** (for the bell), **mark one read** and **mark all read**; you only ever see your own. Backend only: nothing creates alerts yet (M8.2) and the bell comes in M8.4. | `pipenv run python manage.py migrate`; `/api/v1/docs/` → **notifications**; `/django-admin/` → Notifications | ✅ Done |
+| **M8.2** | **Sending alerts:** when you're named, must act, or something important affects you; class changes to confirm; never twice | – | ⏭️ **Next** |
 ---
 
 ## Where things are
@@ -188,6 +195,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `apps/audiences/` | Who a post is for (`Audience`), and `selectors.py` (who sees what) |
 | `apps/timetable/` | Sections, weekly classes and which students are in each section |
 | `apps/intelligence/` | The AI pipeline: groups (sources), their members and messages, `whatsapp_export.py` (reads WhatsApp's text formats), `services.py` (paste and upload rules), `files.py` (timetable files and Drive links), `providers.py` (the AI), `triage.py` (academic or noise), `timetable_reading.py` (reading timetables), `extraction.py` (timetable changes in messages) and `telegram.py` (the Telegram bot) |
+| `apps/notifications/` | Alerts inside UniFlow (`Notification`): the list, unread count and mark-as-read addresses (M8.1); sending them comes in M8.2 |
 | `apps/publishing/` | The shared base for every post (status, publisher, expiry), the publish / archive actions, and `policies.py` (the school boundary) |
 | `core/models.py` | Shared "created at / updated at" timestamps for every table |
 | `core/` | Shared API pieces: the error format, paging and the health check |
