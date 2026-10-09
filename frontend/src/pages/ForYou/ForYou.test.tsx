@@ -15,6 +15,7 @@ function feedItem(overrides: Partial<FeedItem> = {}): FeedItem {
   return {
     id: 1,
     kind: 'academic_notice',
+    info_type: 'academic_notice',
     tier: 'digest',
     title: 'Library hours',
     summary: 'The library opens at 8.',

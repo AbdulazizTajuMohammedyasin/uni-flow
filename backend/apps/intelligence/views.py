@@ -8,9 +8,11 @@ connector's private addresses (/api/v1/internal/, see connector.py), and the stu
 
 import hmac
 import logging
+from datetime import date
 
 from django.conf import settings
 from django.db.models import Count
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import exceptions, generics, status
 from rest_framework.exceptions import PermissionDenied
@@ -27,6 +29,7 @@ from .serializers import (
     ConnectorMessageSerializer,
     ConnectSourceSerializer,
     CreateSourceSerializer,
+    DigestSerializer,
     ExportSerializer,
     FeedbackSerializer,
     FeedDetailSerializer,
@@ -382,3 +385,24 @@ class FeedFeedbackView(APIView):
         serializer.is_valid(raise_exception=True)
         feed.not_relevant(feed.my_item(request.user, insight_id))
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    tags=["feed"],
+    responses=DigestSerializer,
+    parameters=[
+        OpenApiParameter("date", OpenApiTypes.DATE, description="YYYY-MM-DD. Default: my latest.")
+    ],
+)
+class DigestView(APIView):
+    """GET feed/digest/?date= - the items of one day's daily digest (the digest alert opens
+    this), most important first."""
+
+    def get(self, request):
+        raw = request.query_params.get("date")
+        try:
+            day = date.fromisoformat(raw) if raw else None
+        except ValueError:
+            raise exceptions.ValidationError({"date": ["Use the format YYYY-MM-DD."]}) from None
+        day, items = feed.my_digest(request.user, day)
+        return Response(DigestSerializer({"date": day, "items": items}).data)

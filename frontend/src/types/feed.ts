@@ -6,6 +6,7 @@ export type Tier = 'direct' | 'action' | 'important' | 'digest'
 export type FeedItem = {
   id: number // the insight's id
   kind: string
+  info_type: string // e.g. "internship"; "" if none
   tier: Tier
   title: string
   summary: string
@@ -40,4 +41,10 @@ export type FeedDetail = FeedItem & {
   evidence: Evidence[]
   timetable_change: { id: number; my_status: 'pending' | 'confirmed' | 'rejected' } | null
   dismissed: boolean
+}
+
+/** GET feed/digest/ - one day's daily digest (date is null when there's none yet). */
+export type Digest = {
+  date: string | null
+  items: FeedItem[]
 }

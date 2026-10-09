@@ -3,10 +3,13 @@
 - my_feed(): what is shown — published, not expired, not dismissed, not marked
   "not relevant"; Direct attention first, then Action required, Important, Digest, newest
   first within each level.
+- my_digest(): the items of one day's digest (M8.3).
 - my_item(): one item for its detail page (404 if it wasn't delivered to this student).
 - open_url(): where "Open original" goes for a message.
 - read / dismiss / not relevant: the student's own buttons.
 """
+
+from datetime import date, datetime, time, timedelta
 
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from django.shortcuts import get_object_or_404
@@ -43,6 +46,21 @@ def my_feed(user, tier: str | None = None) -> QuerySet[Delivery]:
         output_field=IntegerField(),
     )
     return deliveries.annotate(rank=rank).order_by("rank", "-insight__published_at", "-id")
+
+
+def my_digest(user, day: date | None = None) -> tuple[date | None, QuerySet[Delivery]]:
+    """The items of one day's digest (default: my latest digest), most important first."""
+    included = _visible(user).filter(
+        digested_at__isnull=False, dismissed_at__isnull=True, feedback=""
+    )
+    if day is None:
+        latest = included.order_by("-digested_at").first()
+        if latest is None:
+            return None, included.none()
+        day = timezone.localdate(latest.digested_at)
+    start = timezone.make_aware(datetime.combine(day, time.min))
+    items = included.filter(digested_at__gte=start, digested_at__lt=start + timedelta(days=1))
+    return day, items.order_by("-insight__importance", "-id")
 
 
 def my_item(user, insight_id: int) -> Delivery:

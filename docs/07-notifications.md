@@ -54,3 +54,10 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 - A timetable change for the student's own section is sent as `timetable_change_proposed`; other Important deliveries as `important_update`.
 - Merged copies: the copy's group members get the insight in their feed, but their new deliveries are marked as already notified (no alert).
 - Retraction (`notify_retraction`): students who were alerted about a timetable change get `timetable_change_retracted` (`ins:{insight}:retract:u:{user}`).
+
+## Built (M8.3): the daily digest
+
+- Celery Beat runs `send_daily_digest` every day at **19:00** Kuala Lumpur time (`CELERY_BEAT_SCHEDULE`, next to the 03:00 clean-up).
+- `send_daily_digests()` (in `intelligence/delivery.py`) collects each student's Digest-tier deliveries not yet in a digest (`digested_at` empty), leaving out dismissed, "not relevant", retracted and expired ones. Students with **nothing new get nothing**.
+- Each other student gets **one** `digest` notification: "Your daily digest: N new items", the top 3 titles by importance as the body, `target_type = "digest"`, `target_id` = the date as a number (e.g. `20261009`), and dedupe key `dig:{date}:u:{user}`, so **at most one per day** even if the job runs twice. The items are then marked `digested_at`.
+- The digest page (`/digest?date=YYYY-MM-DD`, API `GET feed/digest/?date=`; without a date, the latest digest) lists that day's items grouped by information type, each linking to its item page. Digest items also stay in the Digest section of For you.

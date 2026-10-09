@@ -168,6 +168,9 @@ class FeedItemSerializer(serializers.Serializer):
 
     id = serializers.IntegerField(source="insight.id", help_text="The insight's id.")
     kind = serializers.CharField(source="insight.kind")
+    info_type = serializers.CharField(
+        source="insight.info_type", help_text='e.g. "internship" (blank: none)'
+    )
     tier = serializers.ChoiceField(choices=Delivery.Tier.choices)
     title = serializers.CharField(source="insight.title")
     summary = serializers.CharField(source="insight.summary")
@@ -226,6 +229,13 @@ class FeedDetailSerializer(FeedItemSerializer):
 
     def get_dismissed(self, delivery) -> bool:
         return delivery.dismissed_at is not None
+
+
+class DigestSerializer(serializers.Serializer):
+    """GET feed/digest/ - one day's digest (date is null when I have none yet)."""
+
+    date = serializers.DateField(allow_null=True)
+    items = FeedItemSerializer(many=True)
 
 
 class FeedbackSerializer(serializers.Serializer):

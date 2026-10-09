@@ -1,4 +1,4 @@
-import type { FeedDetail, FeedItem } from '@/types/feed'
+import type { Digest, FeedDetail, FeedItem } from '@/types/feed'
 import type { Page } from '@/types/timetable'
 
 import { api } from './client'
@@ -8,6 +8,16 @@ import { toApiError } from './errors'
 export async function getFeed(): Promise<FeedItem[]> {
   try {
     return (await api.get<Page<FeedItem>>('/feed/', { params: { page_size: 100 } })).data.results
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** One day's daily digest (YYYY-MM-DD), or my latest one. */
+export async function getDigest(date?: string): Promise<Digest> {
+  try {
+    const params = date ? { date } : undefined
+    return (await api.get<Digest>('/feed/digest/', { params })).data
   } catch (error) {
     throw toApiError(error)
   }

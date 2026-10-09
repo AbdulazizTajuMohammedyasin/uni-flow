@@ -136,3 +136,11 @@ def notify_retraction(insight_id: int) -> int:
     """Tell the students who were alerted about a class change that it was taken back."""
     insight = Insight.objects.filter(pk=insight_id).first()
     return delivery.notify_retraction(insight) if insight else 0
+
+
+@shared_task
+def send_daily_digest() -> int:
+    """Every evening (CELERY_BEAT_SCHEDULE): one digest alert per student with new items."""
+    sent = delivery.send_daily_digests()
+    logger.info("Daily digest sent to %s students", sent)
+    return sent

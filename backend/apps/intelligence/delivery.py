@@ -17,12 +17,15 @@ to each of them, which level of their feed it goes in, and why. Plain code, no A
 Running it again (more evidence, a new mention) updates the score but never undoes
 "read" or "dismissed".
 4. Alerts (M8.2): Direct attention, Action required and Important alert right away (once
-   per student and insight); the Digest waits for the daily digest (M8.3).
+   per student and insight); the Digest waits for the daily digest (M8.3): one alert
+   each evening per student who has new Digest items.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.academics.models import Term
@@ -261,3 +264,51 @@ def queue_notifications(insight: Insight) -> None:
     from .tasks import notify_insight  # tasks imports this module
 
     transaction.on_commit(lambda: notify_insight.delay(insight.id))
+
+
+# --- The daily digest (M8.3) ----------------------------------------------------------------
+
+
+def _digest_title(count: int) -> str:
+    return f"Your daily digest: {count} new item" + ("s" if count > 1 else "")
+
+
+def send_daily_digests(now=None) -> int:
+    """Every evening: one alert per student summing up their new Digest items (only if
+    there are any), then those items are marked as included (digested_at). Returns how
+    many students got a digest. At most one per student per day (dedupe key)."""
+    now = now or timezone.now()
+    day = timezone.localdate(now)
+    with transaction.atomic():
+        waiting = list(
+            Delivery.objects.select_for_update()
+            .filter(
+                Q(insight__expires_at__isnull=True) | Q(insight__expires_at__gt=now),
+                tier=Delivery.Tier.DIGEST,
+                digested_at__isnull=True,
+                dismissed_at__isnull=True,
+                feedback="",
+                insight__status=Status.PUBLISHED,
+            )
+            .select_related("insight")
+            .order_by("user_id", "-insight__importance", "-id")
+        )
+        by_student: dict[int, list[Delivery]] = defaultdict(list)
+        for delivery in waiting:
+            by_student[delivery.user_id].append(delivery)
+        send(
+            [
+                Notification(
+                    recipient_id=user_id,
+                    kind=NotificationKind.DIGEST,
+                    title=_digest_title(len(items)),
+                    body=" · ".join(item.insight.title for item in items[:3])[:500],
+                    target_type="digest",
+                    target_id=int(day.strftime("%Y%m%d")),  # opens /digest?date=...
+                    dedupe_key=f"dig:{day.isoformat()}:u:{user_id}",
+                )
+                for user_id, items in by_student.items()
+            ]
+        )
+        Delivery.objects.filter(pk__in=[d.pk for d in waiting]).update(digested_at=now)
+    return len(by_student)

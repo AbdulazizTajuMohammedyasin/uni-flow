@@ -252,6 +252,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.intelligence.tasks.clear_old_messages",
         "schedule": crontab(hour=3, minute=0),  # every night at 03:00
     },
+    "send-daily-digest": {
+        "task": "apps.intelligence.tasks.send_daily_digest",
+        "schedule": crontab(hour=19, minute=0),  # every evening at 19:00 (Malaysia time)
+    },
 }
 
 # Privacy: message text and timetable files are deleted after this many days.

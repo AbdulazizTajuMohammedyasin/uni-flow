@@ -15,6 +15,7 @@ vi.mock('@/api/feed', () => ({ getFeed: vi.fn(), getFeedItem: vi.fn(), updateFee
 const detail: FeedDetail = {
   id: 7,
   kind: 'internship',
+  info_type: 'internship',
   tier: 'action',
   title: 'Petronas internship',
   summary: 'Petronas is taking 3rd-year interns.',

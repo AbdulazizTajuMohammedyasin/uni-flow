@@ -488,7 +488,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 |---|---|---|---|
 | M8.1 ✅ | `Notification` model and API: list, unread count, mark read, mark all read (new app `apps/notifications`; `dedupe_key` never sends the same alert twice; read-only admin; kinds named for the API docs: `NotificationKind`, and `ClassChangeKind` moved out of `ClassChange` for the same reason) | Users see only their own | `feat(notifications): add in-app notification endpoints` |
 | M8.2 ✅ | `notify_deliveries`: immediate tiers, timetable proposals and retractions (in `intelligence/delivery.py`, so `notifications` doesn't depend on `intelligence`; `notifications.services.send` stores alerts; Celery tasks `notify_insight` and `notify_retraction` after commit; `Delivery.notified_at` claims each delivery) | Only immediate tiers notify; merged duplicates notify nobody; never twice | `feat(notifications): notify students by tier` |
-| M8.3 | Daily digest job and digest page | One digest per student per day, only if there is something new | `feat(notifications): add daily digest` |
+| M8.3 ✅ | Daily digest job and digest page (`delivery.send_daily_digests`, Celery Beat `send-daily-digest` at 19:00; `GET feed/digest/?date=`; feed items now include `info_type`; `pages/Digest` grouped by type) | One digest per student per day, only if there is something new | `feat(notifications): add daily digest` |
 | M8.4 | Bell, notification list and links to the insight | 60-second polling while the tab is visible | `feat(notifications): add notification bell and list` |
 
 ## M9 — Pilot release

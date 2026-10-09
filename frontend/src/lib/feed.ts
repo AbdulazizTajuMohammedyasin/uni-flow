@@ -19,6 +19,18 @@ export function formatWhen(iso: string, withTime = true): string {
   })
 }
 
+/** Headings of the digest page, by information type (in this order). */
+export const INFO_TYPE_LABELS: Record<string, string> = {
+  academic_notice: 'Academic notices',
+  student_affairs: 'Student affairs',
+  internship: 'Internships',
+  bootcamp: 'Bootcamps',
+  industry_visit: 'Industry visits',
+  competition: 'Competitions',
+  scholarship: 'Scholarships',
+  '': 'Other',
+}
+
 /** "class_moved" -> "Class moved" */
 export function kindLabel(kind: string): string {
   const text = kind.replace(/_/g, ' ')

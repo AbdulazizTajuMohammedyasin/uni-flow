@@ -2,10 +2,18 @@
 
 from django.urls import path
 
-from .views import FeedDetailView, FeedDismissView, FeedFeedbackView, FeedListView, FeedReadView
+from .views import (
+    DigestView,
+    FeedDetailView,
+    FeedDismissView,
+    FeedFeedbackView,
+    FeedListView,
+    FeedReadView,
+)
 
 urlpatterns = [
     path("", FeedListView.as_view(), name="feed"),
+    path("digest/", DigestView.as_view(), name="feed-digest"),
     path("<int:insight_id>/", FeedDetailView.as_view(), name="feed-item"),
     path("<int:insight_id>/read/", FeedReadView.as_view(), name="feed-read"),
     path("<int:insight_id>/dismiss/", FeedDismissView.as_view(), name="feed-dismiss"),
