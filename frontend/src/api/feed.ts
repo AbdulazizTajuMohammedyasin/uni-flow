@@ -1,4 +1,4 @@
-import type { Digest, FeedDetail, FeedItem } from '@/types/feed'
+import type { Digest, FeedDetail, FeedItem, Home } from '@/types/feed'
 import type { Page } from '@/types/timetable'
 
 import { api } from './client'
@@ -8,6 +8,15 @@ import { toApiError } from './errors'
 export async function getFeed(): Promise<FeedItem[]> {
   try {
     return (await api.get<Page<FeedItem>>('/feed/', { params: { page_size: 100 } })).data.results
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** The home screen: the urgent levels, today's classes, changes waiting, and more. */
+export async function getHome(): Promise<Home> {
+  try {
+    return (await api.get<Home>('/feed/home/')).data
   } catch (error) {
     throw toApiError(error)
   }

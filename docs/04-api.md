@@ -56,7 +56,7 @@ These Djoser endpoints are restricted to `super_admin` in the MVP:
 | *[Later]* Announcements, documents, events, communities, applications | Browsable lists of each kind | Their information already reaches students through `feed/`. |
 | Notifications (M8.1) | `GET notifications/` (paginated, newest first: `{id, kind, title, body, target_type, target_id, read, created_at}`), `GET notifications/unread-count/` (`{count}`), `POST notifications/{id}/read/` (**204**), `POST notifications/read-all/` (`{marked}`) | Only the caller's own notifications (someone else's → 404). Each points to a feed item or a timetable change (`target_type`, `target_id`). |
 | Daily digest (M8.3) | `GET feed/digest/?date=YYYY-MM-DD` (`{date, items}`; without `date`, my latest digest; `date` is null when I have none) | The items included in that day's digest, most important first; same item shape as `feed/` (which now also has `info_type`). |
-| Home | `GET feed/home/` | `{direct, action, important, todays_classes, pending_timetable_changes, digest_preview, unread_notifications}`, each limited to a few items |
+| Home (M9.1) | `GET feed/home/` | `{direct, action, important, todays_classes, pending_timetable_changes, digest_preview, unread_notifications}`: up to 5 items per level, 3 in the digest preview, 5 changes waiting; same visibility as `feed/`; today's classes include confirmed changes; staff get empty classes and changes. At most 15 database queries. |
 | Search | `GET feed/search/?q=` | Searches every insight delivered to the caller (including ones below the display threshold). Needs at least 2 characters. |
 
 ## Manage surface (staff dashboard) [MVP]

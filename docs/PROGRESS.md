@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M8 is done ✅. Alerts are visible: **Notifications** in the menu with the **unread number**, the Notifications page, and each alert opens its item or the digest. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M9.1 (pilot release begins), a **home screen** with what matters right now: Direct attention, Action required, Important, today's classes and class changes waiting for you.
+**Now:** M9.1 is done ✅. The For you page starts with **Today**: your classes today and class changes waiting for you, from one fast request that the mobile app can use too. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M9.2, **search** across everything delivered to you.
 
 ---
 
@@ -23,7 +23,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ✅ Done except the real WhatsApp test (waits for the new number) |
 | **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ✅ Done |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ✅ Done |
-| **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
+| **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | 🔄 In progress |
 | **M10** Staff pages | After the pilot: pages for staff to check groups, fix AI mistakes and post official news | ⏳ |
 
 ---
@@ -158,6 +158,13 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M8.2 | **Sending alerts.** When something is published (or a name in it is matched), the background worker sends an alert to every student for whom it's **Direct attention** (you were named), **Action required**, or **Important** (a **class change to confirm** gets its own alert). **Digest** items don't alert; they wait for the daily digest (M8.3). An alert is **never sent twice** (each student and item is marked once, and the database refuses duplicates). A **forwarded copy** puts the item in new students' feeds but sends **no alert**. If a class change is **taken back**, the students alerted about it get "Taken back: …". | With the worker running, publish an important staff post in the admin (importance 70+), then `/django-admin/` → Notifications (or `/api/v1/notifications/` as a student) | ✅ Done |
 | M8.3 | **The daily digest.** "Digest" items are the *good to know* ones (not urgent, or the AI wasn't sure), so they **don't alert one by one**. Instead, **every evening at 7 pm** (Malaysia time) a scheduled job sends each student **one** alert: "Your daily digest: 4 new items", with the top 3 titles. **Nothing new → no alert.** At most **one per day**, even if the job runs twice. Items you dismissed, marked "not relevant", or that were retracted or expired are left out. Tapping the alert (M8.4) opens the **Digest page** (`/digest`): that day's items **grouped by type** (Academic notices, Student affairs, Internships…), each opening its item page. | Run the worker **and** `celery -A config beat` (the scheduler), or try it at once: `pipenv run python manage.py shell -c "from apps.intelligence.delivery import send_daily_digests; print(send_daily_digests())"`, then open `/digest` as a student | ✅ Done |
 | M8.4 | **The bell.** **Notifications** is in the menu ("Alerts" on phones) with a **red number** of unread alerts, checked **every 60 seconds only while the UniFlow tab is visible** (and again when you come back to it). The **Notifications page** lists your alerts, newest first: what kind ("You were named", "Class change to confirm", "Daily digest"…), the title and text, and "5 min ago"; unread ones are bold with a dot. **Tapping** one marks it read and **opens it** (its item page, or that day's Digest page). **Mark all as read** clears the number. | Run both servers (and the worker), log in as a student who has alerts → the number next to **Notifications** → tap an alert | ✅ Done |
+
+## M9 Pilot release: task by task
+
+| Task | What it did (plain words) | What you can see or try | Status |
+|---|---|---|---|
+| M9.1 | **Today at a glance.** A new address, `GET /api/v1/feed/home/`, gives everything the home screen needs in **one fast request** (15 database lookups at most): the first few Direct attention, Action required and Important items, **today's classes** (with changes you confirmed), **class changes waiting** for you, a digest preview and your unread alert count. It follows the same rules as the feed (you only see your own; dismissed, retracted and expired items are hidden). On the website, For you now starts with a **Today** box: your classes today (a cancelled one crossed out, a moved one marked) and "1 class change is waiting for you → Confirm or reject". Staff don't see the box. The mobile app will use the same address. | Run both servers, log in as a student with classes → **For you** | ✅ Done |
+| **M9.2** | **Search** across everything delivered to you | – | ⏭️ **Next** |
 ---
 
 ## Where things are

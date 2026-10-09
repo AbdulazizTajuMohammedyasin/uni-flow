@@ -7,6 +7,7 @@
 - my_item(): one item for its detail page (404 if it wasn't delivered to this student).
 - open_url(): where "Open original" goes for a message.
 - read / dismiss / not relevant: the student's own buttons.
+- home(): the home screen in one request (M9.1).
 """
 
 from datetime import date, datetime, time, timedelta
@@ -15,8 +16,12 @@ from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
+from apps.accounts import semesters
+from apps.accounts.models import UserRole
+from apps.notifications.models import Notification
 from apps.publishing.models import Status
-from apps.timetable.changes import changes_for
+from apps.timetable.changes import PENDING, changes_for
+from apps.timetable.services import classes_for_days
 
 from .models import Delivery, Message, Source
 
@@ -108,3 +113,40 @@ def not_relevant(delivery: Delivery) -> None:
     delivery.feedback = Delivery.Feedback.NOT_RELEVANT
     delivery.dismissed_at = delivery.dismissed_at or timezone.now()
     delivery.save(update_fields=["feedback", "dismissed_at", "updated_at"])
+
+
+# --- The home screen (M9.1) ---------------------------------------------------------------
+
+HOME_ITEMS = 5  # per level
+DIGEST_PREVIEW = 3
+
+
+def home(user) -> dict:
+    """Everything the home screen shows, in one request: the first few items of the three
+    urgent levels, today's classes (with confirmed changes), class changes waiting for an
+    answer, a digest preview and the unread alert count. Same visibility as the feed."""
+    feed = my_feed(user)
+    is_student = user.role == UserRole.STUDENT
+    today = semesters.today()
+    waiting = (
+        changes_for(user)
+        .filter(my_status=PENDING)
+        .filter(Q(date__gte=today) | Q(new_date__gte=today))
+        .prefetch_related("insight__evidence__message__source")
+        .order_by("date", "id")[:HOME_ITEMS]
+        if is_student
+        else []
+    )
+    return {
+        "direct": feed.filter(tier=Delivery.Tier.DIRECT)[:HOME_ITEMS],
+        "action": feed.filter(tier=Delivery.Tier.ACTION)[:HOME_ITEMS],
+        "important": feed.filter(tier=Delivery.Tier.IMPORTANT)[:HOME_ITEMS],
+        "digest_preview": feed.filter(tier=Delivery.Tier.DIGEST)[:DIGEST_PREVIEW],
+        "todays_classes": classes_for_days(user, [today])["days"][0]["classes"]
+        if is_student
+        else [],
+        "pending_timetable_changes": waiting,
+        "unread_notifications": Notification.objects.filter(
+            recipient=user, read_at__isnull=True
+        ).count(),
+    }

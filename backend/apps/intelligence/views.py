@@ -34,6 +34,7 @@ from .serializers import (
     FeedbackSerializer,
     FeedDetailSerializer,
     FeedItemSerializer,
+    HomeSerializer,
     ImportResultSerializer,
     JoinedSerializer,
     PasteSerializer,
@@ -406,3 +407,13 @@ class DigestView(APIView):
             raise exceptions.ValidationError({"date": ["Use the format YYYY-MM-DD."]}) from None
         day, items = feed.my_digest(request.user, day)
         return Response(DigestSerializer({"date": day, "items": items}).data)
+
+
+@extend_schema(tags=["feed"], responses=HomeSerializer)
+class HomeView(APIView):
+    """GET feed/home/ - the home screen: the first items of Direct attention, Action required
+    and Important, today's classes, class changes waiting for me, a digest preview and my
+    unread alert count."""
+
+    def get(self, request):
+        return Response(HomeSerializer(feed.home(request.user)).data)

@@ -3,13 +3,27 @@ import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import * as authApi from '@/api/auth'
 import * as feedApi from '@/api/feed'
+import { AuthProvider } from '@/context/AuthContext'
 import { createQueryClient } from '@/lib/queryClient'
-import type { FeedItem } from '@/types/feed'
+import { makeSchoolStaff, makeStudent } from '@/test/fixtures'
+import type { FeedItem, Home } from '@/types/feed'
 
 import { ForYouPage } from './ForYou'
 
-vi.mock('@/api/feed', () => ({ getFeed: vi.fn(), getFeedItem: vi.fn(), updateFeedItem: vi.fn() }))
+vi.mock('@/api/feed', () => ({ getFeed: vi.fn(), getHome: vi.fn(), getFeedItem: vi.fn(), updateFeedItem: vi.fn() }))
+vi.mock('@/api/auth', () => ({ restoreSession: vi.fn(), getCurrentUser: vi.fn(), logout: vi.fn() }))
+
+const emptyHome: Home = {
+  direct: [],
+  action: [],
+  important: [],
+  todays_classes: [],
+  pending_timetable_changes: [],
+  digest_preview: [],
+  unread_notifications: 0,
+}
 
 function feedItem(overrides: Partial<FeedItem> = {}): FeedItem {
   return {
@@ -40,12 +54,17 @@ function renderPage() {
   const router = createMemoryRouter([{ path: '/', element: <ForYouPage /> }])
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>,
   )
 }
 
 beforeEach(() => {
+  vi.mocked(authApi.restoreSession).mockResolvedValue(true)
+  vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeStudent())
+  vi.mocked(feedApi.getHome).mockResolvedValue(emptyHome)
   vi.mocked(feedApi.getFeed).mockResolvedValue([
     feedItem({ id: 1, tier: 'direct', title: 'See Dr Lee', reason: 'You were named in this message' }),
     feedItem({
@@ -65,7 +84,7 @@ describe('For you page', () => {
 
     expect(await screen.findByText('See Dr Lee')).toBeTruthy()
     const sections = screen.getAllByRole('region').map((section) => section.getAttribute('aria-label'))
-    expect(sections).toEqual(['Direct attention', 'Action required', 'Digest'])
+    expect(sections).toEqual(['Today', 'Direct attention', 'Action required', 'Digest'])
 
     const action = screen.getByRole('region', { name: 'Action required' })
     expect(within(action).getByText('Due Tue 20 Oct, 16:00 · For Computer Science students')).toBeTruthy()
@@ -80,5 +99,46 @@ describe('For you page', () => {
     vi.mocked(feedApi.getFeed).mockResolvedValue([])
     renderPage()
     expect(await screen.findByText('Nothing for you yet')).toBeTruthy()
+  })
+
+  it("shows today's classes and class changes waiting", async () => {
+    vi.mocked(feedApi.getHome).mockResolvedValue({
+      ...emptyHome,
+      todays_classes: [
+        {
+          section_id: 5,
+          course_code: 'CDE2313',
+          course_name: 'Data Structures',
+          section_code: 'A',
+          lecturer_name: '',
+          start_time: '14:00',
+          end_time: '16:00',
+          meeting_type: 'lecture',
+          building: '',
+          room: 'B2',
+          change: { id: 3, kind: 'class_moved', status: 'confirmed' },
+        },
+      ],
+      pending_timetable_changes: [{ id: 4 } as Home['pending_timetable_changes'][number]],
+    })
+    renderPage()
+
+    const today = await screen.findByRole('region', { name: 'Today' })
+    expect(within(today).getByText('14:00–16:00')).toBeTruthy()
+    expect(within(today).getByText('CDE2313 · B2')).toBeTruthy()
+    expect(within(today).getByText('Moved')).toBeTruthy()
+    expect(within(today).getByText(/1 class change is waiting for you/)).toBeTruthy()
+  })
+
+  it('says when there are no classes today', async () => {
+    renderPage()
+    expect(await screen.findByText('No classes today.')).toBeTruthy()
+  })
+
+  it('hides the box for staff', async () => {
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue(makeSchoolStaff())
+    renderPage()
+    expect(await screen.findByText('See Dr Lee')).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Today' })).toBeNull()
   })
 })

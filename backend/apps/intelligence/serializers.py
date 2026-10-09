@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.academics.models import Course, Intake, Programme, School
 from apps.timetable.models import CourseSection
+from apps.timetable.serializers import ClassChangeSerializer, ClassSlotSerializer
 
 from .models import Delivery, Source
 
@@ -242,3 +243,15 @@ class FeedbackSerializer(serializers.Serializer):
     """POST feed/{insight_id}/feedback/"""
 
     feedback = serializers.ChoiceField(choices=Delivery.Feedback.choices)
+
+
+class HomeSerializer(serializers.Serializer):
+    """GET feed/home/ - the home screen in one request."""
+
+    direct = FeedItemSerializer(many=True)
+    action = FeedItemSerializer(many=True)
+    important = FeedItemSerializer(many=True)
+    todays_classes = ClassSlotSerializer(many=True)
+    pending_timetable_changes = ClassChangeSerializer(many=True)
+    digest_preview = FeedItemSerializer(many=True)
+    unread_notifications = serializers.IntegerField()

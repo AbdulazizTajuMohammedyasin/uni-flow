@@ -1,5 +1,7 @@
 /** Shapes of the "For you" feed API (/api/v1/feed/). */
 
+import type { ClassChange, ClassSlot } from './timetable'
+
 export type Tier = 'direct' | 'action' | 'important' | 'digest'
 
 /** One item of my feed: what UniFlow found (or staff posted), plus why I see it. */
@@ -47,4 +49,15 @@ export type FeedDetail = FeedItem & {
 export type Digest = {
   date: string | null
   items: FeedItem[]
+}
+
+/** GET feed/home/ - the home screen in one request. */
+export type Home = {
+  direct: FeedItem[]
+  action: FeedItem[]
+  important: FeedItem[]
+  todays_classes: ClassSlot[]
+  pending_timetable_changes: ClassChange[]
+  digest_preview: FeedItem[]
+  unread_notifications: number
 }

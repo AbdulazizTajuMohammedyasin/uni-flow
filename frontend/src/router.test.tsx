@@ -13,7 +13,18 @@ import { RouteErrorPage } from './pages/RouteError/RouteError'
 import { createAppRoutes } from './router'
 
 // The home page is "For you" and the active-link test opens Groups: answer them empty.
-vi.mock('@/api/feed', () => ({ getFeed: vi.fn().mockResolvedValue([]) }))
+vi.mock('@/api/feed', () => ({
+  getFeed: vi.fn().mockResolvedValue([]),
+  getHome: vi.fn().mockResolvedValue({
+    direct: [],
+    action: [],
+    important: [],
+    todays_classes: [],
+    pending_timetable_changes: [],
+    digest_preview: [],
+    unread_notifications: 0,
+  }),
+}))
 vi.mock('@/api/sources', () => ({ getMySources: vi.fn().mockResolvedValue([]) }))
 vi.mock('@/api/notifications', () => ({ getUnreadCount: vi.fn().mockResolvedValue(3) }))
 

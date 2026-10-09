@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { PageLoading } from '@/components/PageLoading'
+import { TodayBox } from '@/components/TodayBox'
 import { Badge } from '@/components/ui/badge'
 import { useFeed } from '@/hooks/useFeed'
 import { formatWhen, TIERS } from '@/lib/feed'
@@ -20,6 +21,8 @@ export function ForYouPage() {
           Only the information that matters to you, from your academic groups.
         </p>
       </div>
+
+      <TodayBox />
 
       {feed.isPending ? (
         <PageLoading />
