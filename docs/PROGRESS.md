@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M7.5 is done ✅. The **feed API**: the addresses the "For you" page will use. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M7.6, the **"For you" page** itself and the item page with its evidence; the student menu becomes For you, Timetable, Groups, Profile.
+**Now:** M7 is done ✅. The home page is now **"For you"**: what matters to you in four levels, each item with its reason and the original messages. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M8.1, **notifications** inside UniFlow (a list, an unread count, mark as read); the Notifications link joins the menu then.
 
 ---
 
@@ -21,7 +21,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | **M4** Messages | UniFlow can store messages and timetable files from groups (pasted, uploaded, WhatsApp "Export chat", Google Drive links) | ✅ Done |
 | **M5** AI, first version | The AI **reads a shared timetable** and the student confirms it; the AI spots "class moved / cancelled / room changed" and the student confirms; their timetable updates | ✅ Done |
 | **M6** Connectors | Students add their groups in the app, and UniFlow's own WhatsApp number joins them in the background | ✅ Done except the real WhatsApp test (waits for the new number) |
-| **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | 🔄 In progress |
+| **M7** AI, full version | Internships, notices, mentions of your name, and the personal "For you" feed with 4 levels | ✅ Done |
 | **M8** Notifications | Alerts inside UniFlow only for what matters to you, plus a daily summary (phone alerts come with the mobile app) | ⏳ |
 | **M9** Pilot | Home screen, search, privacy notice, putting it online, and testing with a small group of real students (you check things in the Django admin) | ⏳ |
 | **M10** Staff pages | After the pilot: pages for staff to check groups, fix AI mistakes and post official news | ⏳ |
@@ -148,7 +148,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | M7.3 | **One announcement, not ten copies.** Before saving something the AI found, UniFlow checks the last **2 weeks** for the same information: for a **timetable change**, everything must match (course, section, date, new time and room), so "moved to 2 PM" and "moved to 3 PM" stay **separate** and the conflict is visible; for **other information**, the same link, or the same date and a title with mostly the same words. A match adds the new message as **extra proof** instead of a second item, keeps the **higher "how sure"** score, and can publish a draft that was too unsure once another group confirms it. Retracted items are never brought back this way. | Paste the same announcement in two of your groups (worker running), then `/django-admin/` → Intelligence → Insights: one insight with two pieces of evidence | ✅ Done |
 | M7.4 | **What matters to *you*.** When an item is published, UniFlow works out for **each student**: **who** gets it (the students it's for, the members of the groups it came from, anyone named; a timetable change only goes to that section; never staff), **how relevant** it is (0–100: named 100, your section 90, your course 85, your group 80, your programme 65…; your **interests** raise it, a kind of information you **switched off** lowers it a lot), the **level** (**Direct attention** if you were named, **Action required** if you must act, **Important** for e.g. a change to your own class, else the **Digest**; an item the AI wasn't sure about only goes in the digest), and a short **reason** ("You are in CDE2313 Section A", "Matches your interest: Artificial Intelligence"). Items that matter too little to someone aren't shown to them. Plain code, no AI, so no quota. | `pipenv run python manage.py migrate`; then `/django-admin/` → Intelligence → **Deliveries** (who got what, at which level, and why) | ✅ Done |
 | M7.5 | **Feed API.** The addresses the "For you" page will call: **my feed** (Direct attention first, then Action required, Important, Digest; newest first in each; or only one level), **one item** with why I see it and the **original messages** (sender, group, time, quote, and "open original": the exact Telegram post, or the WhatsApp group), whether I confirmed it if it's a timetable change, and buttons for **read**, **dismiss** and **"not relevant to me"**. You only ever see **your own** items (anything else: "not found"); retracted or expired items disappear. | `/api/v1/docs/` → **feed** (log in as a student with some deliveries) | ✅ Done |
-| **M7.6** | **"For you" page** and the item page with its evidence | – | ⏭️ **Next** |
+| M7.6 | **The "For you" page.** The home page (`/`) is now **For you**: your items in **four sections in order** (Direct attention, Action required, Important updates, Digest; empty ones hidden). Each card shows the title, summary, date or deadline, **why you see it**, an **Official** or **Not confirmed** tag, and a dot if unread. Clicking opens the **item page**: details, a **"What to do"** box, a link, the **original messages** with **Open original**, a link to your timetable for a class change, and **Dismiss** / **Not relevant to me**. Opening it marks it read. The menu is now **For you, Timetable, Groups** (Profile stays at the bottom of the sidebar); the old "Announcements" and "Events" placeholders are gone. **Notifications** joins the menu with M8. | Run both servers, log in as a student → **For you** (items appear once groups bring in messages, or after you publish a staff post in the admin) | ✅ Done |
 ---
 
 ## Where things are
@@ -167,14 +167,14 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 |---|---|
 | `main.tsx` | Starting point: turns on data loading (TanStack Query) and the router |
 | `router.tsx` | **The router:** which address shows which page |
-| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `timetable.ts` (sections, today, week), `sources.ts` (groups, paste, upload), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
+| `api/` | **Talking to the backend:** `client.ts` (the connection, which refreshes the login automatically), `auth.ts` (login, logout, who am I, profile, password), `timetable.ts` (sections, today, week, imports, changes), `sources.ts` (groups, paste, upload, connect), `feed.ts` (the "For you" feed), `academics.ts` (schools, programmes, intakes), `errors.ts` (reads errors), `health.ts` (health check), `tokenStore.ts` (the access token, in memory only) |
 | `context/` | `AuthContext.tsx`: who is logged in (`useAuth()`) |
-| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useTimetable.ts` (today, week, my sections), `useSources.ts` (groups), `useHealth.ts` |
-| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `sources.ts`, `health.ts` |
+| `hooks/` | Data hooks for pages: `useAcademics.ts` (schools, programmes, intakes), `usePreferences.ts` (interest choices), `useTimetable.ts` (today, week, my sections), `useSources.ts` (groups), `useFeed.ts` (For you), `useHealth.ts` |
+| `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `sources.ts`, `feed.ts`, `health.ts` |
 | `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `SectionPicker`, `AddClassForm` and `TimetableImport` (timetable), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `Timetable/`, `Sources/` (Groups), `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
-| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage), `timetable.ts` (date and class-time formatting) |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `ForYou/` (the home page), `Insight/` (one item), `Timetable/`, `Sources/` (Groups), `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage), `timetable.ts` (date and class-time formatting), `feed.ts` (the four levels and date formatting) |
 | `index.css` | Colours and fonts |
 
 ### Backend files so far (`backend/`)

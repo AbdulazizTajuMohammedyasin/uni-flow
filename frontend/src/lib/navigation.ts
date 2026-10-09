@@ -11,9 +11,7 @@ export type NavItem = {
 }
 
 export const studentNavItems: NavItem[] = [
-  { to: '/', label: 'Home', shortLabel: 'Home', end: true },
-  { to: '/announcements', label: 'Announcements', shortLabel: 'News' },
-  { to: '/events', label: 'Events', shortLabel: 'Events' },
+  { to: '/', label: 'For you', shortLabel: 'For you', end: true },
   { to: '/timetable', label: 'Timetable', shortLabel: 'Classes' },
   { to: '/sources', label: 'Groups', shortLabel: 'Groups' },
 ]

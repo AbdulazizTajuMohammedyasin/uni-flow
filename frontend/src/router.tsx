@@ -32,9 +32,14 @@ export function createAppRoutes(): RouteObject[] {
               path: '/',
               lazy: { Component: async () => (await import('./components/AppLayout')).default },
               children: [
-                { index: true, element: <PlaceholderPage title="Home" /> },
-                { path: 'announcements', element: <PlaceholderPage title="Announcements" /> },
-                { path: 'events', element: <PlaceholderPage title="Events" /> },
+                {
+                  index: true,
+                  lazy: { Component: async () => (await import('./pages/ForYou/ForYou')).ForYouPage },
+                },
+                {
+                  path: 'insights/:insightId',
+                  lazy: { Component: async () => (await import('./pages/Insight/Insight')).InsightPage },
+                },
                 {
                   path: 'timetable',
                   lazy: {

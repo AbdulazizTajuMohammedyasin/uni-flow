@@ -12,6 +12,10 @@ import { createQueryClient } from './lib/queryClient'
 import { RouteErrorPage } from './pages/RouteError/RouteError'
 import { createAppRoutes } from './router'
 
+// The home page is "For you" and the active-link test opens Groups: answer them empty.
+vi.mock('@/api/feed', () => ({ getFeed: vi.fn().mockResolvedValue([]) }))
+vi.mock('@/api/sources', () => ({ getMySources: vi.fn().mockResolvedValue([]) }))
+
 // The layout shows the dev-only API health badge; answer it with a fake "ok" (no network).
 vi.mock('@/api/academics', () => ({
   getSchools: vi.fn().mockResolvedValue([]),
@@ -60,31 +64,34 @@ function renderAt(path: string) {
 }
 
 describe('student area (AppLayout)', () => {
-  it('renders the home page with sidebar and bottom navigation', async () => {
+  it('renders the "For you" home page with sidebar and bottom navigation', async () => {
     renderAt('/')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'For you' })).toBeTruthy()
 
     const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
-    for (const label of ['Home', 'Announcements', 'Events', 'Timetable', 'Groups']) {
+    for (const label of ['For you', 'Timetable', 'Groups']) {
       expect(within(sidebar).getByRole('link', { name: label })).toBeTruthy()
+    }
+    for (const gone of ['Home', 'Announcements', 'Events']) {
+      expect(within(sidebar).queryByRole('link', { name: gone })).toBeNull()
     }
 
     const bottom = screen.getByRole('navigation', { name: 'Bottom navigation' })
-    expect(within(bottom).getAllByRole('link')).toHaveLength(5)
+    expect(within(bottom).getAllByRole('link')).toHaveLength(3)
     expect(screen.queryByRole('link', { name: 'Staff dashboard' })).toBeNull()
   })
 
   it('highlights the active link', async () => {
-    renderAt('/events')
+    renderAt('/sources')
 
-    await screen.findByRole('heading', { level: 1, name: 'Events' })
+    await screen.findByRole('heading', { level: 1, name: 'Groups' })
     const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
 
-    expect(within(sidebar).getByRole('link', { name: 'Events' }).getAttribute('aria-current')).toBe(
+    expect(within(sidebar).getByRole('link', { name: 'Groups' }).getAttribute('aria-current')).toBe(
       'page',
     )
-    expect(within(sidebar).getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBeNull()
+    expect(within(sidebar).getByRole('link', { name: 'For you' }).getAttribute('aria-current')).toBeNull()
   })
 })
 
@@ -92,11 +99,13 @@ describe('login protection', () => {
   it('sends visitors who are not logged in to /login, remembering where they were going', async () => {
     vi.mocked(authApi.restoreSession).mockResolvedValue(false)
 
-    const router = renderAt('/events')
+    const router = renderAt('/sources')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy()
+    // A longer wait: the first load of the login page can be slow on CI machines.
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Log in' }, { timeout: 5000 })
+    expect(heading).toBeTruthy()
     expect(router.state.location.pathname).toBe('/login')
-    expect(router.state.location.search).toBe('?next=%2Fevents')
+    expect(router.state.location.search).toBe('?next=%2Fsources')
   })
 })
 
@@ -104,7 +113,7 @@ describe('onboarding', () => {
   it('sends a student who has not chosen their studies to /onboarding', async () => {
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({ ...student, profile_complete: false })
 
-    const router = renderAt('/events')
+    const router = renderAt('/sources')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Welcome/ })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/onboarding')
@@ -120,10 +129,10 @@ describe('other areas', () => {
     expect(screen.queryByRole('navigation', { name: 'Sidebar' })).toBeNull()
   })
 
-  it('sends a logged-in user away from /login to Home', async () => {
+  it('sends a logged-in user away from /login to For you', async () => {
     const router = renderAt('/login')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'For you' })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/')
   })
 
@@ -187,7 +196,7 @@ describe('staff dashboard (StaffLayout)', () => {
 
     renderAt('/')
 
-    await screen.findByRole('heading', { level: 1, name: 'Home' })
+    await screen.findByRole('heading', { level: 1, name: 'For you' })
     const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
     expect(within(sidebar).getByRole('link', { name: 'Staff dashboard' })).toBeTruthy()
   })
