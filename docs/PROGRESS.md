@@ -5,8 +5,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 
 **What UniFlow is (updated after M2.8):** an **AI assistant** that reads academic WhatsApp and Telegram groups, works out what matters to each student, and shows only that, in one place. *"No fluff. No information overload. Just the information that matters to you."* See [01-product.md](01-product.md).
 
-**Now:** M9.1 is done ✅. The For you page starts with **Today**: your classes today and class changes waiting for you, from one fast request that the mobile app can use too. (M6.3's real WhatsApp test still waits for the new number.)
-**Next up:** M9.2, **search** across everything delivered to you.
+**Now:** M9.2 is done ✅. **Search**: find anything UniFlow showed you by typing a few words. (M6.3's real WhatsApp test still waits for the new number.)
+**Next up:** M9.3, a **privacy notice** (at registration and in the profile) and a list of **senders whose messages UniFlow skips**.
 
 ---
 
@@ -164,7 +164,8 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | Task | What it did (plain words) | What you can see or try | Status |
 |---|---|---|---|
 | M9.1 | **Today at a glance.** A new address, `GET /api/v1/feed/home/`, gives everything the home screen needs in **one fast request** (15 database lookups at most): the first few Direct attention, Action required and Important items, **today's classes** (with changes you confirmed), **class changes waiting** for you, a digest preview and your unread alert count. It follows the same rules as the feed (you only see your own; dismissed, retracted and expired items are hidden). On the website, For you now starts with a **Today** box: your classes today (a cancelled one crossed out, a moved one marked) and "1 class change is waiting for you → Confirm or reject". Staff don't see the box. The mobile app will use the same address. | Run both servers, log in as a student with classes → **For you** | ✅ Done |
-| **M9.2** | **Search** across everything delivered to you | – | ⏭️ **Next** |
+| M9.2 | **Search.** "Search" is in the menu. Type a few words (e.g. "petronas internship") and UniFlow finds every item that was **delivered to you**, including ones you read, dismissed or got in a digest, newest first. It looks in titles, summaries, places, "what to do" and the **original messages**; with several words, an item must contain **all** of them. It **never** shows something that wasn't delivered to you, nor retracted or expired items. At least 2 characters. | Run both servers, log in as a student → **Search** | ✅ Done |
+| **M9.3** | **Privacy notice** and the list of senders whose messages are skipped | – | ⏭️ **Next** |
 ---
 
 ## Where things are
@@ -189,7 +190,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 | `types/` | TypeScript shapes of API data: `academics.ts`, `auth.ts`, `timetable.ts`, `sources.ts`, `feed.ts`, `notifications.ts`, `health.ts` |
 | `components/` | Page frames (`AppLayout`, `AuthLayout`, `StaffLayout`), `RequireAuth` (login-only pages, and sends new students to onboarding), `FormField` and `SelectField` (form inputs), `StudentDetailsForm`, `PreferencesForm` (interests, information types, nicknames), `SectionPicker`, `AddClassForm` and `TimetableImport` (timetable), `ChangePasswordForm`, `RequireCapability` (staff pages: "No access" if not allowed), `Can` (hides buttons you can't use), small boxes (`EmptyState`, `ErrorState`, `PageLoading`) and the dev-only `HealthBadge` |
 | `components/ui/` | **shadcn** components (Button, Badge, Input, Label). Add more with `npx shadcn@latest add <name>`. |
-| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `ForYou/` (the home page), `Insight/` (one item), `Digest/` (one day's digest), `Notifications/`, `Timetable/`, `Sources/` (Groups), `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
+| `pages/` | One folder per page: `Login/`, `Register/`, `ActivateAccount/`, `ForgotPassword/`, `ResetPassword/`, `Onboarding/`, `Profile/`, `ForYou/` (the home page), `Insight/` (one item), `Digest/` (one day's digest), `Notifications/`, `Search/`, `Timetable/`, `Sources/` (Groups), `NoAccess/`, `NotFound/`, `Placeholder/`, `RouteError/` |
 | `lib/` | Helpers: `utils.ts` (shadcn), `queryClient.ts`, `navigation.ts` (the student and staff menu links), `capabilities.ts` (what the user may manage), `timetable.ts` (date and class-time formatting), `feed.ts` (the four levels, digest headings, date formatting), `notifications.ts` (alert labels, where each alert goes, "5 min ago") |
 | `index.css` | Colours and fonts |
 

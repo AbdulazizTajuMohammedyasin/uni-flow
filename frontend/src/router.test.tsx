@@ -82,7 +82,7 @@ describe('student area (AppLayout)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'For you' })).toBeTruthy()
 
     const sidebar = screen.getByRole('navigation', { name: 'Sidebar' })
-    for (const label of ['For you', 'Timetable', 'Groups', /^Notifications/]) {
+    for (const label of ['For you', 'Timetable', 'Groups', 'Search', /^Notifications/]) {
       expect(within(sidebar).getByRole('link', { name: label })).toBeTruthy()
     }
     for (const gone of ['Home', 'Announcements', 'Events']) {
@@ -90,7 +90,7 @@ describe('student area (AppLayout)', () => {
     }
 
     const bottom = screen.getByRole('navigation', { name: 'Bottom navigation' })
-    expect(within(bottom).getAllByRole('link')).toHaveLength(4)
+    expect(within(bottom).getAllByRole('link')).toHaveLength(5)
     expect((await within(sidebar).findByLabelText('3 unread')).textContent).toBe('3')
     expect(screen.queryByRole('link', { name: 'Staff dashboard' })).toBeNull()
   })

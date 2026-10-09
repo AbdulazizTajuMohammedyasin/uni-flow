@@ -10,11 +10,13 @@ from .views import (
     FeedListView,
     FeedReadView,
     HomeView,
+    SearchView,
 )
 
 urlpatterns = [
     path("", FeedListView.as_view(), name="feed"),
     path("home/", HomeView.as_view(), name="feed-home"),
+    path("search/", SearchView.as_view(), name="feed-search"),
     path("digest/", DigestView.as_view(), name="feed-digest"),
     path("<int:insight_id>/", FeedDetailView.as_view(), name="feed-item"),
     path("<int:insight_id>/read/", FeedReadView.as_view(), name="feed-read"),

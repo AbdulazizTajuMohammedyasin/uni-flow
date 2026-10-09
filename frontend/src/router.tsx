@@ -37,6 +37,10 @@ export function createAppRoutes(): RouteObject[] {
                   lazy: { Component: async () => (await import('./pages/ForYou/ForYou')).ForYouPage },
                 },
                 {
+                  path: 'search',
+                  lazy: { Component: async () => (await import('./pages/Search/Search')).SearchPage },
+                },
+                {
                   path: 'notifications',
                   lazy: {
                     Component: async () =>

@@ -62,7 +62,7 @@ export default function AppLayout() {
 
       <nav
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-4 border-t border-slate-200 bg-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-slate-200 bg-white md:hidden"
       >
         {studentNavItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={bottomLinkClass}>

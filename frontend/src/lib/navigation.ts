@@ -16,6 +16,7 @@ export const studentNavItems: NavItem[] = [
   { to: '/', label: 'For you', shortLabel: 'For you', end: true },
   { to: '/timetable', label: 'Timetable', shortLabel: 'Classes' },
   { to: '/sources', label: 'Groups', shortLabel: 'Groups' },
+  { to: '/search', label: 'Search', shortLabel: 'Search' },
   { to: '/notifications', label: 'Notifications', shortLabel: 'Alerts', badge: 'unread' },
 ]
 

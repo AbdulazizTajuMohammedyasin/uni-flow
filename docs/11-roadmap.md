@@ -496,7 +496,7 @@ The AI can only tell who is affected if UniFlow knows each student's classes. Ev
 | # | Task | Verify | Commit |
 |---|---|---|---|
 | M9.1 ✅ | Home API and page: direct, action, important, today's classes, pending changes (`GET feed/home/`, `feed.home()`; the For you page gets a "Today" box (`components/TodayBox.tsx`) instead of a separate page; staff get empty classes and changes) | Same visibility as the feed; 15 queries or fewer | `feat(intelligence): add home screen` |
-| M9.2 | Search API and page over the caller's deliveries | Never returns undelivered insights | `feat(intelligence): add search` |
+| M9.2 ✅ | Search API and page over the caller's deliveries (`feed.search()`, `GET feed/search/?q=`; every word must match the title, summary, place, action or a quoted message; read, dismissed and digested items included; `pages/Search`, "Search" in the menu; the For you card became the shared `FeedItemCard`) | Never returns undelivered insights | `feat(intelligence): add search` |
 | M9.3 | Privacy notice (registration and profile) and the sender exclusion list | Excluded senders' messages are skipped | `feat(accounts): add privacy notice and sender exclusion` |
 | M9.4 | Django admin for the operator: draft queue, publish and retract actions, source review, AI usage list | Actions do the same as the services | `feat(intelligence): add operator admin actions` |
 | M9.5 | Production settings hardening | `check --deploy` is clean | `chore(security): harden production settings` |

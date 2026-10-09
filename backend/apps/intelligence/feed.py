@@ -8,6 +8,7 @@
 - open_url(): where "Open original" goes for a message.
 - read / dismiss / not relevant: the student's own buttons.
 - home(): the home screen in one request (M9.1).
+- search(): find my own items by words (M9.2).
 """
 
 from datetime import date, datetime, time, timedelta
@@ -150,3 +151,24 @@ def home(user) -> dict:
             recipient=user, read_at__isnull=True
         ).count(),
     }
+
+
+# --- Search (M9.2) --------------------------------------------------------------------------
+
+MIN_SEARCH = 2  # characters
+
+
+def search(user, text: str) -> QuerySet[Delivery]:
+    """My items (read, dismissed and digested ones too) containing every word of `text` in
+    the title, summary, place, "what to do" or a quoted original message; newest first.
+    Only ever my own deliveries: nothing delivered to someone else."""
+    results = _visible(user)
+    for word in text.split()[:10]:
+        results = results.filter(
+            Q(insight__title__icontains=word)
+            | Q(insight__summary__icontains=word)
+            | Q(insight__location__icontains=word)
+            | Q(insight__action_text__icontains=word)
+            | Q(insight__evidence__quote__icontains=word)
+        )
+    return results.distinct().order_by("-insight__published_at", "-id")

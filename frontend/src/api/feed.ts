@@ -22,6 +22,15 @@ export async function getHome(): Promise<Home> {
   }
 }
 
+/** Everything delivered to me that contains every word of `q` (2+ characters). */
+export async function searchFeed(q: string): Promise<FeedItem[]> {
+  try {
+    return (await api.get<Page<FeedItem>>('/feed/search/', { params: { q, page_size: 50 } })).data.results
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
 /** One day's daily digest (YYYY-MM-DD), or my latest one. */
 export async function getDigest(date?: string): Promise<Digest> {
   try {

@@ -417,3 +417,19 @@ class HomeView(APIView):
 
     def get(self, request):
         return Response(HomeSerializer(feed.home(request.user)).data)
+
+
+@extend_schema(
+    tags=["feed"],
+    parameters=[OpenApiParameter("q", str, description="Words to look for (2+ characters).")],
+)
+class SearchView(generics.ListAPIView):
+    """GET feed/search/?q= - search everything delivered to me (paginated, newest first)."""
+
+    serializer_class = FeedItemSerializer
+
+    def get_queryset(self):
+        text = self.request.query_params.get("q", "").strip()
+        if len(text) < feed.MIN_SEARCH:
+            raise exceptions.ValidationError({"q": ["Type at least 2 characters."]})
+        return feed.search(self.request.user, text)
