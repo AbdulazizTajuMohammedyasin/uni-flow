@@ -260,6 +260,8 @@ CELERY_BEAT_SCHEDULE = {
 
 # Privacy: message text and timetable files are deleted after this many days.
 MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))
+# The operator's list of AI requests (M9.4) keeps this many days.
+AI_CALL_RETENTION_DAYS = 90
 
 
 # The AI (apps/intelligence/providers.py): Gemini's free tier (the developer's decision).

@@ -6,10 +6,13 @@ from django.db import models
 from django.utils import timezone
 
 from apps.audiences.models import Audience
+from apps.publishing.models import Status
 
 from . import services
 from .models import (
+    AICall,
     Delivery,
+    DraftInsight,
     ExcludedSender,
     Insight,
     InsightEvidence,
@@ -21,6 +24,10 @@ from .models import (
     TimetableImport,
 )
 from .tasks import triage_source
+
+# No "date_hierarchy" (the year/month/day bar): on MySQL it needs the time-zone tables, which
+# a Windows MySQL install usually lacks, and the page then crashes. Date filters ("Today",
+# "Past 7 days", "This month") in list_filter work everywhere.
 
 # Links typed without "https://" are read as https (Django 6.0's default, chosen now).
 HTTPS_LINKS = {models.URLField: {"assume_scheme": "https"}}
@@ -34,13 +41,79 @@ class SourceMemberInline(admin.TabularInline):
 
 @admin.register(Source)
 class SourceAdmin(admin.ModelAdmin):
+    """Groups. Review new ones: what they are for (the scope students suggested), whether
+    they are official, and disconnect any that aren't academic."""
+
     formfield_overrides = HTTPS_LINKS
-    list_display = ("title", "platform", "status", "trust", "scope_confirmed", "joined_at")
+    list_display = (
+        "title",
+        "platform",
+        "status",
+        "trust",
+        "scope_confirmed",
+        "member_count",
+        "message_count",
+        "connected_by",
+        "created_at",
+    )
     list_filter = ("platform", "status", "trust", "scope_confirmed")
     search_fields = ("title", "external_id")
     raw_id_fields = ("connected_by", "section")
+    list_select_related = ("connected_by",)
     inlines = [SourceMemberInline]
-    actions = ["sort_new_messages"]
+    actions = [
+        "sort_new_messages",
+        "confirm_scope",
+        "mark_official",
+        "mark_normal",
+        "disconnect",
+        "reconnect",
+    ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .annotate(
+                member_total=models.Count("members", distinct=True),
+                message_total=models.Count("messages", distinct=True),
+            )
+        )
+
+    @admin.display(description="Members", ordering="member_total")
+    def member_count(self, source):
+        return source.member_total
+
+    @admin.display(description="Messages", ordering="message_total")
+    def message_count(self, source):
+        return source.message_total
+
+    @admin.action(description="Confirm what these groups are for (their scope)")
+    def confirm_scope(self, request, queryset):
+        count = queryset.update(scope_confirmed=True, updated_at=timezone.now())
+        self.message_user(request, f"Scope confirmed for {count} group(s).")
+
+    @admin.action(description="Mark as official (university or staff channels)")
+    def mark_official(self, request, queryset):
+        count = queryset.update(trust=Source.Trust.OFFICIAL, updated_at=timezone.now())
+        self.message_user(request, f"{count} group(s) marked official.")
+
+    @admin.action(description="Mark as normal (not official)")
+    def mark_normal(self, request, queryset):
+        count = queryset.update(trust=Source.Trust.NORMAL, updated_at=timezone.now())
+        self.message_user(request, f"{count} group(s) marked normal.")
+
+    @admin.action(description="Disconnect (UniFlow stops reading these groups)")
+    def disconnect(self, request, queryset):
+        count = queryset.update(status=Source.Status.DISCONNECTED, updated_at=timezone.now())
+        self.message_user(request, f"{count} group(s) disconnected; new messages are ignored.")
+
+    @admin.action(description="Reconnect (read these groups again)")
+    def reconnect(self, request, queryset):
+        count = queryset.filter(status=Source.Status.DISCONNECTED).update(
+            status=Source.Status.ACTIVE, updated_at=timezone.now()
+        )
+        self.message_user(request, f"{count} group(s) reconnected.")
 
     @admin.action(description="Sort new messages now (academic or noise)")
     def sort_new_messages(self, request, queryset):
@@ -52,9 +125,8 @@ class SourceAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     list_display = ("sent_at", "source", "sender_name", "short_text", "triage")
-    list_filter = ("triage", "source__platform", "source")
+    list_filter = ("triage", "source__platform", "source", "sent_at")
     search_fields = ("text", "sender_name")
-    date_hierarchy = "sent_at"
     raw_id_fields = ("source", "reply_to")
     list_select_related = ("source",)
     actions = ["exclude_senders"]
@@ -131,9 +203,8 @@ class InsightAdmin(admin.ModelAdmin):
         "publisher_type",
         "published_at",
     )
-    list_filter = ("status", "origin", "kind", "publisher_type")
+    list_filter = ("status", "origin", "kind", "publisher_type", "created_at")
     search_fields = ("title", "summary")
-    date_hierarchy = "created_at"
     fields = (
         "kind",
         "title",
@@ -238,4 +309,76 @@ class DeliveryAdmin(admin.ModelAdmin):
     readonly_fields = [field.name for field in Delivery._meta.fields]
 
     def has_add_permission(self, request):
+        return False
+
+
+@admin.register(DraftInsight)
+class DraftInsightAdmin(admin.ModelAdmin):
+    """The operator's queue: what the AI found but wasn't sure enough to publish (or held
+    back, e.g. an unknown course), oldest first. Publish uses the same code as everywhere
+    else (students get it in their feed and alerts); Reject takes it back for good."""
+
+    list_display = ("title", "kind", "how_sure", "group", "quote", "created_at")
+    list_filter = ("kind",)
+    search_fields = ("title", "summary")
+    ordering = ("created_at",)
+    actions = ["publish_selected", "reject_selected"]
+    list_display_links = ("title",)
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .filter(status=Status.DRAFT, origin=Insight.Origin.AI)
+            .select_related("publisher_source")
+            .prefetch_related("evidence")
+        )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False  # open it under Insights to correct it
+
+    @admin.display(description="How sure")
+    def how_sure(self, insight):
+        return f"{insight.confidence:.0%}"
+
+    @admin.display(description="Group")
+    def group(self, insight):
+        return insight.publisher_source.title if insight.publisher_source else ""
+
+    @admin.display(description="Quote")
+    def quote(self, insight):
+        first = next(iter(insight.evidence.all()), None)
+        return first.quote[:120] if first else ""
+
+    @admin.action(description="Publish (students get it, with alerts as usual)")
+    def publish_selected(self, request, queryset):
+        for insight in queryset:
+            services.publish_insight(insight, request.user)
+        self.message_user(request, f"Published {queryset.count()} item(s).")
+
+    @admin.action(description="Reject (take it back; students never see it)")
+    def reject_selected(self, request, queryset):
+        count = 0
+        for insight in queryset:
+            services.retract_insight(insight, request.user)
+            count += 1
+        self.message_user(request, f"Rejected {count} item(s).")
+
+
+@admin.register(AICall)
+class AICallAdmin(admin.ModelAdmin):
+    """Every AI request: filter by date ("Today") and model to see how much of each model's
+    free daily allowance is used (kept 90 days)."""
+
+    list_display = ("created_at", "kind", "model", "outcome", "detail")
+    list_filter = ("created_at", "outcome", "kind", "model")
+    readonly_fields = [field.name for field in AICall._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False

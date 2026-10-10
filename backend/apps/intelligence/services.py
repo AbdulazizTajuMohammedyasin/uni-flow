@@ -28,6 +28,7 @@ from . import whatsapp_export
 from .delivery import deliver, queue_notifications
 from .models import (
     UNSURE,
+    AICall,
     ExcludedSender,
     Insight,
     InsightEvidence,
@@ -234,7 +235,14 @@ def clear_old_messages(now=None) -> dict[str, int]:
         stored.save(update_fields=["file", "file_deleted_at", "updated_at"])
         deleted_files += 1
 
-    return {"messages_cleared": cleared, "files_deleted": deleted_files}
+    ai_calls, _ = AICall.objects.filter(
+        created_at__lt=now - timedelta(days=settings.AI_CALL_RETENTION_DAYS)
+    ).delete()
+    return {
+        "messages_cleared": cleared,
+        "files_deleted": deleted_files,
+        "ai_calls_deleted": ai_calls,
+    }
 
 
 AUDIENCE_LISTS = ("schools", "programmes", "intakes", "courses", "sections")

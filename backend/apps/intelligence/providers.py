@@ -151,6 +151,13 @@ def _rest_key(model: str) -> str:
     return f"ai-resting:{model}"
 
 
+def _record(kind: str, model: str, outcome: str, detail: str = "") -> None:
+    """One row per request, for the operator's "AI requests" page (M9.4)."""
+    from .models import AICall  # models import nothing from here; kept local for clarity
+
+    AICall.objects.create(kind=kind, model=model, outcome=outcome, detail=detail[:300])
+
+
 def ask(
     kind: str,
     *,
@@ -178,10 +185,16 @@ def ask(
             wait = error.retry_after or LIMIT_REST
             cache.set(_rest_key(model), True, timeout=wait)
             waits.append(wait)
+            _record(kind, model, "used_up", f"resting {wait} s")
         except AIBusy:
             cache.set(_rest_key(model), True, timeout=BUSY_REST)
             waits.append(BUSY_REST)
+            _record(kind, model, "busy")
+        except AIError as error:
+            _record(kind, model, "failed", str(error))
+            raise
         else:
+            _record(kind, model, "answered")
             return Answer(data=data, model=model)
     raise AIRateLimited(
         f"Every {kind} model is used up or busy for now ({', '.join(models)}).",

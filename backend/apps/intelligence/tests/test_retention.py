@@ -52,7 +52,11 @@ def test_old_message_text_is_cleared_but_the_message_stays(group):
     old = message(group, OLD)
     recent = message(group, RECENT, text="Room B2")
 
-    assert clear_old_messages(NOW) == {"messages_cleared": 1, "files_deleted": 0}
+    assert clear_old_messages(NOW) == {
+        "messages_cleared": 1,
+        "files_deleted": 0,
+        "ai_calls_deleted": 0,
+    }
 
     old.refresh_from_db()
     assert (old.text, old.raw, old.text_deleted_at) == ("", {}, NOW)
@@ -85,7 +89,11 @@ def test_old_files_are_deleted_from_the_disk(group):
 def test_running_twice_changes_nothing_more(group):
     message(group, OLD)
     clear_old_messages(NOW)
-    assert clear_old_messages(NOW) == {"messages_cleared": 0, "files_deleted": 0}
+    assert clear_old_messages(NOW) == {
+        "messages_cleared": 0,
+        "files_deleted": 0,
+        "ai_calls_deleted": 0,
+    }
 
 
 def test_the_retention_period_is_a_setting(group, settings):
@@ -96,6 +104,10 @@ def test_the_retention_period_is_a_setting(group, settings):
 
 def test_the_daily_job_runs_the_clean_up(group):
     message(group, datetime(2020, 1, 1, tzinfo=UTC))
-    assert tasks.clear_old_messages.delay().get() == {"messages_cleared": 1, "files_deleted": 0}
+    assert tasks.clear_old_messages.delay().get() == {
+        "messages_cleared": 1,
+        "files_deleted": 0,
+        "ai_calls_deleted": 0,
+    }
     schedule = settings.CELERY_BEAT_SCHEDULE["clear-old-messages"]
     assert schedule["task"] == "apps.intelligence.tasks.clear_old_messages"

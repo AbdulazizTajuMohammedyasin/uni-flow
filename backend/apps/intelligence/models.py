@@ -361,6 +361,40 @@ class Delivery(TimeStampedModel):
         return f"{self.insight} for {self.user} ({self.tier})"
 
 
+class DraftInsight(Insight):
+    """The same insights, as the operator's "Drafts to check" page in the admin (no table of
+    its own): what the AI wasn't sure enough about, waiting to be published or rejected."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "draft to check"
+        verbose_name_plural = "drafts to check"
+
+
+class AICall(models.Model):
+    """One request to the AI (providers.ask), so the operator can see how much of each
+    model's free daily allowance is used. Kept for AI_CALL_RETENTION_DAYS."""
+
+    class Outcome(models.TextChoices):
+        ANSWERED = "answered", "Answered"
+        USED_UP = "used_up", "Used up (too many requests)"
+        BUSY = "busy", "Busy"
+        FAILED = "failed", "Failed"
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    kind = models.CharField(max_length=10, help_text='"fast" or "smart"')
+    model = models.CharField(max_length=100)
+    outcome = models.CharField(max_length=20, choices=Outcome)
+    detail = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "AI request"
+
+    def __str__(self) -> str:
+        return f"{self.model} {self.outcome} at {self.created_at:%Y-%m-%d %H:%M}"
+
+
 class TimetableImport(TimeStampedModel):
     """One student's "Is this your timetable?": classes read from a file, saved only when
     the student confirms (then the shared sections are created and they are enrolled)."""
