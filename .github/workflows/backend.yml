@@ -88,6 +88,8 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: config.settings.prod
           DJANGO_ALLOWED_HOSTS: uniflow.example.com
+          # Not a real secret: the checklist only wants 50+ varied characters, like a real one.
+          DJANGO_SECRET_KEY: ci-only-deploy-check-not-a-real-secret-0123456789-abcdefghij
 
       - name: Tests (pytest against MySQL)
         run: pipenv run pytest
