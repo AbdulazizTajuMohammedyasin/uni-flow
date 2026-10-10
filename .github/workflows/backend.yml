@@ -82,5 +82,12 @@ jobs:
       - name: No missing migrations
         run: pipenv run python manage.py makemigrations --check --dry-run
 
+      # The production settings must pass Django's own security checklist (M9.5).
+      - name: Production settings security check (check --deploy)
+        run: pipenv run python manage.py check --deploy --fail-level WARNING
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          DJANGO_ALLOWED_HOSTS: uniflow.example.com
+
       - name: Tests (pytest against MySQL)
         run: pipenv run pytest

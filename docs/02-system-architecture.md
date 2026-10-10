@@ -163,6 +163,9 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `DJANGO_SECRET_KEY` | *(random 50+ chars)* | |
 | `DJANGO_DEBUG` | `true` | |
 | `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | |
+| `DJANGO_CSRF_TRUSTED_ORIGINS` | (none) | Production: UniFlow's own `https://` address, for the Django admin's forms (M9.5) |
+| `DJANGO_HSTS_SECONDS` | `3600` | Production: how long browsers remember "HTTPS only"; raise to `31536000` (a year) once HTTPS is confirmed (M9.5) |
+| `DJANGO_SECURE_SSL_REDIRECT` | `true` | Production: send `http://` visitors to `https://` (M9.5) |
 | `DB_NAME` / `DB_USER` / `DB_PASSWORD` / `DB_HOST` / `DB_PORT` | `uniflow` / `uniflow` / … / `127.0.0.1` / `3306` | Separate variables, so no URL parsing library is needed |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | The Vite dev server |
 | `FRONTEND_DOMAIN` | `localhost:5173` | Becomes Django's `DOMAIN` setting, which Djoser uses to build email links |

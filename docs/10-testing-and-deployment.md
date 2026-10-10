@@ -72,6 +72,6 @@ There is no Docker in the current plan. Containerization can be revisited if the
   6. `npm ci && npm run build`
 - There is **no cron**: Celery Beat starts the daily jobs (the digest and retention clean-up). Redis, the Celery worker and Celery Beat run as services next to gunicorn. Tests and CI don't need Redis (jobs run immediately).
 - The WhatsApp connector runs as its own systemd service and restarts automatically. Its login session files are kept outside the repository and backed up.
-- `manage.py check --deploy` must pass. A monitor watches `/api/v1/health/`.
+- `manage.py check --deploy` must pass (M9.5: it does with `config/settings/prod.py`, and CI checks it on every push). Production is HTTPS-only: nginx handles HTTPS and must pass `X-Forwarded-Proto: https` to Django; `http://` is redirected (except `/api/v1/health/`); HSTS starts at one hour (`DJANGO_HSTS_SECONDS`) and is raised to a year once HTTPS works; the admin login and CSRF cookies are HTTPS-only (the refresh-token cookie already was). A monitor watches `/api/v1/health/`.
 - **Backups:** a daily `mysqldump` plus media, kept for 30 days. Restoring is tested once per term.
 - The API domain and `/api/v1/` must stay stable once a mobile build ships.
