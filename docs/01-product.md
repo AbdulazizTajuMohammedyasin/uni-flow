@@ -228,4 +228,4 @@ Every user has exactly **one role**.
 - All logic lives in the backend. The frontend is never the security boundary.
 - Accounts: only `@student.aiu.edu.my` can self-register; staff accounts are created by a super admin.
 - AIU is organized into **Schools**; a Programme is a degree; a Course is a subject (for example CDE2313).
-- Minimal infrastructure: no Docker for now. Background work uses Celery with Redis (Redis runs in WSL during development).
+- Minimal infrastructure: native installs for development; online, the backend runs on **Render** (Docker images) and the website on **Vercel** (M9.6). Background work uses Celery with Redis (Redis runs in WSL during development).

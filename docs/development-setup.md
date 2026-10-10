@@ -1,6 +1,6 @@
 # Development Setup
 
-This guide sets up a local UniFlow development environment. UniFlow uses **native installs only**, with no Docker. Sections are added as the foundation tasks (M0) land.
+This guide sets up a local UniFlow development environment. Development uses **native installs only**, with no Docker (running UniFlow online uses Docker: see [10](10-testing-and-deployment.md) section 21). Sections are added as the foundation tasks (M0) land.
 
 ## Prerequisites
 

@@ -36,42 +36,41 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 ### Continuous integration (GitHub Actions, `.github/workflows/`)
 
-- **`backend.yml`:** ruff, `manage.py check`, `makemigrations --check` and pytest. `pip-audit` is optional and needs approval. MySQL runs as a GitHub Actions *service*. This uses GitHub's hosted runner, and no Docker files are added to the repo.
+- **`backend.yml`:** ruff, `manage.py check`, `makemigrations --check` and pytest. `pip-audit` is optional and needs approval. MySQL runs as a GitHub Actions *service*. This uses GitHub's hosted runner (the Docker setup in `deploy/` is for running UniFlow, not for CI).
 - **`frontend.yml`:** lint, typecheck, test and build.
 - *[Later]* end-to-end tests with Playwright.
 
 ## 21. Deployment considerations
 
-There is no Docker in the current plan. Containerization can be revisited if the hosting environment needs it.
+**Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). The step-by-step Render and Vercel guide, PostgreSQL, whitenoise and `vercel.json` come in the next task.
 
 ### Environments
 
 | Environment | Setup |
 |---|---|
-| Local | Native MySQL 8.4, `python manage.py runserver`, `npm run dev` |
-| Staging and production | A single Linux VM, or the university's own server (*hosting still to be decided*). The WhatsApp connector needs a machine that stays online. |
+| Local development | Native MySQL 8.4, Redis in WSL, `python manage.py runserver`, `npm run dev` |
+| Trying the online backend locally | Docker Desktop: `docker compose up` in `deploy/` (the same images Render runs) |
+| Production | **Render:** the backend image as a web service (Django on gunicorn), plus background workers from the same image (Celery worker, Celery Beat) and from `connectors/whatsapp/` (always on, with a disk for its login), Render Key Value (Redis) and PostgreSQL. **Vercel:** the website. |
 
-### Recommended MVP topology
+### The Docker images
 
-```
- HTTPS ─► nginx (or Caddy) ─┬─ uniflow.example.edu      → frontend/dist (static files from `npm run build`)
-                            └─ api.uniflow.example.edu  → gunicorn (systemd service) → Django
-                                                         /api/v1/internal/ blocked from the internet
-        systemd services on the same VM:
-          gunicorn (Django)  ·  celery worker  ·  celery beat  ·  redis-server  ·  whatsapp-connector
-        MySQL 8.4 (same VM, native)   ·   nightly mysqldump + media backup → off-site
-```
+| Image | Built from | Runs |
+|---|---|---|
+| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django; the same image with another command runs the Celery worker and Beat |
+| WhatsApp connector | `connectors/whatsapp/Dockerfile` (Node 24, a non-root user) | UniFlow's WhatsApp number; its login lives in `/app/auth` (a disk or volume) |
 
-- A Pipenv-managed virtualenv with gunicorn, run as a systemd service. nginx serves the Django admin's static files after `collectstatic`. whitenoise is deferred, and is added in M9.6 only if the final deployment design needs it.
-- Release steps:
-  1. `git pull`
-  2. `pipenv sync` (installs exactly what `Pipfile.lock` pins, with no dev packages)
-  3. `manage.py migrate`
-  4. `collectstatic`
-  5. restart gunicorn
-  6. `npm ci && npm run build`
-- There is **no cron**: Celery Beat starts the daily jobs (the digest and retention clean-up). Redis, the Celery worker and Celery Beat run as services next to gunicorn. Tests and CI don't need Redis (jobs run immediately).
-- The WhatsApp connector runs as its own systemd service and restarts automatically. Its login session files are kept outside the repository and backed up.
-- `manage.py check --deploy` must pass (M9.5: it does with `config/settings/prod.py`, and CI checks it on every push). Production is HTTPS-only: nginx handles HTTPS and must pass `X-Forwarded-Proto: https` to Django; `http://` is redirected (except `/api/v1/health/`); HSTS starts at one hour (`DJANGO_HSTS_SECONDS`) and is raised to a year once HTTPS works; the admin login and CSRF cookies are HTTPS-only (the refresh-token cookie already was). A monitor watches `/api/v1/health/`.
-- **Backups:** a daily `mysqldump` plus media, kept for 30 days. Restoring is tested once per term.
+Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`) never go into an image; settings are given when a container starts.
+
+### Trying the backend locally with Docker Desktop (`deploy/docker-compose.yml`)
+
+Not used by Render: it starts the same images on your computer, with MySQL and Redis, so you can see the backend run as it will online.
+
+1. In `deploy/`: `Copy-Item .env.example .env`, then fill in `DJANGO_SECRET_KEY`, `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `GEMINI_API_KEY` (and `CONNECTOR_SECRET`, `WHATSAPP_NUMBER` for WhatsApp). `.env` is git-ignored.
+2. `docker compose up -d --build` (add `--profile whatsapp` for the connector). `backend` runs `migrate` and `collectstatic`, then gunicorn.
+3. `docker compose exec backend python manage.py createsuperuser`, then open `http://localhost:8000/api/v1/health/` and `http://localhost:8000/django-admin/`. The website runs with `npm run dev` as usual.
+
+Useful: `docker compose ps`, `docker compose logs -f backend`, `docker compose down` (the data stays in volumes). **Never** `docker compose down -v`: it deletes the volumes (the database and the WhatsApp login).
+
+- `manage.py check --deploy` must pass (M9.5: it does with `config/settings/prod.py`, and CI checks it on every push). Production is HTTPS-only: the host (Render) handles HTTPS and passes `X-Forwarded-Proto: https`; `http://` is redirected (except `/api/v1/health/` and the connector's `/api/v1/internal/` on the private network, whose requests are signed); HSTS starts at one hour (`DJANGO_HSTS_SECONDS`) and is raised to a year once HTTPS works; the admin login and CSRF cookies are HTTPS-only.
+- **Backups:** daily PostgreSQL backups (Render's, or `pg_dump`), plus uploaded files and the WhatsApp login disk, kept for 30 days. Restoring is tested once per term. *(Set up with hosting.)*
 - The API domain and `/api/v1/` must stay stable once a mobile build ships.

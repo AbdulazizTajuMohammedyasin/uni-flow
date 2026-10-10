@@ -34,7 +34,7 @@ UniFlow/
 | Python | 3.13 | Backend |
 | Pipenv | recent | Backend dependency management (`Pipfile` / `Pipfile.lock`) |
 | Node.js | current LTS | Frontend |
-| MySQL | 8.4 (any 8.x works) | Native local install, **no Docker** |
+| MySQL | 8.4 (any 8.x works) | Native local install for development (Docker is only used to run UniFlow online: `deploy/`) |
 | Editor | any with [EditorConfig](https://editorconfig.org) support | Picks up `.editorconfig` automatically (VS Code needs the EditorConfig extension) |
 
 ### Setup

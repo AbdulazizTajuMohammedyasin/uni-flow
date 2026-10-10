@@ -93,7 +93,7 @@ Every manage response includes `can_edit` and `can_publish`, so the dashboard ne
 
 **Signing (M6.2):** every `internal/` request has `X-UniFlow-Timestamp` (Unix seconds) and `X-UniFlow-Signature` (hex HMAC-SHA256 of `<timestamp>.<METHOD>.<path>.<raw body>` with `CONNECTOR_SECRET`). Missing, wrong, or more than 5 minutes off → **403**. See `apps/intelligence/connector.py`.
 
-`internal/` endpoints are only reachable from the server itself (nginx does not expose them) and are excluded from the public API docs.
+`internal/` endpoints are meant for the connector only: every request must be signed with `CONNECTOR_SECRET` (M6.2), and online the connector reaches Django over the host's private network (M9.6) and are excluded from the public API docs.
 
 ## Example: an official staff post (after the pilot)
 

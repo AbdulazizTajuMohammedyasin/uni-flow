@@ -1,0 +1,9 @@
+# Not copied into the backend image: secrets, local data and caches.
+.env
+.venv/
+media/
+staticfiles/
+local_samples/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/

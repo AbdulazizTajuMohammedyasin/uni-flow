@@ -39,7 +39,7 @@ UniFlow/
 ```
 
 - Settings that apply to only one side of the project live inside `backend/` or `frontend/`.
-- **There are no Docker files**, and no `mobile/` or `packages/` folders until the React Native work is approved.
+- **Docker images only for running the backend online** (`backend/Dockerfile`, `connectors/whatsapp/Dockerfile`, and `deploy/` to try them locally, M9.6); development stays native. The website has no Docker image (Vercel builds it). No `mobile/` or `packages/` folders until the React Native work is approved.
 
 ## Key architecture decisions
 
@@ -51,12 +51,12 @@ UniFlow/
 | D4 | **The frontend is not a security boundary.** Roles map to *capabilities*, and a school scope limits what each user can manage. The same functions drive both the API's permission checks and the `me.capabilities` field that the UI uses to hide actions. |
 | D5 | Official staff posts are **insights with `origin = staff`**: one table and one lifecycle for everything students receive. There is no separate announcements table. Publishers are `university_admin` (any school, any audience) and `school_staff` (only their own school). Lecturers are read-only. |
 | D6 | A single `Audience` model per insight or post is the **hard filter** of who can receive it: schools, programmes, intakes, and (from M3) courses and sections. Relevance is then scored per student. |
-| D7 | Background work (AI calls, notifications, digest, retention) runs in **Celery with Redis** as the broker; daily jobs use Celery Beat. Redis runs in WSL during development; tests need no Redis. No Docker. |
+| D7 | Background work (AI calls, notifications, digest, retention) runs in **Celery with Redis** as the broker; daily jobs use Celery Beat. Redis runs in WSL during development; tests need no Redis. Online, the backend runs on Render (D23). |
 | D8 | **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`) handle accounts and login, and SimpleJWT handles tokens. There are no custom login views. Tokens are returned as `{access, refresh}` for web and mobile alike. `is_active` means the email is verified. |
 | D9 | Documents, events, applications and communities as browsable lists are **[Later]**. Their information reaches students as insights. |
 | D10 | The timetable is the **student's current reality**. The normal timetable is **read by the AI** from timetables shared in groups or uploaded by students (images, PDFs, spreadsheets, Google Drive links), and changes are detected in messages. **Nothing is saved until the student confirms.** Students can also add a class by hand. |
 | D11 | Messaging platforms are **primary sources**. Telegram uses the official bot. **WhatsApp uses an unofficial connector, chosen knowingly** with the risks and safeguards in [08](08-messaging-integrations.md). Manual paste and chat export always work as a fallback. |
-| D12 | Native MySQL 8.4 with no Docker. Local-day logic (such as "today in Kuala Lumpur") is computed in Python, so MySQL's time zone tables are never needed. |
+| D12 | Native MySQL 8.4 for development; **PostgreSQL in production** (Render, D23). Local-day logic (such as "today in Kuala Lumpur") is computed in Python, so MySQL's time zone tables are never needed. |
 | D13 | Libraries are added only in the task that needs them, and only once approved. |
 | D14 | **shadcn/ui** (Radix-based, preset "nova") provides the UI components, themed with UniFlow indigo as the primary colour. Components live in `src/components/ui/` and UniFlow's own small components live in `src/shared/ui/`. |
 | D15 | **The AI reads and proposes; code decides and acts.** All model calls go through `intelligence/providers.py`; output is schema-validated; relevance and tiers are computed by code per student. |
@@ -87,3 +87,4 @@ UniFlow/
 - **Terminology:** AIU is organised into **Schools** (plus the Centre for Foundation and General Studies, stored as a School). A Programme is the degree and belongs to one school. A Course is a subject or module (for example CDE2313). UniFlow therefore uses "school" everywhere: the role is `school_staff`, and staff manage content for their own school.
 - **School staff** manage only content that belongs to and is targeted within their own school.
 - **CI:** a MySQL service container in GitHub Actions is acceptable. Local development has no Docker.
+- **D23 (M9.6): hosting.** The **backend runs on Render** from Docker images (Django on gunicorn as a web service; the Celery worker, Celery Beat and the WhatsApp connector as background workers), the **website on Vercel** (built from `frontend/`, no Docker), and the **production database is PostgreSQL** (Render has no MySQL). Approved: gunicorn and whitenoise. A single-server setup with Caddy was written first and dropped before committing.

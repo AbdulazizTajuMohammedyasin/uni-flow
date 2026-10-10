@@ -1,0 +1,5 @@
+# Never copied into the image: secrets, the WhatsApp login session, installed packages.
+.env
+auth/
+node_modules/
+test/

@@ -1,7 +1,7 @@
 """Production settings. Every secret and host must come from the environment.
 
 Hardened for being online (M9.5): `manage.py check --deploy` is clean with these settings
-(CI checks it). nginx sits in front of Django and handles HTTPS (docs/10).
+(CI checks it). The host (Render) sits in front of Django and handles HTTPS (docs/10).
 """
 
 from config.env import env_bool, env_list, env_str
@@ -17,12 +17,13 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 DATABASES["default"]["CONN_MAX_AGE"] = 60
 
 # --- HTTPS only -----------------------------------------------------------------------------
-# nginx receives HTTPS and passes requests on over plain HTTP, telling Django the original
+# The host receives HTTPS and passes requests on over plain HTTP, telling Django the original
 # was HTTPS with this header; without it, the redirect below would loop forever.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)  # http:// → https://
-# Health checks from the server itself may use plain HTTP.
-SECURE_REDIRECT_EXEMPT = [r"^api/v1/health/$"]
+# Plain HTTP is fine inside the host's private network: health checks, and the WhatsApp
+# connector talking to Django (its requests are signed: see apps/intelligence/connector.py).
+SECURE_REDIRECT_EXEMPT = [r"^api/v1/health/$", r"^api/v1/internal/"]
 
 # HSTS: browsers remember to only ever use HTTPS for this site. Start small (1 hour) and,
 # once HTTPS is confirmed to work, raise DJANGO_HSTS_SECONDS to 31536000 (one year). A
