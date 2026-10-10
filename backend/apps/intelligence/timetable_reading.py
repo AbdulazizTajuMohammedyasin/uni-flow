@@ -15,7 +15,6 @@ from datetime import date, datetime, time
 from io import BytesIO
 
 import openpyxl
-from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -31,7 +30,7 @@ from apps.timetable.models import SectionEnrollment
 from apps.timetable.services import current_term_for
 
 from .models import MessageFile, TimetableImport
-from .providers import Attachment, get_provider
+from .providers import Attachment, ask
 
 PROMPT_VERSION = "timetable-v1"
 MAX_ROWS, MAX_COLUMNS, MAX_CHARS = 300, 40, 40_000
@@ -111,16 +110,17 @@ def spreadsheet_tabs(data: bytes) -> dict[str, str]:
     return tabs
 
 
-def _ask(prompt: str, attachments=None) -> list[dict]:
-    answer = get_provider().ask_json(
-        model=settings.AI_SMART_MODEL,
+def _ask(prompt: str, attachments=None) -> tuple[list[dict], str]:
+    """(the classes read, the model that read them)."""
+    answer = ask(
+        "smart",
         instructions=INSTRUCTIONS,
         prompt=prompt,
         schema=SCHEMA,
         attachments=attachments,
     )
     # Check the AI's answer like user input: invalid classes and times are dropped.
-    return rows_to_json(rows_from_json(answer.get("classes", [])))
+    return rows_to_json(rows_from_json(answer.data.get("classes", []))), answer.model
 
 
 def read_file(message_file: MessageFile) -> dict[str, list[dict]]:
@@ -132,18 +132,21 @@ def read_file(message_file: MessageFile) -> dict[str, list[dict]]:
     with message_file.file.open("rb") as handle:
         data = handle.read()
 
+    models = set()
     if message_file.kind == MessageFile.Kind.SPREADSHEET:
-        tabs = {
-            name: _ask(f'Timetable tab "{name}":\n{text}')
-            for name, text in spreadsheet_tabs(data).items()
-        }
+        tabs = {}
+        for name, text in spreadsheet_tabs(data).items():
+            tabs[name], model = _ask(f'Timetable tab "{name}":\n{text}')
+            models.add(model)
     else:
         attachment = Attachment(data=data, mime_type=message_file.mime_type)
-        tabs = {"": _ask("Read the attached timetable.", [attachment])}
+        tabs = {}
+        tabs[""], model = _ask("Read the attached timetable.", [attachment])
+        models.add(model)
 
     message_file.reading = {
         "tabs": tabs,
-        "model": settings.AI_SMART_MODEL,
+        "model": ", ".join(sorted(models)),
         "prompt_version": PROMPT_VERSION,
     }
     message_file.save(update_fields=["reading", "updated_at"])

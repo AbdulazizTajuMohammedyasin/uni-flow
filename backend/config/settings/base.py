@@ -268,8 +268,35 @@ MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))
 
 AI_PROVIDER = env_str("AI_PROVIDER", "gemini")  # "gemini", or "fake" in tests
 GEMINI_API_KEY = env_str("GEMINI_API_KEY", "")
-AI_FAST_MODEL = env_str("AI_FAST_MODEL", "gemini-3.1-flash-lite")  # "is this academic?"
-AI_SMART_MODEL = env_str("AI_SMART_MODEL", "gemini-3.5-flash")  # understanding, timetables
+
+
+def _model_list(list_name: str, single_name: str, defaults: list[str]) -> list[str]:
+    """Models in the order they are tried (comma-separated in .env). A model set the old way
+    (AI_FAST_MODEL / AI_SMART_MODEL) goes first."""
+    models = [m.strip() for m in env_str(list_name, ",".join(defaults)).split(",") if m.strip()]
+    first = env_str(single_name, "").strip()
+    return [first, *[m for m in models if m != first]] if first else models
+
+
+# Each model has its own free daily allowance: when one is used up (or busy), the next one in
+# the list is used (apps/intelligence/providers.py, ask()). Checked to work with a new free
+# key in October 2026; run `manage.py check_ai` to try them.
+AI_FAST_MODELS = _model_list(  # "is this academic?"
+    "AI_FAST_MODELS",
+    "AI_FAST_MODEL",
+    [
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-lite-latest",
+    ],
+)
+AI_SMART_MODELS = _model_list(  # understanding messages, reading timetables
+    "AI_SMART_MODELS",
+    "AI_SMART_MODEL",
+    ["gemini-3.5-flash", "gemini-3-flash-preview", "gemini-flash-latest"],
+)
+AI_FAST_MODEL, AI_SMART_MODEL = AI_FAST_MODELS[0], AI_SMART_MODELS[0]  # the first choices
 
 
 # The UniFlow Telegram bot (apps/intelligence/telegram.py). Create it with @BotFather; the

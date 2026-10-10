@@ -11,6 +11,12 @@ from .providers import AIError, AIRateLimited
 logger = logging.getLogger(__name__)
 
 
+def _wait(error: AIRateLimited, retries: int) -> int:
+    """Seconds before trying again when every model is used up: as long as Google says the
+    first one needs (at most an hour), but at least 1, 2, 4… minutes."""
+    return max(60 * 2**retries, min(error.retry_after or 0, 3600))
+
+
 @shared_task
 def clear_old_messages() -> dict[str, int]:
     """Daily privacy clean-up (scheduled in CELERY_BEAT_SCHEDULE)."""
@@ -32,7 +38,7 @@ def triage_source(self, source_id: int) -> dict[str, int] | None:
     try:
         result = triage.triage_source(source)
     except AIRateLimited as error:
-        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+        raise self.retry(exc=error, countdown=_wait(error, self.request.retries)) from error
     except AIError as error:
         logger.warning("Triage of source %s failed: %s", source_id, error)
         return None
@@ -55,7 +61,7 @@ def extract_source(self, source_id: int) -> int | None:
     try:
         created = extraction.extract_source(source)
     except AIRateLimited as error:
-        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+        raise self.retry(exc=error, countdown=_wait(error, self.request.retries)) from error
     except AIError as error:
         logger.warning("Extraction for source %s failed: %s", source_id, error)
         return None
@@ -78,7 +84,7 @@ def read_timetable_import(self, import_id: int) -> str | None:
     try:
         timetable_reading.read_import(timetable_import)
     except AIRateLimited as error:
-        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+        raise self.retry(exc=error, countdown=_wait(error, self.request.retries)) from error
     except (timetable_reading.ImportProblem, AIError) as error:
         logger.warning("Timetable import %s failed: %s", import_id, error)
         timetable_import.status = TimetableImport.Status.FAILED
@@ -116,7 +122,7 @@ def offer_group_timetable(self, file_id: int) -> int | None:
     try:
         offered = timetable_reading.offer_to_group(message_file)
     except AIRateLimited as error:
-        raise self.retry(exc=error, countdown=60 * 2**self.request.retries) from error
+        raise self.retry(exc=error, countdown=_wait(error, self.request.retries)) from error
     except (timetable_reading.ImportProblem, AIError) as error:
         logger.warning("Group timetable %s not offered: %s", file_id, error)
         return None

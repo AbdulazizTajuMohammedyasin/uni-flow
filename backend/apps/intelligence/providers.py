@@ -1,19 +1,24 @@
 """The one place that talks to the AI (docs/12-intelligence.md, "AI provider").
 
-The rest of the code asks for JSON that matches a schema and never imports a vendor
-library. Two models are used:
-- AI_FAST_MODEL: cheap and quick ("is this message academic?").
-- AI_SMART_MODEL: understanding messages and reading timetable images, PDFs and sheets.
+The rest of the code calls ask("fast" or "smart", ...) for JSON that matches a schema and
+never imports a vendor library. Two kinds of model are used, each a list tried in order:
+- AI_FAST_MODELS: cheap and quick ("is this message academic?").
+- AI_SMART_MODELS: understanding messages and reading timetable images, PDFs and sheets.
+
+On the free tier each model has its own small daily allowance. When a model says "too many
+requests" (or is busy), it rests until Google says it can be used again, and the next model
+in the list answers instead. Only when every model of the list is resting is AIRateLimited
+raised, so the Celery job waits and retries later instead of failing.
 
 Providers: "gemini" (Google's Gemini API, key in GEMINI_API_KEY) and "fake" (tests).
-When the AI says "too many requests", AIRateLimited is raised so the Celery job can wait
-and retry later instead of failing.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 
 from django.conf import settings
+from django.core.cache import cache
 
 
 class AIError(Exception):
@@ -22,6 +27,20 @@ class AIError(Exception):
 
 class AIRateLimited(AIError):
     """Too many requests for now (the free tier has per-minute and daily limits)."""
+
+    def __init__(self, message: str = "", retry_after: int | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after  # seconds, when Google says
+
+
+class AIBusy(AIError):
+    """The model is overloaded right now ("high demand"); another one may answer."""
+
+
+def _retry_after(message: str) -> int | None:
+    """Google's "retryDelay": "49332s" in a 429 error, in seconds."""
+    found = re.search(r"retryDelay['\"]?:\s*['\"](\d+)", message)
+    return int(found.group(1)) if found else None
 
 
 @dataclass
@@ -69,7 +88,9 @@ class GeminiProvider:
             )
         except errors.APIError as error:
             if error.code == 429:
-                raise AIRateLimited(str(error)) from error
+                raise AIRateLimited(str(error), _retry_after(str(error))) from error
+            if error.code in (500, 503):
+                raise AIBusy(str(error)) from error
             raise AIError(str(error)) from error
         except Exception as error:  # network problems and the like
             raise AIError(str(error)) from error
@@ -111,3 +132,58 @@ def get_provider():
 def fake_provider() -> FakeProvider:
     """The shared fake (tests set its answers and read its calls)."""
     return _fake
+
+
+# --- Asking, with fallback between models ---------------------------------------------------
+
+MODEL_LISTS = {"fast": "AI_FAST_MODELS", "smart": "AI_SMART_MODELS"}
+BUSY_REST = 60  # seconds a busy model rests
+LIMIT_REST = 60  # when Google doesn't say how long
+
+
+@dataclass
+class Answer:
+    data: dict
+    model: str  # the model that answered (recorded on insights and timetable readings)
+
+
+def _rest_key(model: str) -> str:
+    return f"ai-resting:{model}"
+
+
+def ask(
+    kind: str,
+    *,
+    instructions: str,
+    prompt: str,
+    schema: dict,
+    attachments: list[Attachment] | None = None,
+) -> Answer:
+    """Ask the first model of the "fast" or "smart" list that isn't resting."""
+    provider = get_provider()
+    models = getattr(settings, MODEL_LISTS[kind])
+    waits: list[int] = []
+    for model in models:
+        if cache.get(_rest_key(model)):
+            continue
+        try:
+            data = provider.ask_json(
+                model=model,
+                instructions=instructions,
+                prompt=prompt,
+                schema=schema,
+                attachments=attachments,
+            )
+        except AIRateLimited as error:  # its allowance is used up for now
+            wait = error.retry_after or LIMIT_REST
+            cache.set(_rest_key(model), True, timeout=wait)
+            waits.append(wait)
+        except AIBusy:
+            cache.set(_rest_key(model), True, timeout=BUSY_REST)
+            waits.append(BUSY_REST)
+        else:
+            return Answer(data=data, model=model)
+    raise AIRateLimited(
+        f"Every {kind} model is used up or busy for now ({', '.join(models)}).",
+        min(waits) if waits else LIMIT_REST,
+    )

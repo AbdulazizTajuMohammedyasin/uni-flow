@@ -7,11 +7,10 @@ information or noise? The fast model answers for a batch of messages at once.
   is lost; the next step can still ignore it.
 """
 
-from django.conf import settings
 from django.utils import timezone
 
 from .models import Message, Source
-from .providers import get_provider
+from .providers import ask
 
 BATCH_SIZE = 30
 MAX_TEXT = 1500  # characters of each message sent to the AI
@@ -78,14 +77,16 @@ def triage_batch(source: Source) -> dict[str, int] | None:
 
     academic_ids: set[int] = set()
     if to_ask:
-        answer = get_provider().ask_json(
-            model=settings.AI_FAST_MODEL,
+        answer = ask(
+            "fast",
             instructions=INSTRUCTIONS,
             prompt=_prompt(source, to_ask),
             schema=SCHEMA,
         )
         noise_ids = {
-            result["id"] for result in answer.get("results", []) if result.get("academic") is False
+            result["id"]
+            for result in answer.data.get("results", [])
+            if result.get("academic") is False
         }
         academic_ids = {m.id for m in to_ask if m.id not in noise_ids}
 

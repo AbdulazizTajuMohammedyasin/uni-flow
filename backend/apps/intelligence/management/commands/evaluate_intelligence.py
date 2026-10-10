@@ -18,7 +18,7 @@ from django.utils import timezone
 from apps.intelligence import extraction, timetable_reading
 from apps.intelligence.extraction import Change
 from apps.intelligence.models import Message, Source
-from apps.intelligence.providers import AIError, AIRateLimited, get_provider
+from apps.intelligence.providers import AIError, AIRateLimited, ask
 from apps.timetable.importing import section_code
 
 EVAL_DIR = Path(__file__).resolve().parents[2] / "tests" / "eval"
@@ -80,15 +80,15 @@ def find_changes(case: dict) -> list[Change]:
         )
         if item.get("new", True):
             new_ids.add(number)
-    answer = get_provider().ask_json(
-        model=settings.AI_SMART_MODEL,
+    answer = ask(
+        "smart",
         instructions=extraction.INSTRUCTIONS,
         prompt=extraction._prompt(source, window, new_ids),
         schema=extraction.SCHEMA,
     )
     return [
         change
-        for item in answer.get("changes", [])
+        for item in answer.data.get("changes", [])
         if (change := extraction.check(item, window)) is not None
     ]
 
@@ -198,7 +198,7 @@ class Command(BaseCommand):
         for sheet in sheets:
             prompt_text = f'Timetable tab "{sheet["tab"]}":\n{sheet["text"]}'
             try:
-                rows = _with_retries(lambda text=prompt_text: timetable_reading._ask(text))
+                rows, _ = _with_retries(lambda text=prompt_text: timetable_reading._ask(text))
             except AIError as error:
                 rows = []
                 self.stdout.write(self.style.WARNING(f"  WRONG {sheet['name']}: AI error: {error}"))

@@ -17,7 +17,6 @@ One AI request per batch of new academic messages finds two things:
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
-from django.conf import settings
 from django.utils import timezone
 
 from apps.academics.models import Course, Programme, School, Term
@@ -28,7 +27,7 @@ from apps.timetable.models import ClassMeeting, CourseSection
 from . import merging
 from .mentions import record_mentions
 from .models import Insight, Message, Source
-from .providers import get_provider
+from .providers import ask
 from .services import save_ai_insight
 
 BATCH_SIZE = 10  # new academic messages looked at in one AI request
@@ -331,7 +330,7 @@ def resolve(change: Change, source: Source) -> dict:
     }
 
 
-def save(change: Change, source: Source) -> Insight:
+def save(change: Change, source: Source, model: str) -> Insight:
     found = resolve(change, source)
     audience = (
         {"sections": found["sections"]}
@@ -360,7 +359,7 @@ def save(change: Change, source: Source) -> Insight:
         location=change.new_room,
         data=found["data"],
         merge_key=key,
-        model_version=settings.AI_SMART_MODEL,
+        model_version=model,
         prompt_version=PROMPT_VERSION,
     )
 
@@ -477,7 +476,7 @@ def item_audience(item: Item, source: Source) -> dict:
     return {name: values for name, values in scope.items() if values}
 
 
-def save_item(item: Item, source: Source) -> Insight:
+def save_item(item: Item, source: Source, model: str) -> Insight:
     key = merging.link_key(item.kind, item.link)
     when = item.deadline_at or item.starts_at
     duplicate = merging.find_duplicate(
@@ -516,7 +515,7 @@ def save_item(item: Item, source: Source) -> Insight:
             "programme_codes": item.programme_codes,
         },
         merge_key=key,
-        model_version=settings.AI_SMART_MODEL,
+        model_version=model,
         prompt_version=PROMPT_VERSION,
     )
     record_mentions(insight, item.names, source)  # which students the names mean
@@ -537,19 +536,19 @@ def extract_batch(source: Source) -> list[Insight] | None:
     if not new:
         return None
     window = _window(source, new)
-    answer = get_provider().ask_json(
-        model=settings.AI_SMART_MODEL,
+    answer = ask(
+        "smart",
         instructions=INSTRUCTIONS,
         prompt=_prompt(source, window, {m.id for m in new}),
         schema=SCHEMA,
     )
     insights = [
-        save(change, source)
-        for item in answer.get("changes") or []
+        save(change, source, answer.model)
+        for item in answer.data.get("changes") or []
         if (change := check(item, window)) is not None
     ] + [
-        save_item(found, source)
-        for item in answer.get("items") or []
+        save_item(found, source, answer.model)
+        for item in answer.data.get("items") or []
         if (found := check_item(item, window)) is not None
     ]
     Message.objects.filter(pk__in=[m.pk for m in new]).update(extracted_at=timezone.now())

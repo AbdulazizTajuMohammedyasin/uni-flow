@@ -15,3 +15,6 @@ CELERY_TASK_EAGER_PROPAGATES = True
 
 # Tests never call the real AI (no key, no quota used): see providers.FakeProvider.
 AI_PROVIDER = "fake"
+# One model each, so a fake "too many requests" reaches the retry logic (fallback tests
+# set their own lists).
+AI_FAST_MODELS, AI_SMART_MODELS = [AI_FAST_MODEL], [AI_SMART_MODEL]  # noqa: F405
