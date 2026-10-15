@@ -37,6 +37,8 @@ def move_refresh_token_to_cookie(response):
 class CookieLoginView(TokenObtainPairView):
     """POST {email, password} -> {access}; the refresh token is set as a cookie."""
 
+    throttle_scope = "auth"  # at most 10 attempts a minute per visitor (REST_FRAMEWORK)
+
     def post(self, request, *args, **kwargs):
         return move_refresh_token_to_cookie(super().post(request, *args, **kwargs))
 

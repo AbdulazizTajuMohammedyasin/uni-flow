@@ -36,13 +36,13 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 ### Continuous integration (GitHub Actions, `.github/workflows/`)
 
-- **`backend.yml`:** ruff, `manage.py check`, `makemigrations --check` and pytest. `pip-audit` is optional and needs approval. MySQL runs as a GitHub Actions *service*. This uses GitHub's hosted runner (the Docker setup in `deploy/` is for running UniFlow, not for CI).
+- **`backend.yml`:** ruff, `manage.py check`, `makemigrations --check`, `check --deploy` with the production settings, and pytest on **MySQL**; a second job runs every test on **PostgreSQL** (the production database, M9.6b). `pip-audit` is optional and needs approval. MySQL runs as a GitHub Actions *service*. This uses GitHub's hosted runner (the Docker setup in `deploy/` is for running UniFlow, not for CI).
 - **`frontend.yml`:** lint, typecheck, test and build.
 - *[Later]* end-to-end tests with Playwright.
 
 ## 21. Deployment considerations
 
-**Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). The step-by-step Render and Vercel guide, PostgreSQL, whitenoise and `vercel.json` come in the next task.
+**Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). M9.6b made the code ready for it (PostgreSQL, whitenoise, the Vercel forwarding below); the step-by-step Render guide follows once uploaded files have a home that every Render service can reach (open decision, see PROGRESS.md).
 
 ### Environments
 
@@ -52,20 +52,35 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 | Trying the online backend locally | Docker Desktop: `docker compose up` in `deploy/` (the same images Render runs) |
 | Production | **Render:** the backend image as a web service (Django on gunicorn), plus background workers from the same image (Celery worker, Celery Beat) and from `connectors/whatsapp/` (always on, with a disk for its login), Render Key Value (Redis) and PostgreSQL. **Vercel:** the website. |
 
+### How the two hosts fit together: Vercel forwarding (M9.6b)
+
+```
+ browser ─► https://<name>.vercel.app/timetable      → Vercel: the website
+ browser ─► https://<name>.vercel.app/api/v1/feed/   → Vercel forwards to → https://<name>.onrender.com/api/v1/feed/
+```
+
+The browser only ever talks to the **Vercel address**, so the login cookie is a normal same-site cookie that every browser (including Safari, which blocks cookies from other sites) keeps. Set up by `frontend/vercel.json` ("rewrites to an external origin") and `frontend/.env.production` (`VITE_API_URL=/api/v1`, used by `npm run build`). No CORS is needed for the website.
+
+- **No caching of personal data:** `vercel.json` switches Vercel's caching off for `/api/` (`x-vercel-enable-rewrite-caching: 0`), and Django marks every `/api/` answer `Cache-Control: private, no-store` (`core/middleware.py`).
+- **Visitor addresses:** Vercel sends the visitor's address first in `X-Forwarded-For`; Django's rate limits use it, so one student's failed logins never slow down everyone (tested in `core/tests/test_hosting.py`). Login is limited to 10 attempts a minute per visitor (`throttle_scope = "auth"`, now actually applied).
+- **Limits to know:** Vercel waits up to 120 seconds for Render to start answering (a sleeping free Render service can take most of that); request size through the forwarding must be tested with a 10 MB timetable upload (Vercel functions allow 4.5 MB), and if it fails, uploads go straight to Render or `MAX_UPLOAD_MB` is lowered.
+- **Direct addresses:** the Django admin (`https://<name>.onrender.com/django-admin/`), the Telegram webhook and the WhatsApp connector use the Render address directly.
+- **After creating the Render service,** put its real address in `frontend/vercel.json` (`destination`), commit and push; Vercel redeploys by itself.
+
 ### The Docker images
 
 | Image | Built from | Runs |
 |---|---|---|
-| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django; the same image with another command runs the Celery worker and Beat |
+| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django (with whitenoise serving the admin's styles, production settings only); the same image with another command runs the Celery worker and Beat |
 | WhatsApp connector | `connectors/whatsapp/Dockerfile` (Node 24, a non-root user) | UniFlow's WhatsApp number; its login lives in `/app/auth` (a disk or volume) |
 
 Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`) never go into an image; settings are given when a container starts.
 
 ### Trying the backend locally with Docker Desktop (`deploy/docker-compose.yml`)
 
-Not used by Render: it starts the same images on your computer, with MySQL and Redis, so you can see the backend run as it will online.
+Not used by Render: it starts the same images on your computer, with **PostgreSQL** and Redis, so you can see the backend run as it will online.
 
-1. In `deploy/`: `Copy-Item .env.example .env`, then fill in `DJANGO_SECRET_KEY`, `DB_PASSWORD`, `DB_ROOT_PASSWORD`, `GEMINI_API_KEY` (and `CONNECTOR_SECRET`, `WHATSAPP_NUMBER` for WhatsApp). `.env` is git-ignored.
+1. In `deploy/`: `Copy-Item .env.example .env`, then fill in `DJANGO_SECRET_KEY`, `DB_PASSWORD` (letters and digits), `GEMINI_API_KEY` (and `CONNECTOR_SECRET`, `WHATSAPP_NUMBER` for WhatsApp). `.env` is git-ignored.
 2. `docker compose up -d --build` (add `--profile whatsapp` for the connector). `backend` runs `migrate` and `collectstatic`, then gunicorn.
 3. `docker compose exec backend python manage.py createsuperuser`, then open `http://localhost:8000/api/v1/health/` and `http://localhost:8000/django-admin/`. The website runs with `npm run dev` as usual.
 

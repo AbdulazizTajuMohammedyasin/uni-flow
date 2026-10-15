@@ -1,4 +1,5 @@
-# Try UniFlow's backend on your own computer exactly as it runs online (Docker Desktop).
+# Try UniFlow's backend on your own computer exactly as it runs online (Docker Desktop),
+# with PostgreSQL like Render.
 # Online, Render runs these same images (backend/Dockerfile, connectors/whatsapp/Dockerfile)
 # and Vercel builds the website; this file is not used there. From this folder (deploy/):
 #   1. Copy-Item .env.example .env      (then fill it in; never commit it)
@@ -21,8 +22,8 @@ services:
     env_file: .env
     environment: &backend-environment
       DJANGO_SETTINGS_MODULE: config.settings.prod
-      DB_HOST: db
-      DB_PORT: "3306"
+      # PostgreSQL, like on Render (Render gives DATABASE_URL the same way).
+      DATABASE_URL: postgresql://${DB_USER:?Set DB_USER in .env}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-uniflow}
       CELERY_BROKER_URL: redis://redis:6379/0
       MEDIA_ROOT: /data/media
     volumes:
@@ -78,20 +79,18 @@ services:
       backend:
         condition: service_healthy
 
-  # The database. Online it will be PostgreSQL on Render (the next task switches this too).
+  # The database: PostgreSQL, as online on Render.
   db:
-    image: mysql:8.4
+    image: postgres:16
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME:-uniflow}
-      MYSQL_USER: ${DB_USER:?Set DB_USER in .env}
-      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
-    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+      POSTGRES_DB: ${DB_NAME:-uniflow}
+      POSTGRES_USER: ${DB_USER:?Set DB_USER in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -102,7 +101,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql-data:
+  postgres-data:
   media:
   beat:
   whatsapp-auth:

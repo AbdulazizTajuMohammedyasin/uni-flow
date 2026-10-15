@@ -7,7 +7,7 @@ Hardened for being online (M9.5): `manage.py check --deploy` is clean with these
 from config.env import env_bool, env_list, env_str
 
 from .base import *  # noqa: F401,F403
-from .base import DATABASES
+from .base import DATABASES, MIDDLEWARE
 
 SECRET_KEY = env_str("DJANGO_SECRET_KEY")
 DEBUG = False
@@ -15,6 +15,16 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 
 # Reuse database connections between requests.
 DATABASES["default"]["CONN_MAX_AGE"] = 60
+
+# The admin's styles, served by Django itself with whitenoise (online there is no web server
+# in front to do it; on your laptop runserver does). Right after SecurityMiddleware.
+MIDDLEWARE = [*MIDDLEWARE[:1], "whitenoise.middleware.WhiteNoiseMiddleware", *MIDDLEWARE[1:]]
+# Compressed, with file names that change when the file changes, so browsers can keep them for
+# a long time (needs `collectstatic`).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 # --- HTTPS only -----------------------------------------------------------------------------
 # The host receives HTTPS and passes requests on over plain HTTP, telling Django the original

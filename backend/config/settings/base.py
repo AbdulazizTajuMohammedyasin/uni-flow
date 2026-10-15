@@ -10,7 +10,7 @@ from pathlib import Path
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers as default_cors_headers
 
-from config.env import env_list, env_str, load_env_file
+from config.env import env_list, env_str, load_env_file, postgres_from_url
 
 # backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -54,6 +54,8 @@ AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # API answers are personal: never kept by browsers or by Vercel's cache.
+    "core.middleware.no_cache_for_api",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # CORS must run before CommonMiddleware so preflight responses get CORS headers.
     "corsheaders.middleware.CorsMiddleware",
@@ -84,7 +86,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 
-# Database: local MySQL 8.x (see docs/development-setup.md)
+# Database: local MySQL 8.x for development (see docs/development-setup.md); PostgreSQL
+# online (Render), chosen by setting DATABASE_URL (see below).
 
 DATABASES = {
     "default": {
@@ -105,6 +108,9 @@ DATABASES = {
         },
     }
 }
+# Online, Render gives one address for its PostgreSQL database (M9.6b).
+if DATABASE_URL := env_str("DATABASE_URL", ""):
+    DATABASES = {"default": postgres_from_url(DATABASE_URL)}
 
 
 # Password validation

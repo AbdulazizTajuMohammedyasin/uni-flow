@@ -4,7 +4,7 @@
 
 | Topic | Decision |
 |---|---|
-| Base path | `/api/v1/`. The version is in the URL. A released mobile app cannot be upgraded instantly, so breaking changes will go to `/api/v2/` while v1 keeps working. Adding fields or endpoints does not need a new version. |
+| Base path | `/api/v1/`. Online the website reaches it through Vercel on its own address (`https://<name>.vercel.app/api/v1/`, forwarded to Render, M9.6b). Every `/api/` answer carries `Cache-Control: private, no-store`. The version is in the URL. A released mobile app cannot be upgraded instantly, so breaking changes will go to `/api/v2/` while v1 keeps working. Adding fields or endpoints does not need a new version. |
 | Two surfaces | **Read:** `/api/v1/<resource>/` serves the caller's own feed, timetable, sources and imports. **Manage:** `/api/v1/manage/<resource>/` serves the staff dashboard. Every call on the manage surface is checked against the caller's capabilities (see [06](06-auth-and-permissions.md)). |
 | Format | JSON in `snake_case`. Datetimes are ISO 8601 in UTC. Class times are local `HH:MM`. |
 | Auth | `Authorization: Bearer <access JWT>` on every endpoint except the ones marked *public*. |

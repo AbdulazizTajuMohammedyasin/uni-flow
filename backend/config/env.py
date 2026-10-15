@@ -12,6 +12,7 @@ value are NOT supported (the `#` would become part of the value).
 
 import os
 from pathlib import Path
+from urllib.parse import parse_qsl, unquote, urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -81,3 +82,23 @@ def env_list(name: str, default=_MISSING) -> list[str]:
             raise ImproperlyConfigured(f"Missing required environment variable: {name}")
         return list(default)
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def postgres_from_url(url: str) -> dict:
+    """Django's database settings from an address like the one Render gives:
+    postgresql://user:password@host:5432/name?sslmode=require (no extra library needed)."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("postgres", "postgresql"):
+        raise ImproperlyConfigured("DATABASE_URL must start with postgresql:// (or postgres://).")
+    if not parsed.hostname or not parsed.path.strip("/"):
+        raise ImproperlyConfigured("DATABASE_URL needs a host and a database name.")
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": unquote(parsed.path.lstrip("/")),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname,
+        "PORT": str(parsed.port or 5432),
+        "OPTIONS": dict(parse_qsl(parsed.query)),  # e.g. sslmode=require
+        "TEST": {"NAME": "test_uniflow"},
+    }
