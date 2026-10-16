@@ -112,6 +112,7 @@ def test_every_ai_request_is_recorded(settings, operator):
     rows = list(AICall.objects.order_by("id").values_list("model", "outcome"))
     assert rows == [("fast-a", "used_up"), ("fast-b", "busy"), ("fast-c", "answered")]
     assert AICall.objects.first().kind == "fast"
+    assert AICall.objects.get(outcome="busy").detail == "503"  # Google's error is kept
     assert operator.get("/django-admin/intelligence/aicall/").status_code == 200
 
 

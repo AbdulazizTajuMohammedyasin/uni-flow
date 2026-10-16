@@ -186,10 +186,11 @@ def ask(
             cache.set(_rest_key(model), True, timeout=wait)
             waits.append(wait)
             _record(kind, model, "used_up", f"resting {wait} s")
-        except AIBusy:
+        except AIBusy as error:
             cache.set(_rest_key(model), True, timeout=BUSY_REST)
             waits.append(BUSY_REST)
-            _record(kind, model, "busy")
+            # Google's own words: tells "overloaded" apart from an error our request causes.
+            _record(kind, model, "busy", str(error))
         except AIError as error:
             _record(kind, model, "failed", str(error))
             raise
