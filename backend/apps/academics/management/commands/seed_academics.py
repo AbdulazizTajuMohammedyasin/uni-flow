@@ -6,18 +6,25 @@ Sources:
 - Terms: the official Undergraduate and Foundation academic calendars for sessions
   2024/2025 and 2025/2026 (aiu.edu.my, Academic Management Department). A term starts on its course
   registration day and ends on the last day of its exams. Add each new term in the
-  Django admin when AIU publishes it. Safe to run many times: existing rows are updated, never
-duplicated.
+  Django admin when AIU publishes it.
+- Courses: `apps/academics/data/courses.csv` (code, name, school), every school's course
+  list, given by the developer (October 2026). Edit the file to add or rename courses.
+
+Safe to run many times: existing rows are updated, never duplicated, and nothing is deleted.
 
     pipenv run python manage.py seed_academics
 """
 
+import csv
 from datetime import date
+from pathlib import Path
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.academics.models import Intake, Programme, School, Term
+from apps.academics.models import Course, Intake, Programme, School, Term
+
+COURSES_CSV = Path(__file__).resolve().parents[2] / "data" / "courses.csv"
 
 # (school code, school name, [(programme code, programme name, level), ...])
 AIU_STRUCTURE = [
@@ -141,9 +148,19 @@ class Command(BaseCommand):
                 },
             )
 
+        schools = {school.code: school for school in School.objects.all()}
+        with COURSES_CSV.open(encoding="utf-8", newline="") as file:
+            for row in csv.DictReader(file):
+                school = schools[row["school"].strip()]
+                Course.objects.update_or_create(
+                    code=row["code"].strip(),
+                    defaults={"school": school, "name": row["name"].strip()},
+                )
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"Done: {School.objects.count()} schools, {Programme.objects.count()} programmes, "
-                f"{Intake.objects.count()} intakes, {Term.objects.count()} terms."
+                f"{Intake.objects.count()} intakes, {Term.objects.count()} terms, "
+                f"{Course.objects.count()} courses."
             )
         )

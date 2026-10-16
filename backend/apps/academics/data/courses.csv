@@ -1,0 +1,377 @@
+code,name,school
+MPU3163,Falsafah dan Isu Semasa,CFGS
+MPU3143,Bahasa Melayu Komunikasi II,CFGS
+MPU3173,Penghayatan Etika dan Peradaban,CFGS
+MPU3323,Kursus Integriti dan Anti Rasuah,CFGS
+MPU3213,Entrepreneurship and Innovation,CFGS
+MPU3412,Social Business I,CFGS
+BBU1012,Social Business I,CFGS
+MPU3113,Hubungan Etnik,CFGS
+MPU3123,Islamic and Asian Civilisation,CFGS
+MPU3153,Malaysian Studies,CFGS
+BBN1022,Sustainability and Society,CFGS
+BBN1012,Ethics in Profession,CFGS
+LLN1012,Academic Writing,CFGS
+LLE1012,Basic Arabic Communication,CFGS
+LLE1022,Basic Japanese Communication,CFGS
+LLE1032,Basic Mandarin Communication,CFGS
+LLE1042,Basic Korean Communication,CFGS
+BBE2013,Intercultural Communication,CFGS
+BBE2023,Leadership for the Changing World,CFGS
+BBE2032,History and Philosophy of Science,CFGS
+BBE2042,Luminaries in Scientific Discoveries,CFGS
+BBE2052,Culture and Design,CFGS
+BBE2062,The Philosophy of Al-Ghazali and Rumi,CFGS
+BBE2072,The Literature of Southeast Asia: Ties that Bind,CFGS
+BBE2082,Literature of the World,CFGS
+BBE3092,Co-curriculum (Public Speaking),CFGS
+BBE3102,Co-curriculum (Drama),CFGS
+BBE3112,Co-curriculum (Sport),CFGS
+BBE3122,Co-curriculum (Music),CFGS
+CCC1113,Mathematics for Computer Science,SCI
+CCC1123,Problem Solving and Programming Fundamental,SCI
+CCC1133,Computer Organization and Architecture,SCI
+CCC1213,Data Communications and Networking,SCI
+CCC1223,Object Oriented Programming,SCI
+CCC1233,Probability and Statistics,SCI
+CCC1243,Artificial Intelligence,SCI
+CCC1313,Cyber Ethics,SCI
+CCC1323,Discrete Mathematics,SCI
+CCC2113,Data Structures and Algorithm Analysis,SCI
+CCC2123,Operating Systems,SCI
+CCC2133,Database Management Systems,SCI
+CCC2143,Software Engineering,SCI
+CCC2213,Directed Study in Computer Science,SCI
+CCC3013,Project 1,SCI
+CCC3026,Project 2,SCI
+CCT3216,Industrial Training,SCI
+CCS2213,Machine Learning,SCI
+CCS2223,Fundamental of Information Security,SCI
+CCS2243,Cryptography Essential,SCI
+CCS2263,Cybersecurity Systems,SCI
+CCS2313,Data Mining and Analytics,SCI
+CCS2323,Secured Software Development,SCI
+CCS3123,Digital Forensics,SCI
+CCS3133,Information Visualization,SCI
+CCS3153,Natural Language Processing,SCI
+CCS3183,Vulnerability Assessments and Penetration Tests,SCI
+CCE2323,Vulnerability Assessments and Penetration Tests,SCI
+CCE2233,Requirements Engineering,SCI
+CCE2333,Software Testing,SCI
+CCE3113,Network Security Technology,SCI
+CDE2213,Professional Ethics and Information Law,SCI
+CDE2223,Web Design and Development,SCI
+CDE2233,Cloud Computing,SCI
+CDE2333,Cloud Computing,SCI
+CDE2243,Internet of Things,SCI
+CDE2313,Mobile Application Development,SCI
+CDE3143,Mobile Application Development,SCI
+CDE2323,Blockchain Application Development,SCI
+CDE3113,Computer Vision,SCI
+CDE3123,Text Mining and Analytics,SCI
+CCS2233,Statistical Programming,SCI
+CDD1213,Introduction to Data Science,SCI
+CDD2113,Programming for Data Science,SCI
+CDD3113,Big Data Analytics,SCI
+CDP3013,Project 1,SCI
+CDP3026,Project 2,SCI
+CDT3216,Industrial Training,SCI
+CTC1113,Discrete Structures,SCI
+CTC1213,Fundamentals of Database System,SCI
+CTC1223,IT Project Management,SCI
+CTC2213,Enterprise Architecture,SCI
+CTC2223,User Experience Design,SCI
+CTC2233,Platform Technologies,SCI
+CTC2313,Cyber Threat Intelligence,SCI
+CTS3113,Data Security and Privacy,SCI
+CTP3013,Project 1,SCI
+CTP3116,Project 2,SCI
+CTT3212,Industrial Training,SCI
+CCR5013,Research Methodology,SCI
+CIT5020,Dissertation,SCI
+CCR6013,Research Methodology,SCI
+CTT6020,Thesis,SCI
+BBC1013,Microeconomics,SBSS
+BBC1033,Principles of Management,SBSS
+BBC1043,Principles of Marketing,SBSS
+BBC1063,Principles of Accounting,SBSS
+BBC1083,Business Communication,SBSS
+BBC1093,Introduction to Finance,SBSS
+BBC1182,Problem Solving and Scientific Thinking,SBSS
+BBC1192,Information Literacy and Learning Skills,SBSS
+BBC2023,Macroeconomics,SBSS
+BBC2053,Quantitative Methods,SBSS
+BBC2073,Business Law and Ethics,SBSS
+BBC2103,Principles of Human Resource Management,SBSS
+BBC2113,Operational Management,SBSS
+BBC2123,Organisational Behaviour,SBSS
+BBC2133,Management Information System,SBSS
+BBC2143,Financial Planning,SBSS
+BBC3163,Strategic Management,SBSS
+BBC3283,Development Studies,SBSS
+BBC3294,Social Business II,SBSS
+BBC2203,Consumer Behaviour,SBSS
+BBC2213,Customer Relationship Management,SBSS
+BBC2233,International Business,SBSS
+BBC2253,Financial Market and Institution,SBSS
+BBC3153,Integrated Marketing Communication,SBSS
+BBC3223,Islamic Financial System,SBSS
+BBC3243,E-Marketing,SBSS
+BBC3263,Supply Chain Management,SBSS
+BBC3273,Seminar in Marketing,SBSS
+BBE2123,Managerial Economics,SBSS
+BBT3016,Industrial Training,SBSS
+BMT3016,Industrial Training,SBSS
+BHT3016,Industrial Training,SBSS
+BST3016,Industrial Training,SBSS
+BPT3016,Industrial Training,SBSS
+BMS2023,Marketing Planning,SBSS
+BMS2033,International Marketing,SBSS
+BMS2043,Marketing Management Strategy,SBSS
+BMS3053,Services Marketing,SBSS
+BMS3063,Marketing Research,SBSS
+BMS3093,Brand Management,SBSS
+BHS2013,Human Resource Planning,SBSS
+BHS2023,Recruitment and Selection,SBSS
+BHS2033,Human Resource Development,SBSS
+BHS3043,Performance Management,SBSS
+BHS3053,Compensation Management,SBSS
+BHS3063,Human Resource Management Information Systems,SBSS
+BHS3073,Industrial Relations,SBSS
+BHS3083,Strategic Human Resource Management,SBSS
+BHS3093,Seminar in Human Resource Management,SBSS
+BHS3103,Occupational Safety and Health,SBSS
+BHS3113,International Human Resource Management,SBSS
+BHS3123,Managing Diversity and Inclusiveness,SBSS
+BEC1014,Applied Statistics,SBSS
+BEC1024,Mathematics for Economic Analysis,SBSS
+BEC1032,Digital Marketing,SBSS
+BEC1044,Microeconomics I,SBSS
+BEC1054,Macroeconomics I,SBSS
+BEC1064,Microeconomics II,SBSS
+BEC1074,Macroeconomics II,SBSS
+BEC2084,Business Accounting,SBSS
+BEC2094,Political Economy,SBSS
+BEC2104,Environment and Natural Resources,SBSS
+BEC2114,Economic Planning and Project Analysis,SBSS
+BEC2124,Monetary Economics,SBSS
+BEC2134,Islamic Economics and Finance,SBSS
+BEC2144,Econometrics,SBSS
+BEC2154,History of Economic Thoughts,SBSS
+BEC2164,Labour Economics,SBSS
+BEC2174,Human Resource Planning,SBSS
+BEC2184,Forestry Economics,SBSS
+BEC2194,Development Economics,SBSS
+BEC2204,Industrial Organisation,SBSS
+BEC2214,Research Methodology,SBSS
+BEC3224,Tourism Economics,SBSS
+BEC3234,International Trade,SBSS
+BEC3244,Fisheries Economics,SBSS
+BEC3254,Public Sector Economics,SBSS
+BEC3264,Health Economics,SBSS
+BEC3274,Knowledge-Based Economy,SBSS
+BEC3284,International Finance,SBSS
+BEC3294,Law and Economics,SBSS
+BEC3304,Energy Economics,SBSS
+BEC3312,Seminar in Contemporary Economic Issues,SBSS
+BET3013,Industrial / Community Project I,SBSS
+BET3023,Industrial / Community Project II,SBSS
+BEE2013,High Impact Business Presentation,SBSS
+BEE2022,Management Information System,SBSS
+BEE3033,Business Writing,SBSS
+BEE3043,Community Engagement,SBSS
+BSC1013,Ideologies of Developing Countries,SBSS
+BSC1024,Principles of Social Development,SBSS
+BSC1034,Development Theories,SBSS
+BSC1044,Economic for Development,SBSS
+BSC1054,Agriculture and Development,SBSS
+BSC1064,Poverty and Development,SBSS
+BSC2073,Statistics for Social Scientist,SBSS
+BSC2084,Development Planning in Regional and Rural Areas,SBSS
+BSC2094,Gender and Development,SBSS
+BSC2104,Digital Society,SBSS
+BSC2114,Research Methodology for Social Scientist,SBSS
+BSC2124,Environment and Development,SBSS
+BSC2134,Project Planning and Management,SBSS
+BSC2144,Project Investment Analysis,SBSS
+BSC2154,Seminar in Social Development Issues,SBSS
+BSC3164,Politics of Development and Underdevelopment,SBSS
+BSC3174,Industrialisation and International Development,SBSS
+BSC3184,Demography,SBSS
+BSC3194,Social Policy and Planning,SBSS
+BSC3204,Social Inequality,SBSS
+BSE1013,Community Development,SBSS
+BSE1023,"Education, Training and Human Resource",SBSS
+BSE2033,Public Sector Management,SBSS
+BSE2043,Human Behaviour and Social Environment,SBSS
+BSE2053,Social Psychology,SBSS
+BSE3064,Human Service Organisation,SBSS
+BSE3074,Comparative Politics,SBSS
+BSE3082,Critical and Creative Thinking,SBSS
+BSE3092,Professional Grooming and Personality Development,SBSS
+BFC1014,Principles of Economics,SBSS
+BFC1043,Financial Management,SBSS
+BFC1063,Business Statistics,SBSS
+BFC1073,Financial Accounting,SBSS
+BFC2023,Financial Markets and Technology in Finance,SBSS
+BFC2073,Business Law,SBSS
+BFC2083,Ethics and Corporate Governance,SBSS
+BFC2103,Research Methodology,SBSS
+BFC2113,Investment Analysis,SBSS
+BFC2123,Corporate Finance,SBSS
+BFC2133,International Finance,SBSS
+BFC2143,Financial Statement Analysis,SBSS
+BFC2153,Financial Modelling,SBSS
+BFC2163,Personal Financial Planning,SBSS
+BFC3043,Financial Risk Management,SBSS
+BFC3163,Seminar in Finance,SBSS
+BFS1013,Aqidah Islamiah,SBSS
+BFS1023,Usul Fiqh,SBSS
+BFS1033,Fiqh Muamalat,SBSS
+BFS1053,Foundation of Islamic Economics,SBSS
+BFS1062,Basic Arabic for Muamalat,SBSS
+BFS1223,Islamic Financial Markets and System,SBSS
+BFS2043,Qawaid Fiqhiyyah,SBSS
+BFS2083,Islamic Capital Market,SBSS
+BFS3093,"Islamic Financial Services, Legal and Governance",SBSS
+BFS3103,Islamic Banking Management,SBSS
+BFS3113,Islamic Risk Management,SBSS
+BFS3123,Waqf and Zakat Management,SBSS
+BPC1013,Introduction to Political Science,SBSS
+BPC1023,Introduction to International Relations,SBSS
+BPC1033,Western Political Thought,SBSS
+BPC1043,Political History,SBSS
+BPC1053,Theories of International Relations,SBSS
+BPC1063,Foreign Policy Making,SBSS
+BPC1073,Political Ideology and Systems,SBSS
+BPC1083,Public Administration,SBSS
+BPC1093,Politics and Technology,SBSS
+BPC2103,Comparative Politics,SBSS
+BPC2113,International Political Economy,SBSS
+BPC2123,Malaysian Foreign Policy,SBSS
+BPC2133,Theories of Political Development,SBSS
+BPC2143,International Organizations,SBSS
+BPC2153,Perspectives on Development,SBSS
+BPC2163,Election and Democratic Transition in Third World,SBSS
+BPC2173,Government and Finance,SBSS
+BPC2183,International Diplomacy,SBSS
+BPC2193,Peace and Conflict Studies,SBSS
+BPC2213,European Politics,SBSS
+BPC3253,Public Policy Analysis,SBSS
+BPC3263,Major Powers' Foreign Policy,SBSS
+BPC3273,Research Methods in Political Science,SBSS
+BPC3283,"Migration, Citizenship and Refugees",SBSS
+BPE2203,Ottoman State and Institution,SBSS
+BPE2223,Islamic Theory of International Relations,SBSS
+BPE2233,Southeast Asian and Regional Politics,SBSS
+BPE3243,Middle East Politics,SBSS
+BCR5013,Research Methodology and Evidence-Based Analysis,SBSS
+BCR6013,Research Methodology and Evidence-Based Analysis,SBSS
+BCM5024,Contemporary Management Practices,SBSS
+BCM5034,Entrepreneurship and Marketing in a Digital World,SBSS
+BCM5044,Human Resource Management,SBSS
+BCM5054,Business Economics,SBSS
+BCM5064,Accounting and Financial Management,SBSS
+BCT5074,Business Analytics for Social Value Creation,SBSS
+BCY5083,Social Business,SBSS
+BSY5093,"Social Problems, Development Solutions and Innovation",SBSS
+BSY5103,Social Business Design and Business Planning Tools,SBSS
+BSY5114,Seminar on Creating New Ventures in Social Business,SBSS
+BPY5124,Project - Social Business Creation and Pitching Sandbox,SBSS
+ECC1113,Growth and Development for Early Childhood Education,SEHS
+ECC1133,Curriculum in Early Childhood Education,SEHS
+ECC1143,Play in Early Childhood Education,SEHS
+ECC1153,Early Childhood Care and Education,SEHS
+ECC1213,Approaches in Early Childhood Education,SEHS
+ECC1223,Technology for Young Children,SEHS
+ECC1233,Children Development and Psychology,SEHS
+ECC1253,Administering and Managing Early Childhood Care and Education Centres,SEHS
+ECC1263,Islamic and Moral Education in Early Childhood,SEHS
+ECC1323,Professionals in Early Childhood Education,SEHS
+ECC1333,Learning Environment for Early Childhood,SEHS
+ECC2113,Observation and Assessment for Young Children,SEHS
+ECC2123,Mathematics for Young Children,SEHS
+ECC2133,Early Science for Young Children,SEHS
+ECC2143,English for Young Children,SEHS
+ECC2153,Special Education Needs in Early Childhood Education,SEHS
+ECC2213,Language and Literacy for Young Children,SEHS
+ECC2223,"Health, Safety and Nutrition for Young Children",SEHS
+ECC2233,Music for Young Children,SEHS
+ECC2243,Creative Arts for Young Children,SEHS
+ECC2313,Research Methodology in Early Childhood Education,SEHS
+ECC2323,"Children, Family and Community Partnership",SEHS
+ECC2333,Social Studies for Young Children,SEHS
+ECC3113,Socio-emotional Development in Early Childhood Education,SEHS
+ECC3123,Behaviour Management in Early Childhood Education,SEHS
+ECC3133,Gifted and Talented in Early Childhood,SEHS
+ECC3143,Pedagogy in Early Childhood Education,SEHS
+ECC3153,Microteaching in Early Childhood Education,SEHS
+ECT3218,Practicum in Early Childhood Education (Child Care & Preschool),SEHS
+EEC1113,Foundation of Education,SEHS
+EEC1123,Elementary Science,SEHS
+EEC1133,English Grammar,SEHS
+EEC1143,Foundation and Principles of Curriculum,SEHS
+EEC1213,Technology Enhanced Active Learning,SEHS
+EEC1223,Educational Psychology,SEHS
+EEC1233,Learning Science Through Inquiry,SEHS
+EEC1243,Child Development and Psychology,SEHS
+EEC1253,Children Literature,SEHS
+EEC1313,English Vocabulary,SEHS
+EEC1323,Literacy Instruction,SEHS
+EEC1333,Elementary Mathematics,SEHS
+EEC2113,Method of Teaching,SEHS
+EEC2123,Teaching English for Elementary School,SEHS
+EEC2133,English Writing,SEHS
+EEC2143,Math Lab for Elementary School,SEHS
+EEC2153,Islamic Education Thought,SEHS
+EEC2213,Speech and Communication,SEHS
+EEC2223,Learning Assessment,SEHS
+EEC2232,School Orientation Plan,SEHS
+EEC2243,Teaching Mathematics for Elementary School,SEHS
+EET2315,Teaching Practicum I,SEHS
+EEC3113,Teaching English in Education,SEHS
+EEC3123,Counselling Skills for Educators,SEHS
+EEC3133,Dynamic Physical Education,SEHS
+EEC3143,Teaching Science for Elementary School,SEHS
+EEC3153,Teaching Physical Education to Elementary School,SEHS
+EEC3213,Introduction to Linguistic,SEHS
+EEC3223,Higher Order Thinking Skills in Elementary Classroom,SEHS
+EEC3233,School Management and Leadership,SEHS
+EEC3243,Research in Education,SEHS
+EET3315,Teaching Practicum II,SEHS
+EEE3113,Human Resource Management,SEHS
+EEE3213,Management and Organisational Behaviour,SEHS
+EEE3122,Stress Management,SEHS
+EEE3142,Outdoor Recreational Skills and Management,SEHS
+EEE3152,Advanced Communication and Public Speaking Techniques,SEHS
+EMC1113,Introduction to Media Communication,SEHS
+EMC1123,Introduction to Intercultural Communication,SEHS
+EMC1143,Global Citizen,SEHS
+EMC1153,Digital Photography and Videography,SEHS
+EMC1213,Professional Communication Skills,SEHS
+EMC1223,Communication Theories,SEHS
+EMC1233,Audience and Media Discourse,SEHS
+EMC1243,Communication Industries Policies and Laws,SEHS
+EMC1253,Cross Cultural Management,SEHS
+EMC1313,Broadcast Journalism,SEHS
+EMC1323,Global Media,SEHS
+EMC1333,Script Writing and Appreciation,SEHS
+EMC2113,Media Management and Production,SEHS
+EMC2123,Semantics in Journalism,SEHS
+EMC2133,Broadcast Feature and Documentaries,SEHS
+EMC2143,Management of Mass Media Organisation,SEHS
+EMC2163,Contemporary Media Writing,SEHS
+EMC2213,Management Production of Aesthetic,SEHS
+EMC2223,Media Entrepreneurship,SEHS
+EMC2233,Principles of Public Relations,SEHS
+EMC2253,Digital Marketing and Advertising,SEHS
+EMC2263,Digital Media: Radio and Podcasting,SEHS
+EMC2333,Public Relations: Case Studies,SEHS
+EMC2343,Introduction to Journalism,SEHS
+EMC3113,Public Relation Writing,SEHS
+EMC3123,Editing,SEHS
+EMC3133,Public Relations Campaign,SEHS
+EMC3143,Statistics and Data Analysis,SEHS
+EMC3153,Communication Research Methodology,SEHS
+EMC3313,Academic Exercise,SEHS
+EMT3216,Industrial Training,SEHS
