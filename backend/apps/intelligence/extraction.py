@@ -34,7 +34,8 @@ BATCH_SIZE = 10  # new academic messages looked at in one AI request
 WINDOW_HOURS = 24  # earlier messages shown for context
 WINDOW_MESSAGES = 30
 MAX_TEXT = 1500
-PROMPT_VERSION = "extract-v2"
+MAX_COURSES = 40  # courses listed in the prompt
+PROMPT_VERSION = "extract-v3"  # v3: the members' courses are listed
 TIMETABLE_KINDS = ["class_moved", "class_cancelled", "room_changed", "extra_session"]
 TIMETABLE_IMPORTANCE = 80  # a change to your own class is an important update
 OPPORTUNITY_KINDS = ["internship", "bootcamp", "industry_visit", "competition", "scholarship"]
@@ -57,14 +58,16 @@ PART 1, "changes": CLASS TIMETABLE CHANGES.
 - class_cancelled: a class is cancelled,
 - room_changed: a class moves to another room,
 - extra_session: an extra or replacement class is added.
-For each change give: the course code if mentioned (else ""), the section if mentioned
-(else ""), the DATE of the affected class as YYYY-MM-DD (work out words like "tomorrow" or
-"next Monday" from the date of the message that says it), for a class moved to another
-day the new date as new_date (else ""), the original start time if mentioned, the new
-start and end times (24-hour HH:MM) if they change, the new room if it changes, a short
-English title, a one-sentence English summary, how sure you are from 0 to 1 (lower it for
-rumours, questions or unclear messages), and the ids of the messages that state it with
-the exact sentence as the quote.
+For each change give: the course code if the course is mentioned by code, name or short
+name (e.g. "DSA" for Data Structures and Algorithm...; take the code from the group's
+courses when they are listed; else ""), the section if mentioned (else ""), the DATE of
+the affected class as YYYY-MM-DD (work out words like "tomorrow" or "next Monday" from the
+date of the message that says it), for a class moved to another day the new date as
+new_date (else ""), the original start time if mentioned, the new start and end times
+(24-hour HH:MM) if they change, the new room if it changes, a short English title, a
+one-sentence English summary, how sure you are from 0 to 1 (lower it for rumours,
+questions or unclear messages), and the ids of the messages that state it with the exact
+sentence as the quote.
 Do not report questions without an answer, jokes, rumours, or a change a later message
 takes back.
 
@@ -77,13 +80,14 @@ PART 2, "items": OTHER INFORMATION a student may need (never timetable changes):
 - direct_request: one or more NAMED students are asked to do something.
 For each item give: the kind, a short English title, a one-sentence English summary,
 importance from 0 to 100 (100 = urgent for the students concerned, 20 = nice to know),
-whether students must act and the action in a few words, the deadline and the event's
-date and time (YYYY-MM-DD or YYYY-MM-DD HH:MM, worked out from the message's date; else
-""), the place, a link copied exactly from the message (else ""), topics from the list
-given, who it is for (course codes, school codes such as SCI, programme codes such as BCS,
-and a semester range when the message says e.g. "Year 2" = semesters 4 to 6; leave empty
-when not said), the names of the students asked (direct_request only), how sure you are
-from 0 to 1, and the ids of the messages that state it with the exact sentence as quote.
+whether students must act and the action in a few words, the deadline and the event's date
+and time (YYYY-MM-DD or YYYY-MM-DD HH:MM, worked out from the message's date; else ""),
+the place, a link copied exactly from the message (else ""), topics from the list given,
+who it is for (course codes, from the group's courses when named there, school codes such
+as SCI, programme codes such as BCS, and a semester range when the message says e.g.
+"Year 2" = semesters 4 to 6; leave empty when not said), the names of the students asked
+(direct_request only), how sure you are from 0 to 1, and the ids of the messages that
+state it with the exact sentence as quote.
 Ignore greetings, chit-chat, selling, rumours and anything not about university life.
 
 If there is nothing, return empty lists.
@@ -169,6 +173,32 @@ def _scope_text(source: Source) -> str:
     return f" (for: {scope})" if scope else ""
 
 
+def _courses_text(source: Source, day: date) -> str:
+    """The courses the group's members take this term (and the group's own course), so the
+    AI can turn "DSA" or "machine learning" into a course code."""
+    if source.pk is None:  # evaluate_intelligence's unsaved test group: no members
+        return ""
+    terms = [t for calendar in Term.Calendar.values if (t := Term.current(calendar, day))]
+    sections = (
+        CourseSection.objects.filter(
+            term__in=terms, is_active=True, enrollments__user__source_memberships__source=source
+        )
+        .select_related("course")
+        .distinct()
+    )
+    courses: dict[Course, list[str]] = {}
+    for section in sections:
+        courses.setdefault(section.course, []).append(section.code)
+    if source.course_id:
+        courses.setdefault(source.course, [])
+    lines = [
+        f"- {course.code} {course.name}"
+        + (f" (sections: {', '.join(sorted(codes))})" if codes else "")
+        for course, codes in sorted(courses.items(), key=lambda pair: pair[0].code)
+    ][:MAX_COURSES]
+    return "\n".join(["The group's courses:", *lines]) if lines else ""
+
+
 def _window(source: Source, new: list[Message]) -> list[Message]:
     """The new messages, the conversation just before them, and the messages they reply to
     (even older ones), oldest first."""
@@ -192,6 +222,8 @@ def _prompt(source: Source, window: list[Message], new_ids: set[int]) -> str:
         reply = f" (reply to [{message.reply_to_id}])" if message.reply_to_id else ""
         text = message.text[:MAX_TEXT].replace("\n", " / ")
         lines.append(f"{mark} [{message.id}] {name} ({when}){reply}: {text}")
+    if courses := _courses_text(source, timezone.localdate(window[-1].sent_at)):
+        lines.append(courses)
     lines.append(f"Topics to choose from: {', '.join(Interest.values)}")
     return "\n".join(lines)
 

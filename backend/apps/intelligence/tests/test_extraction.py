@@ -5,12 +5,13 @@ from celery.exceptions import Retry
 from django.conf import settings
 
 from apps.academics.models import Course, School, Term
+from apps.accounts.services import create_user
 from apps.intelligence import tasks
 from apps.intelligence.extraction import extract_source
-from apps.intelligence.models import Insight, Message, Source
+from apps.intelligence.models import Insight, Message, Source, SourceMember
 from apps.intelligence.providers import AIRateLimited, fake_provider
 from apps.publishing.models import Status
-from apps.timetable.models import ClassMeeting, CourseSection
+from apps.timetable.models import ClassMeeting, CourseSection, SectionEnrollment
 
 pytestmark = pytest.mark.django_db
 
@@ -130,6 +131,33 @@ def test_the_groups_own_course_is_used_when_no_course_is_named(group, cde):
     insight = Insight.objects.get()
     assert list(insight.audience.sections.all()) == [cde["B"]]
     assert insight.data["old_start"] == "14:00"  # worked out from Section B's Tuesday class
+
+
+def test_the_ai_is_shown_the_courses_the_groups_students_take(group, cde, term):
+    student = create_user("ali@student.aiu.edu.my", "Str0ng-pass-99", full_name="Ali")
+    SourceMember.objects.create(source=group, user=student)
+    SectionEnrollment.objects.create(user=student, section=cde["A"])
+    old = Term.objects.create(
+        name="Old",
+        academic_session="2025/2026",
+        number=1,
+        starts_on=date(2025, 9, 1),
+        ends_on=date(2026, 1, 30),
+    )
+    past = CourseSection.objects.create(
+        course=Course.objects.create(school=cde["A"].course.school, code="OLD1013", name="Old"),
+        term=old,
+        code="1",
+    )
+    SectionEnrollment.objects.create(user=student, section=past)
+    moved = add(group, "DS class tomorrow moved to 2 PM")
+    fake_provider().answers.append({"changes": [change(moved)]})
+
+    extract_source(group)
+
+    prompt = fake_provider().calls[0]["prompt"]
+    assert "- CDE2313 Data Structures (sections: A)" in prompt
+    assert "OLD1013" not in prompt  # only this term's classes
 
 
 def test_unknown_course_is_kept_as_a_draft_for_review(group, cde):
