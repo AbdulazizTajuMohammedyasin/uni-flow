@@ -57,7 +57,7 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 ### Safeguards
 
 - A **dedicated number** owned by the project, never a student's personal number.
-- **Read-only behaviour:** the connector sends nothing except the one join notice. No bulk messaging, no replies.
+- **Read-only behaviour:** the connector joins silently and sends nothing (the one join notice is optional: `SEND_JOIN_NOTICE=true`, off for now; the developer tells students directly). No bulk messaging, no replies.
 - Joins only through invite links students submit, at a slow rate.
 - The join notice explains what UniFlow reads, and that a group admin can simply remove the number.
 - Only academic groups; admins can disconnect any source.
@@ -71,7 +71,7 @@ WhatsApp has **no official API for reading groups**. The developer has chosen to
 - It does three things: join a group from an invite link, receive new group messages (with image, PDF and spreadsheet attachments), and send them to the backend. It ignores private messages and never reads members' phone numbers.
 - It sends messages to `POST /api/v1/internal/messages/`, signed with a shared secret (`CONNECTOR_SECRET`). It has no database of its own.
 - **Built so far (M6.2):** the Django side, `apps/intelligence/connector.py` (addresses and signing in [04](04-api.md)). The connector asks for groups to join, reports each join (and whether the notice was sent), sends each message once with a sender id that UniFlow hashes again (so a phone number is never stored), then uploads any files. The connector program itself is M6.3.
-- **Built (M6.3):** `connectors/whatsapp/` (`src/index.js` WhatsApp side, `src/messages.js` message conversion and the join notice, `src/uniflow.js` signed requests; setup in its `README.md`). It logs in once with a **pairing code** (session in the git-ignored `auth/` folder), asks for groups to join every 5 minutes and joins **one per round** (each link at most once an hour), posts the notice, reports the join, forwards messages and then their files, stays "offline", and ignores private chats, status updates and its own messages. After a restart WhatsApp delivers what was missed and the backend stores each message once.
+- **Built (M6.3):** `connectors/whatsapp/` (`src/index.js` WhatsApp side, `src/messages.js` message conversion and the join notice, `src/uniflow.js` signed requests; setup in its `README.md`). It logs in once with a **pairing code** (session in the git-ignored `auth/` folder), asks for groups to join every 5 minutes and joins **one per round** (each link at most once an hour), joins silently (or posts the notice when `SEND_JOIN_NOTICE=true`), reports the join, forwards messages and then their files, stays "offline", and ignores private chats, status updates and its own messages. After a restart WhatsApp delivers what was missed and the backend stores each message once.
 - **Known issue (October 2026):** Baileys 7.0.0-rc14 can fail to link ("Couldn't link device"). Its built-in WhatsApp Web version is out of date (fixed: the connector fetches the current one), and since late July 2026 WhatsApp sends a `companion_reg_refresh` step Baileys doesn't handle yet ([Baileys #2737](https://github.com/WhiskeySockets/Baileys/issues/2737); unreleased fix). If linking still fails, either wait for the next Baileys release or apply that fix as a patch (needs approval).
 - Online it runs on Render as an always-on background worker from `connectors/whatsapp/Dockerfile`, with a disk for its login session; locally it can be tried with Docker Desktop (`docker compose --profile whatsapp up -d` in `deploy/`). See [10](10-testing-and-deployment.md) section 21.
 
@@ -117,6 +117,6 @@ A staff post is an `Insight` with `origin = staff` (built on the `publishing` ba
 |---|---|
 | WhatsApp number banned | Other sources keep working; a replacement number can be registered; the connector is isolated |
 | A non-academic or private group is connected | Admin review of new sources; academic-only rule; disconnect button |
-| Someone connects a group to spy on it | The join notice tells members; group admins can remove the account; admins can disconnect |
+| Someone connects a group to spy on it | The join notice (when turned on) or the developer tells members; group admins can remove the account; admins can disconnect |
 | Fake or phishing invite links | Host validation (`chat.whatsapp.com`, `t.me`, `telegram.me`) |
 | Forged messages to the internal endpoint | Signed requests with `CONNECTOR_SECRET`; the endpoint is not reachable from outside the server |

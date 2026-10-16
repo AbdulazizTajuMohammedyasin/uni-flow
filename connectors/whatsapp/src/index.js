@@ -2,9 +2,9 @@
 //
 // 1. Logs in (the first time: a pairing code you type in WhatsApp on the phone).
 // 2. Every few minutes asks the backend which groups students added, and joins them
-//    slowly (one at a time), posting the join notice once.
+//    slowly (one at a time), silently (SEND_JOIN_NOTICE=true: posting the join notice once).
 // 3. Forwards every new group message, then its photo/PDF/Excel file, to the backend.
-// It ignores private chats and never sends anything except the join notice.
+// It ignores private chats and never sends anything except the join notice, if turned on.
 // After a restart WhatsApp delivers what was missed; the backend stores each message once.
 import makeWASocket, {
   DisconnectReason,
@@ -24,6 +24,7 @@ const config = {
   authDir: process.env.AUTH_DIR ?? './auth',
   joinEverySeconds: Number(process.env.JOIN_EVERY_SECONDS ?? 300),
   maxFileBytes: Number(process.env.MAX_UPLOAD_MB ?? 10) * 1024 * 1024,
+  sendJoinNotice: process.env.SEND_JOIN_NOTICE === 'true', // off unless turned on
 }
 if (!config.secret) {
   console.error('Set CONNECTOR_SECRET in connectors/whatsapp/.env (the same as in backend/.env).')
@@ -137,13 +138,18 @@ async function forward(socket, message) {
   await uniflow.sendFile(stored.id, file.fileName, file.mimeType, bytes)
 }
 
-/** Post the join notice once, then tell the backend UniFlow is in the group. */
+/** Post the join notice once (unless turned off), then tell the backend UniFlow is in the group. */
 async function reportJoined(socket, groupId, title, sourceId) {
   if (announced.has(groupId)) return // joining by link also fires "groups.upsert"
   announced.add(groupId)
-  await socket.sendMessage(groupId, { text: JOIN_NOTICE })
+  if (config.sendJoinNotice) await socket.sendMessage(groupId, { text: JOIN_NOTICE })
   waitingApproval.delete(groupId)
-  await uniflow.joined({ external_id: groupId, title: title ?? '', source_id: sourceId ?? null, notice_sent: true })
+  await uniflow.joined({
+    external_id: groupId,
+    title: title ?? '',
+    source_id: sourceId ?? null,
+    notice_sent: config.sendJoinNotice,
+  })
   log(`Joined "${title}".`)
 }
 

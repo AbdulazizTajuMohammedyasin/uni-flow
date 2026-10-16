@@ -1,9 +1,10 @@
 # UniFlow WhatsApp connector
 
 A small Node.js program that runs **UniFlow's own WhatsApp number** (docs/08). It joins the
-groups students add in UniFlow, posts one notice saying what UniFlow does, and forwards new
-group messages and their files (photos, PDFs, Excel) to the backend's private, signed
-addresses (`/api/v1/internal/`). It ignores private chats and sends nothing else.
+groups students add in UniFlow and forwards new group messages and their files (photos,
+PDFs, Excel) to the backend's private, signed addresses (`/api/v1/internal/`). It joins
+silently: with `SEND_JOIN_NOTICE=true` in `.env` it also posts one notice saying what
+UniFlow does. It ignores private chats and sends nothing else.
 
 It uses [Baileys](https://github.com/WhiskeySockets/Baileys) (approved before M6.3), an
 **unofficial** WhatsApp library: WhatsApp may ban the number. Use a dedicated SIM.
