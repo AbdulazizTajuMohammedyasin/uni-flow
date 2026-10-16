@@ -36,7 +36,12 @@ class FakeGoogleClient:
 
 def gemini_with(monkeypatch, reply) -> tuple[GeminiProvider, FakeGoogleClient]:
     client = FakeGoogleClient(reply)
-    monkeypatch.setattr(genai, "Client", lambda api_key: client)
+
+    def make_client(**options):
+        client.options = options
+        return client
+
+    monkeypatch.setattr(genai, "Client", make_client)
     return GeminiProvider("test-key"), client
 
 
@@ -63,6 +68,14 @@ def test_the_fake_answers_in_order_and_records_questions():
 def test_gemini_needs_a_key():
     with pytest.raises(AIError, match="GEMINI_API_KEY"):
         GeminiProvider("")
+
+
+def test_gemini_tries_a_busy_model_again_after_a_few_seconds(monkeypatch):
+    _, client = gemini_with(monkeypatch, '{"ok": true}')
+
+    retry = client.options["http_options"].retry_options
+    assert retry.attempts == 3 and retry.initial_delay == 2
+    assert retry.http_status_codes == [500, 503]  # "too many requests" (429) is not retried
 
 
 def test_gemini_asks_for_json_and_sends_files_first(monkeypatch):

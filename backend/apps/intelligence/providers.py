@@ -5,8 +5,9 @@ never imports a vendor library. Two kinds of model are used, each a list tried i
 - AI_FAST_MODELS: cheap and quick ("is this message academic?").
 - AI_SMART_MODELS: understanding messages and reading timetable images, PDFs and sheets.
 
-On the free tier each model has its own small daily allowance. When a model says "too many
-requests" (or is busy), it rests until Google says it can be used again, and the next model
+On the free tier each model has its own small daily allowance. A busy model is first tried
+again a few seconds later. When a model says "too many requests" (or is still busy), it
+rests until Google says it can be used again, and the next model
 in the list answers instead. Only when every model of the list is resting is AIRateLimited
 raised, so the Celery job waits and retries later instead of failing.
 
@@ -56,8 +57,16 @@ class GeminiProvider:
         if not api_key:
             raise AIError("GEMINI_API_KEY is not set in backend/.env.")
         from google import genai  # imported here so tests never need the library or a key
+        from google.genai import types
 
-        self._client = genai.Client(api_key=api_key)
+        # "High demand" usually passes within seconds: the library tries the same model
+        # again (after about 2 s, then 4 s) before UniFlow rests it and moves on.
+        retry = types.HttpRetryOptions(
+            attempts=BUSY_ATTEMPTS, initial_delay=2, max_delay=8, http_status_codes=[500, 503]
+        )
+        self._client = genai.Client(
+            api_key=api_key, http_options=types.HttpOptions(retry_options=retry)
+        )
 
     def ask_json(
         self,
@@ -137,7 +146,8 @@ def fake_provider() -> FakeProvider:
 # --- Asking, with fallback between models ---------------------------------------------------
 
 MODEL_LISTS = {"fast": "AI_FAST_MODELS", "smart": "AI_SMART_MODELS"}
-BUSY_REST = 60  # seconds a busy model rests
+BUSY_ATTEMPTS = 3  # tries of the same model while it's busy, a few seconds apart
+BUSY_REST = 60  # seconds a busy model rests after that
 LIMIT_REST = 60  # when Google doesn't say how long
 
 
