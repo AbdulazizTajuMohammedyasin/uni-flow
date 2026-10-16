@@ -159,7 +159,7 @@ UniFlow is built **one small task at a time**.
   - `UserManager`:
     - It lowercases the **whole** email address, and `User.clean()` does the same, which covers the admin forms.
     - `create_superuser` requires `role=super_admin`, `is_staff` and `is_superuser`.
-  - Uniqueness is case-insensitive at the database level too, because the `utf8mb4_0900_ai_ci` collation is case-insensitive.
+  - Uniqueness is case-insensitive at the database level too: a unique index on the lowercased email (added in M9.6g, so it also holds on PostgreSQL, which compares text case-sensitively).
   - The back-office `UserAdmin` uses email-based versions of `AdminUserCreationForm` and `UserChangeForm`.
   - `is_active` keeps Django's default of True for accounts created by admins. Djoser's registration creates users as inactive (M1.5).
 - **Verification:**

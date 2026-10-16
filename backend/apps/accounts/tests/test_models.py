@@ -44,7 +44,7 @@ def test_email_is_unique_case_insensitively():
     User.objects.create_user("dup@example.com", "pass", full_name="First")
 
     # Bypass the manager's lowercasing: the database itself must reject a case variant
-    # (MySQL utf8mb4_0900_ai_ci is case-insensitive).
+    # (a unique index on the lowercased email, on MySQL and PostgreSQL).
     with pytest.raises(IntegrityError), transaction.atomic():
         User.objects.create(email="DUP@example.com", full_name="Second")
 

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 
 from core.models import TimeStampedModel
 
@@ -82,6 +83,9 @@ class User(AbstractUser):
                 condition=models.Q(role__in=UserRole.values),
                 name="accounts_user_role_valid",
             ),
+            # One account per email whatever the capitals, on MySQL and PostgreSQL alike
+            # (PostgreSQL compares text case-sensitively).
+            models.UniqueConstraint(Lower("email"), name="accounts_user_email_unique_ci"),
         ]
 
     def __str__(self) -> str:
