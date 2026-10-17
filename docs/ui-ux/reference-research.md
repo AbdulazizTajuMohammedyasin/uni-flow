@@ -10,9 +10,9 @@ Reference screenshots were saved **outside the repo**, in the session's temporar
 |---|---|---|
 | **Refero** (https://refero.design/) | The home page, plus `https://refero.design/web-apps` with its category list (Education, Productivity, Scheduling Tools, …). Opening a category showed **only loading placeholders**; screens need an account. | Category list only. No screens were studied, and no paywall or login was bypassed. |
 | **SaaSUI** (https://www.saasui.design/) | Public pattern pages with real product screenshots (`/pattern/{type}/{product}`). | **Main source.** |
-| **Mobbin** (https://mobbin.com/) | The marketing and explore landing page. Per its own page, screens, flows and search need a free or paid account. | Not used. Needs your decision: sign up yourself and share links, or skip it. |
+| **Mobbin** (https://mobbin.com/) | The marketing and explore landing page. Per its own page, screens, flows and search need a free or paid account. | Not used; skipped by decision (SaaSUI was enough). |
 | Dribbble | Not visited | Optional; visual exploration only. |
-| Your earlier inspiration sites | **Not found** in this project's saved conversations | Please send them, if any. |
+| Earlier inspiration sites | None. The references below are the agreed set (decision 2026-10-17). | — |
 
 **Limitation:** SaaSUI shows each product screen at reduced size on its pages. The notes below cover layout, hierarchy and pattern. Exact sizes and colours were not measured.
 

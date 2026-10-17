@@ -1,4 +1,4 @@
-# UniFlow UI/UX redesign plan (Phase 1: proposal, not approved yet)
+# UniFlow UI/UX redesign plan (Phase 1: decisions made 2026-10-17, waiting for final approval)
 
 Inputs:
 - [page-inventory.md](page-inventory.md): routes, issues, evidence.
@@ -76,9 +76,7 @@ These are additions to and replacements for the values in `index.css`, still exp
 | success (new) | `#17663A` | "Saved", "Added" | 7.0:1 |
 | danger (`--destructive`) | `#B42318` | Errors, the unread count | 6.6:1 |
 
-- **Why blue, not the current indigo:** it is decision #2 below.
-  - The deep blue reads as institutional and trustworthy, and it is not the default shadcn indigo.
-  - If AIU has official brand colours, they replace `primary`, and the rest stays.
+- **Why blue, not the current indigo:** the deep blue reads as institutional and trustworthy, and it is not the default shadcn indigo. **Decided (decision #2).**
 - **Type:** keep **Geist Variable**, which is already installed, so no new dependency.
   - Scale: 13 / 14 / 16 (body) / 18 / 22 / 28 px.
   - Page titles at 22 px on phones (smaller than today's 24 px), to bring content above the fold.
@@ -96,7 +94,28 @@ These are additions to and replacements for the values in `index.css`, still exp
   - About 150 ms colour and opacity transitions on state changes only.
   - No entrance animations.
   - `prefers-reduced-motion` respected.
-- **Dark mode:** not in this redesign (decision #6). The tokens stay dark-ready.
+- **Dark mode: part of this redesign, with a toggle (decision #6).** The dark tokens below replace the unused `.dark` block in `index.css`:
+
+| Token | Dark value | Contrast (computed) |
+|---|---|---|
+| ink | `#E6EAF0` | 15.0:1 on paper, 13.6:1 on surface |
+| paper | `#10161F` | — |
+| surface | `#18202B` | — |
+| muted text | `#9AA5B4` | 7.3:1 on paper, 6.6:1 on surface |
+| line | `#2A3441` | decorative |
+| control edge | `#6B7788` | 3.6:1 on surface |
+| primary | `#6CA6E0`, with button text `#0B1A2A` | 6.4:1 on surface; 6.8:1 for button text |
+| attention | text `#F5C46B` on `#2E2414` | 9.4:1 |
+| success | `#5FCB8A` | 8.1:1 on surface |
+| danger | `#F2877D` | 6.7:1 on surface |
+
+**How the toggle works:**
+- **Where it lives:** in the account menu (the sidebar on computers, the top-bar menu on phones) and on the Profile page.
+- **Choices:** **Light / Dark / System**. System is the default and follows the phone or computer setting.
+- **What gets saved:** the choice is stored in the browser's `localStorage` under `uniflow-theme`. This is the only thing UniFlow stores there; it is not sensitive. Login tokens still never go to `localStorage`.
+- **No flash on load:** a tiny inline script in `index.html` sets the `.dark` class before the page draws, so it doesn't flash white first.
+- **No new library:** about 30 lines in a small `ThemeProvider` / `useTheme`.
+- **Screenshots and checks:** every screenshot set is taken in **both** themes, and the contrast checks run on both.
 
 ### Layout
 
@@ -117,16 +136,16 @@ These are additions to and replacements for the values in `index.css`, still exp
 | **App shell** | Icons on nav items; an active state with a primary bar and text weight, not colour alone; an account menu on phones (shadcn `dropdown-menu`); the unread count as a danger-token badge with its text label kept; the dev `API` badge stays dev-only and moves out of the top bar into the account menu. |
 | **For you** | Header: greeting, date and the Today rail. Then **"Needs you"** (the direct + action tiers, plus the class-change prompt), in the attention style with the tier named in text and an icon. Then **"Updates for you"** (important). Then **"Good to know"** (digest tier), collapsed to a count with a link to `/digest`. The tier order and data are unchanged; only the grouping labels change, and the original tier names stay visible as row labels. Item rows: title; summary limited to 2 lines; byline with reason · when; unread dot plus "Unread" text for screen readers. Skeleton rows while loading. |
 | **Insight** | Byline and "Why you see this" promoted under the title; a "What to do" block in attention style; quotes as a list with sender, group, time and **Open original** as a real button; Dismiss and "Not relevant to me" grouped at the bottom; the back link uses browser history when there is one, and falls back to "For you". |
-| **Timetable** | The Today rail at the top; the "N changes to confirm" panel **below** today's classes (still above the fold on desktop); on desktop the week view becomes 7 columns in CSS grid with no library (decision #4), and stays a day list on phones; "My sections" rows get aligned actions; one **"Add classes"** button opens a choice of the three existing flows (import, choose, add missing), rendered in place with a heading and a close button; the overflow is fixed by wrapping. |
+| **Timetable** | The Today rail at the top; the "N changes to confirm" panel **below** today's classes (still above the fold on desktop); **on computers (≥1024 px) the week view becomes 7 columns, Monday to Sunday,** in CSS grid with no library (decided), and stays a day list on phones and tablets; "My sections" rows get aligned actions; one **"Add classes"** button opens a choice of the three existing flows (import, choose, add missing), rendered in place with a heading and a close button; the overflow is fixed by wrapping. |
 | **Groups** | Status as a badge with an icon and text ("Waiting to join", "Connected", "Disconnected"); the add form explains *why* the button is disabled; paste and upload move into a per-group "Add messages" menu. |
 | **Search** | A larger search field; result count; the same item rows as For you. |
-| **Notifications** | Grouped by day (Today, Yesterday, then earlier dates); unread shown with dot + bold + the word "New" in the kind line; optional "Needs you / All" tabs filtered **on the client** by notification kind (decision #5). |
+| **Notifications** | Grouped by day (Today, Yesterday, then earlier dates); unread shown with dot + bold + the word "New" in the kind line; **"Needs you" / "All" tabs** (decided), filtered **on the client** by notification kind. "Needs you" covers *You were named*, *Action required* and *Class change to confirm*; "Mark all as read" stays on both tabs. |
 | **Digest** | A link from For you's "Good to know"; day header; an empty state that explains when the digest arrives. |
 | **Profile** | Section nav (Account, Studies, Interests, Password, Privacy): a sticky left list on desktop, an anchor chip row on phones; one explanation line per setting; save buttons stay per section, as today. |
 | **Onboarding** | A "Step 1 of 2" indicator; the same forms. |
 | **Auth** | A two-panel layout on desktop: the form, plus a short plain statement of what UniFlow does and the privacy link. A single column on phones. A focused "Check your email" state. The privacy notice gets a readable 65-character text column and section headings. |
 | **404 / 403 / error** | Token colours, an icon, the same copy. |
-| **Staff placeholders** | Token colours only (decision #3). |
+| **Staff placeholders** | New token colours only (decided); no new pages. |
 
 ## 5. Components and tokens work
 
@@ -171,12 +190,14 @@ These are additions to and replacements for the values in `index.css`, still exp
 | Timetable: changes affect *only my* timetable; imports poll; `?view=week&date=` | Keep the components' logic and URL params; restyle the JSX only. Smoke-test Confirm, Reject, week navigation and import Start → Review. |
 | Auth: `safeNext`, refresh cookie, onboarding redirect | No changes in `AuthContext`, `RequireAuth` or `api/`. Login, register and onboarding only restyled. |
 | Unread polling every 60 s | `useUnreadCount` unchanged. |
+| The theme choice uses `localStorage`, while [05-frontend.md](../05-frontend.md) says nothing is saved there | That rule is about login tokens. Only the theme name is stored; the doc is updated to say so. |
+| Dark mode makes some text unreadable | Every screenshot set is taken in both themes; the dark contrast table must hold; no raw colour classes (they don't switch with the theme). |
 | Grouping tiers into "Needs you" could hide a tier | Every item still shows its tier label; a test asserts all four tiers render. |
 
 ## 8. Implementation order (each step is reviewable)
 
-1. **UI-0 Tooling (needs approval, see section 10):** Playwright smoke and screenshot harness with **mocked API responses built from synthetic fixtures**, so no real student data and no backend is needed. Capture the "before" set.
-2. **UI-1 Tokens and primitives:** `index.css` tokens; semantic replacements in the 19 files; button sizes; add skeleton, tabs, separator and dropdown-menu. *No layout changes yet.*
+1. **UI-0 Tooling (approved, see section 10):** Playwright smoke and screenshot harness with **mocked API responses built from synthetic fixtures**, so no real student data and no backend is needed. Capture the "before" set into `artifacts/ui/baseline/`.
+2. **UI-1 Tokens, primitives and dark mode:** `index.css` light and dark tokens; the theme toggle (`ThemeProvider`, the no-flash script); semantic replacements in the 19 files; button sizes; add skeleton, tabs, separator and dropdown-menu. *No layout changes yet.*
 3. **UI-2 App shell:** sidebar with icons, phone account menu, bottom nav icons, content widths, the phone overflow fix (problem #1, which may be done first as a hotfix if you prefer).
 4. **UI-3 For you, Insight, Digest:** ItemRow, Today rail, "Needs you" grouping, byline.
 5. **UI-4 Timetable:** changes panel position, Add classes chooser, desktop week grid (if approved).
@@ -197,7 +218,7 @@ Each milestone:
 ## 10. Screenshot and test workflow (no MCP)
 
 - **Today:** there is no browser tooling in the repo.
-- **Smallest proposal** (needs your approval: a new dev dependency and new files):
+- **Approved setup** (decision #7):
   - Add `@playwright/test` as a **devDependency** in `frontend/`.
   - Use the **installed Chrome** (`channel: 'chrome'`), so no browser download is needed.
   - Add `frontend/e2e/`, with:
@@ -206,10 +227,8 @@ Each milestone:
   - Add a `playwright.config.ts`.
   - API calls are intercepted with `page.route('**/api/v1/**')` and answered from synthetic fixtures, extending `src/test/fixtures.ts`. That covers populated, empty, error and loading states, with no real names and no backend.
   - New npm scripts: `e2e` and `screens`.
-- **Where screenshots go:**
-  - **Option A (recommended):** `artifacts/ui/{baseline,iteration-NN}/`, plus one `.gitignore` line, `artifacts/`.
-  - **Option B:** keep them outside the repo, like the baseline in `C:\Users\abdul\Desktop\uniflow-screenshots\`, with no `.gitignore` change.
-- **Optional, a second dependency:** `@axe-core/playwright` for automatic accessibility checks. Otherwise the checks are manual: the keyboard walk-through and contrast table above.
+- **Where screenshots go (decided):** `artifacts/ui/{baseline,iteration-NN}/{light,dark}/`, with `artifacts/` added to `.gitignore` so they are never committed.
+- **Not approved, so not installed:** `@axe-core/playwright` (automatic accessibility checks). The accessibility checks are manual: the keyboard walk-through and the contrast tables above.
 - **CI:** not added now. A later option is to run the smoke spec in GitHub Actions.
 
 ## 11. Acceptance criteria (measurable)
@@ -222,13 +241,15 @@ Each milestone:
 - No changes under `backend/`, `frontend/src/api/`, `context/` or `hooks/`, and no route changes in `router.tsx`, except approved proposals.
 - The For you first screen at 390×844 with the synthetic "busy day" fixture shows the Today rail and at least the first "Needs you" item.
 
-## 12. Decisions needed from you
+## 12. Decisions (made 2026-10-17)
 
-1. Inspiration sites: send them, or confirm there are none.
-2. Brand: use AIU colours or a logo (send them), or approve the proposed deep blue.
-3. Staff placeholders: token colours only (recommended), or leave them untouched.
-4. Timetable week view on desktop: a 7-column grid (recommended), or keep the list.
-5. Notifications: add "Needs you / All" tabs (client-side), or keep a single list.
-6. Dark mode: later (recommended), or now.
-7. Tooling: approve `@playwright/test` (and optionally `@axe-core/playwright`), and choose where screenshots go (A or B).
-8. Mobbin: skip it, or share screens from your own account.
+| # | Question | Decision |
+|---|---|---|
+| 1 | Inspiration sites | Use the references in [reference-research.md](reference-research.md) |
+| 2 | Main colour | The deep blue `#1B5E9E` |
+| 3 | Staff placeholders | New token colours only |
+| 4 | Timetable week on computers | 7 columns, Monday to Sunday (the list stays on phones) |
+| 5 | Notifications | "Needs you" / "All" tabs (client-side) |
+| 6 | Dark mode | **Now**, with a Light / Dark / System toggle |
+| 7 | Tooling | Install `@playwright/test` (dev only, using the installed Chrome); screenshots in `artifacts/`, which is git-ignored. `@axe-core/playwright` is not installed. |
+| 8 | Mobbin | Skipped; SaaSUI was enough |

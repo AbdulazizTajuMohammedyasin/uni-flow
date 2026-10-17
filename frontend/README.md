@@ -25,6 +25,8 @@ npm run dev                      # opens on http://localhost:5173
 | `npm run typecheck` | TypeScript type check only |
 | `npm test` | Run all tests once (Vitest + React Testing Library, in a simulated browser) |
 | `npm run test:watch` | Re-run tests automatically on every save |
+| `npm run e2e` | Browser smoke tests (Playwright, in your installed Chrome): every page loads with no errors and no sideways scrolling at 360–1440 px. A fake backend (`e2e/mock-api.ts`) answers with made-up data, so Django doesn't need to run. |
+| `npm run screens` | Full-page screenshots of every page and state, phone and desktop, light and dark, into `artifacts/ui/latest/` (git-ignored). Set `SCREENS_RUN=iteration-01` to keep a named set. |
 
 ## Conventions
 

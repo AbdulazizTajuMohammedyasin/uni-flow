@@ -34,3 +34,6 @@ $RECYCLE.BIN/
 CLAUDE.md
 .claude/skills/
 .claude/settings.local.json
+
+# Redesign screenshots and Playwright results (docs/ui-ux/redesign-plan.md)
+artifacts/
