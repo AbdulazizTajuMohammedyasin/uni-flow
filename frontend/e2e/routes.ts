@@ -7,6 +7,8 @@ export type Screen = {
   scenario: Scenario
   /** Text that proves the page has finished loading (Playwright waits for it). */
   ready: string | RegExp
+  /** Something to do before the screenshot, e.g. open the account menu. */
+  action?: 'open-account-menu'
 }
 
 export const screens: Screen[] = [
@@ -29,6 +31,7 @@ export const screens: Screen[] = [
   { name: 'search--busy', path: '/search?q=internship', scenario: 'busy', ready: /internship at a Kuala Lumpur/ },
   { name: 'notifications--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read' },
   { name: 'profile--busy', path: '/profile', scenario: 'busy', ready: 'Your studies' },
+  { name: 'account-menu--busy', path: '/', scenario: 'busy', ready: 'Project meeting with Dr Farah', action: 'open-account-menu' },
 
   // Nothing yet
   { name: 'for-you--empty', path: '/', scenario: 'empty', ready: 'Nothing for you yet' },

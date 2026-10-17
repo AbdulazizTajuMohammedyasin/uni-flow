@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router'
 
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { useDigest } from '@/hooks/useFeed'
@@ -25,14 +26,14 @@ export function DigestPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
+      <div className="space-y-3">
         <Link to="/" className="text-sm text-muted-foreground hover:underline">
           ← For you
         </Link>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Daily digest</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {date ? `Good to know, ${formatDay(date)}.` : 'Your first digest arrives one evening at 7 pm.'}
-        </p>
+        <PageHeader
+          title="Daily digest"
+          description={date ? `Good to know, ${formatDay(date)}.` : 'Your first digest arrives one evening at 7 pm.'}
+        />
       </div>
 
       {items.length === 0 ? (

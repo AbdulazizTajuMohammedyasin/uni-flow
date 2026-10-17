@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { FeedItemCard } from '@/components/FeedItemCard'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { TodayBox } from '@/components/TodayBox'
 import { useFeed } from '@/hooks/useFeed'
@@ -12,12 +13,10 @@ export function ForYouPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">For you</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Only the information that matters to you, from your academic groups.
-        </p>
-      </div>
+      <PageHeader
+        title="For you"
+        description="Only the information that matters to you, from your academic groups."
+      />
 
       <TodayBox />
 

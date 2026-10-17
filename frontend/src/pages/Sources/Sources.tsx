@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from '@/api/errors'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,13 +37,10 @@ export function SourcesPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Groups</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add the academic WhatsApp groups you're in with their invite link, and UniFlow's own
-          number joins them. You can also paste messages or upload a WhatsApp chat export.
-        </p>
-      </div>
+      <PageHeader
+        title="Groups"
+        description="Add the academic WhatsApp groups you're in with their invite link, and UniFlow's own number joins them. You can also paste messages or upload a WhatsApp chat export."
+      />
 
       <AddGroupForm />
 

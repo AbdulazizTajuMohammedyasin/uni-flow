@@ -27,9 +27,13 @@ for (const theme of themes) {
           await page.goto(screen.path)
           await expect(page.getByText(screen.ready).first()).toBeVisible()
           await page.evaluate(() => document.fonts.ready)
+          if (screen.action === 'open-account-menu') {
+            await page.getByRole('button', { name: 'Account menu' }).filter({ visible: true }).click()
+            await expect(page.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
+          }
           await page.screenshot({
             path: path.join(root, theme, device, `${screen.name}.png`),
-            fullPage: true,
+            fullPage: !screen.action, // an open menu is drawn over the first screen
             animations: 'disabled',
           })
         })

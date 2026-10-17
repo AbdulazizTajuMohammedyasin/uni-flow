@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { FeedItemCard } from '@/components/FeedItemCard'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +25,7 @@ export function SearchPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Search</h1>
+      <PageHeader title="Search" />
       <form onSubmit={onSubmit} role="search" className="flex items-end gap-2">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor="search-text">Search your items</Label>

@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/EmptyState'
+import { PageHeader } from '@/components/PageHeader'
 
 type PlaceholderPageProps = {
   title: string
@@ -9,7 +10,7 @@ type PlaceholderPageProps = {
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   return (
     <section>
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <PageHeader title={title} />
       <div className="mt-6">
         <EmptyState
           title="Coming soon"

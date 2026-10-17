@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,14 +21,16 @@ export function NotificationsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-        {hasUnread && (
-          <Button size="sm" variant="outline" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
-            Mark all as read
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Notifications"
+        actions={
+          hasUnread && (
+            <Button size="sm" variant="outline" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
+              Mark all as read
+            </Button>
+          )
+        }
+      />
 
       {notifications.isPending ? (
         <PageLoading />

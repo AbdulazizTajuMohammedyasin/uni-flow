@@ -11,6 +11,35 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-2: app frame (2026-10-17)
+
+**Changes**
+- `lib/navigation.ts`: a `lucide-react` icon per student nav item.
+- `components/AppLayout.tsx`:
+  - The sidebar has icons, an active state (tinted background + 4 px primary bar + semibold + `aria-current`), focus rings, a sticky full-height layout, and the account card at the bottom.
+  - The phone top bar has the wordmark plus the account menu.
+  - The bottom bar has icon + label (56 px tall), the unread badge on the bell, and safe-area padding.
+  - Content is centred in `max-w-5xl` with larger desktop gutters.
+- `components/AccountMenu.tsx` (new): shadcn `dropdown-menu` with name, email, Profile, Privacy notice, Staff dashboard (staff only) and Log out. It is 44 px per item on phones and keyboard-accessible (Radix). It is a full card in the sidebar and initials in the phone bar.
+- `components/ui/dropdown-menu.tsx`: added with `npx shadcn add dropdown-menu`.
+- `components/PageHeader.tsx` (new): one title style (22 px on phones, 28 px from `md` up, semibold, balanced wrapping), an optional description (max 65 characters per line) and actions. Used on For you, Timetable, Groups, Search, Notifications, Digest, Profile and the staff placeholders. The Insight page keeps its own header until UI-3.
+- E2E: a new `account-menu--busy` screen (menu opened before the screenshot).
+
+**Iteration 01** (`artifacts/ui/ui2-iteration-01/`)
+- **P2:** on desktop the account menu was wider than its trigger, aligned to the end, so it was pushed against the window's left edge.
+- Checked by eye: `for-you--busy` (light, desktop), `notifications--busy` (light, phone), `timetable-today--busy` (dark, desktop), `account-menu--busy` (dark phone, light desktop).
+- Note: full-page screenshots cut the sticky sidebar off after the first screen. This only affects the screenshots; in the browser the sidebar stays visible while scrolling.
+
+**Iteration 02** (`artifacts/ui/ui2-iteration-02/`)
+- Fix: the sidebar menu takes the trigger's width. Checked by eye: `account-menu--busy` (dark, desktop).
+
+**Checks:**
+- `npm test`: 115 passed (3 new for `AccountMenu`).
+- `typecheck` and `lint`: clean.
+- `npm run e2e`: 196 passed.
+
+**Left for later:** in the For you Today box on phones, a "Room changed" badge wraps onto its own line (UI-3, Today rail).
+
 ## UI-1: tokens, dark mode, sizes (2026-10-17)
 
 **Changes**

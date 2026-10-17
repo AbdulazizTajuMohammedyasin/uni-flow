@@ -1,3 +1,5 @@
+import { Bell, CalendarDays, Inbox, MessagesSquare, Search, type LucideIcon } from 'lucide-react'
+
 import type { Capability } from '@/types/auth'
 
 /** Student-area navigation, shared by the desktop sidebar and the mobile bottom bar. */
@@ -6,6 +8,7 @@ export type NavItem = {
   label: string
   /** Shorter label for the narrow mobile bottom bar. */
   shortLabel: string
+  icon: LucideIcon
   /** Match the path exactly (only needed for "/"). */
   end?: boolean
   /** Show the number of unread alerts next to it. */
@@ -13,11 +16,11 @@ export type NavItem = {
 }
 
 export const studentNavItems: NavItem[] = [
-  { to: '/', label: 'For you', shortLabel: 'For you', end: true },
-  { to: '/timetable', label: 'Timetable', shortLabel: 'Classes' },
-  { to: '/sources', label: 'Groups', shortLabel: 'Groups' },
-  { to: '/search', label: 'Search', shortLabel: 'Search' },
-  { to: '/notifications', label: 'Notifications', shortLabel: 'Alerts', badge: 'unread' },
+  { to: '/', label: 'For you', shortLabel: 'For you', icon: Inbox, end: true },
+  { to: '/timetable', label: 'Timetable', shortLabel: 'Classes', icon: CalendarDays },
+  { to: '/sources', label: 'Groups', shortLabel: 'Groups', icon: MessagesSquare },
+  { to: '/search', label: 'Search', shortLabel: 'Search', icon: Search },
+  { to: '/notifications', label: 'Notifications', shortLabel: 'Alerts', icon: Bell, badge: 'unread' },
 ]
 
 /** Staff-dashboard navigation. Each item shows only if the user has its capability. */

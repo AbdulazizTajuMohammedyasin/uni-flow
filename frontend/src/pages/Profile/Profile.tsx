@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router'
 import type { ReactNode } from 'react'
 
 import { ChangePasswordForm } from '@/components/ChangePasswordForm'
+import { PageHeader } from '@/components/PageHeader'
 import { PreferencesForm } from '@/components/PreferencesForm'
 import { StudentDetailsForm } from '@/components/StudentDetailsForm'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -38,7 +39,7 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Profile</h1>
+      <PageHeader title="Profile" />
 
       <Section title="Account">
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_1fr]">

@@ -5,6 +5,7 @@ import { AddClassForm } from '@/components/AddClassForm'
 import { ClassChanges } from '@/components/ClassChanges'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
 import { SectionPicker } from '@/components/SectionPicker'
 import { GroupTimetableOffer, TimetableImportBox } from '@/components/TimetableImport'
@@ -26,17 +27,19 @@ export function TimetablePage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Timetable</h1>
-        <div role="group" aria-label="View" className="flex gap-1 rounded-lg bg-muted p-1">
-          <Button size="sm" variant={view === 'today' ? 'default' : 'ghost'} aria-pressed={view === 'today'} onClick={() => show('today')}>
-            Today
-          </Button>
-          <Button size="sm" variant={view === 'week' ? 'default' : 'ghost'} aria-pressed={view === 'week'} onClick={() => show('week')}>
-            This week
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Timetable"
+        actions={
+          <div role="group" aria-label="View" className="flex gap-1 rounded-lg bg-muted p-1">
+            <Button size="sm" variant={view === 'today' ? 'default' : 'ghost'} aria-pressed={view === 'today'} onClick={() => show('today')}>
+              Today
+            </Button>
+            <Button size="sm" variant={view === 'week' ? 'default' : 'ghost'} aria-pressed={view === 'week'} onClick={() => show('week')}>
+              This week
+            </Button>
+          </div>
+        }
+      />
 
       <GroupTimetableOffer />
       {hasSections && <ClassChanges />}
