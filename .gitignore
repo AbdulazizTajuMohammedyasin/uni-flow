@@ -29,3 +29,7 @@ $RECYCLE.BIN/
 *.swo
 \#*\#
 .#*
+
+# Claude Code: local skills and personal settings
+.claude/skills/
+.claude/settings.local.json
