@@ -64,7 +64,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
       <button
         type="button"
         onClick={open}
-        className={`flex w-full gap-3 p-4 text-left hover:bg-muted/50 ${notification.read ? '' : 'bg-brand-50/60'}`}
+        className={`flex w-full gap-3 p-4 text-left hover:bg-muted/50 ${notification.read ? '' : 'bg-accent/60'}`}
       >
         <span
           aria-hidden

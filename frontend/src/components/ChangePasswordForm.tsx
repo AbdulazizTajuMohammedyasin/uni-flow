@@ -83,7 +83,7 @@ export function ChangePasswordForm() {
         </p>
       )}
       {saved && (
-        <p role="status" className="text-sm text-emerald-700">
+        <p role="status" className="text-sm text-success">
           Password changed.
         </p>
       )}

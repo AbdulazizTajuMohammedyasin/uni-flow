@@ -129,7 +129,7 @@ function AddGroupForm() {
         </p>
       )}
       {done && !error && (
-        <p role="status" className="text-sm text-emerald-700">
+        <p role="status" className="text-sm text-success">
           {done.status === 'pending'
             ? `Added "${done.title}". UniFlow's number will join it soon.`
             : `UniFlow already reads "${done.title}"; it's now in your groups.`}
@@ -161,7 +161,7 @@ function GroupCard({ source }: { source: Source }) {
             {statusText(source)}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button size="sm" variant={open === 'paste' ? 'default' : 'outline'} onClick={() => toggle('paste')}>
             Paste messages
           </Button>
@@ -194,7 +194,7 @@ function PasteForm({ source }: { source: Source }) {
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder="Select messages in WhatsApp, copy them, and paste them here."
-        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm"
       />
       <Button type="submit" size="sm" disabled={paste.isPending || !text.trim()}>
         {paste.isPending ? 'Adding…' : 'Add messages'}
@@ -243,7 +243,7 @@ function Outcome({ result, error }: { result?: ImportResult; error: Error | null
   }
   if (!result) return null
   return (
-    <p role="status" className="text-sm text-emerald-700">
+    <p role="status" className="text-sm text-success">
       {resultText(result)}
     </p>
   )

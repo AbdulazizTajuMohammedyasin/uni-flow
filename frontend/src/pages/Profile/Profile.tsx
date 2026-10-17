@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { ChangePasswordForm } from '@/components/ChangePasswordForm'
 import { PreferencesForm } from '@/components/PreferencesForm'
 import { StudentDetailsForm } from '@/components/StudentDetailsForm'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -60,6 +61,13 @@ export function ProfilePage() {
           </Section>
         </>
       )}
+
+      <Section title="Appearance">
+        <p className="mb-3 text-sm text-muted-foreground">
+          "System" follows your phone or computer setting.
+        </p>
+        <ThemeToggle />
+      </Section>
 
       <Section title="Password">
         <ChangePasswordForm />

@@ -88,7 +88,7 @@ export function PreferencesForm({ submitLabel, onSaved }: Props) {
         </p>
       )}
       {saved && !onSaved && (
-        <p role="status" className="text-sm text-emerald-700">
+        <p role="status" className="text-sm text-success">
           Saved.
         </p>
       )}

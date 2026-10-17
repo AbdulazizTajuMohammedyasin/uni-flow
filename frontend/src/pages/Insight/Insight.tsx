@@ -92,7 +92,7 @@ function Details({ item }: { item: FeedDetail }) {
   return (
     <div className="space-y-3">
       {item.action_required && (
-        <p role="note" className="rounded-xl bg-amber-50 p-3 text-sm ring-1 ring-amber-200">
+        <p role="note" className="rounded-xl bg-attention p-3 text-sm ring-1 ring-attention-border">
           <span className="font-semibold">What to do:</span> {item.action_text || 'Action needed.'}
         </p>
       )}

@@ -12,7 +12,7 @@ export function ClassChanges() {
   if (waiting.length === 0) return null
 
   return (
-    <section aria-label="Changes to confirm" className="space-y-3 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+    <section aria-label="Changes to confirm" className="space-y-3 rounded-2xl bg-attention p-4 ring-1 ring-attention-border">
       <h2 className="font-semibold">
         {waiting.length === 1 ? 'A class may have changed' : `${waiting.length} classes may have changed`}
       </h2>

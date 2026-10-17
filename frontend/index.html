@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UniFlow</title>
+    <script>
+      // Light or dark before the first paint, so dark-mode users never see a white flash.
+      // Same rule as src/lib/theme.ts: a saved choice wins, otherwise follow the device.
+      try {
+        var theme = localStorage.getItem('uniflow-theme')
+        var dark = theme === 'dark' || (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) document.documentElement.classList.add('dark')
+      } catch (error) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

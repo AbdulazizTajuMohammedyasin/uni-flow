@@ -188,7 +188,7 @@ export function StudentDetailsForm({ submitLabel, onSaved, withSemester = false 
         </p>
       )}
       {saved && !onSaved && (
-        <p role="status" className="text-sm text-emerald-700">
+        <p role="status" className="text-sm text-success">
           Saved.
         </p>
       )}

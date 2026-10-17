@@ -12,6 +12,8 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   reporter: [['list']],
+  expect: { timeout: 15_000 }, // pages compile on first visit in the dev server
+
   outputDir: '../artifacts/ui/test-results',
   use: {
     baseURL: 'http://localhost:5174',

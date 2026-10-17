@@ -3,25 +3,16 @@
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/geist';
 
-/* Dark mode is class-based (`.dark` on <html>). Not enabled yet; tokens are ready for it. */
+/* Dark mode is class-based: `.dark` on <html>, set by context/ThemeContext.tsx (Light / Dark /
+   System) and, before the first paint, by the small script in index.html. */
 @custom-variant dark (&:is(.dark *));
 
 /*
- * UniFlow design tokens.
- * - shadcn/ui components read the semantic colours below (background, primary, border, ...).
- * - UniFlow's own brand scale is available as utilities, e.g. `bg-brand-600`, `text-brand-700`.
- * Keep this small; add tokens only when real screens need them.
+ * UniFlow design tokens (docs/ui-ux/redesign-plan.md, section 3).
+ * Components use the semantic names only (bg-card, text-muted-foreground, bg-attention, ...),
+ * never raw palette colours, so every screen follows the light and dark theme automatically.
+ * Every text pair below was checked: at least 4.5:1, control edges at least 3:1.
  */
-
-/* UniFlow brand scale (indigo-blue) */
-@theme {
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-900: #312e81;
-}
 
 /* Maps shadcn's semantic variables to Tailwind utilities (bg-primary, text-muted-foreground, ...) */
 @theme inline {
@@ -43,6 +34,11 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-attention: var(--attention);
+  --color-attention-foreground: var(--attention-foreground);
+  --color-attention-border: var(--attention-border);
+  --color-success: var(--success);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -69,80 +65,93 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Light theme (shadcn "nova" neutral, with UniFlow indigo as primary and a light grey page) */
+/* Light theme: ink on paper, deep "harbour" blue for actions, amber only for "needs you". */
 :root {
-  --radius: 0.625rem;
+  color-scheme: light;
+  --radius: 0.5rem;
 
-  --background: oklch(0.984 0.003 247.858); /* slate-50: page */
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0); /* white: cards/panels */
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.511 0.262 276.966); /* brand-600 #4f46e5 */
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.962 0.018 272.314); /* brand-50 */
-  --accent-foreground: oklch(0.457 0.24 277.023); /* brand-700 */
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.585 0.233 277.117); /* brand-500 */
+  --background: #f5f6f8; /* paper: the page */
+  --foreground: #17212f; /* ink: 15:1 on paper */
+  --card: #ffffff; /* surface: lists, panels, forms */
+  --card-foreground: #17212f;
+  --popover: #ffffff;
+  --popover-foreground: #17212f;
+  --primary: #1b5e9e; /* links, main buttons, focus: 6.7:1 with white */
+  --primary-foreground: #ffffff;
+  --secondary: #eef1f5;
+  --secondary-foreground: #17212f;
+  --muted: #eef1f5;
+  --muted-foreground: #586273; /* secondary text: 5.7:1 on paper */
+  --accent: #e8f0f8; /* the active menu item */
+  --accent-foreground: #154b80; /* 7.8:1 on accent */
+  --destructive: #b42318; /* errors, unread count: 6.6:1 with white */
+  --destructive-foreground: #ffffff;
+  --attention: #fff4db; /* "needs you" background */
+  --attention-foreground: #8a4b00; /* 6.2:1 on attention */
+  --attention-border: #e9c46a;
+  --success: #17663a; /* "Saved", "Added": 6.5:1 on paper */
+  --border: #d5dae1; /* dividers (decorative) */
+  --input: #8c95a3; /* input and checkbox edges: 3:1 on white */
+  --ring: #1b5e9e;
 
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-1: #1b5e9e;
+  --chart-2: #586273;
+  --chart-3: #8a4b00;
+  --chart-4: #17663a;
+  --chart-5: #b42318;
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.511 0.262 276.966);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.962 0.018 272.314);
-  --sidebar-accent-foreground: oklch(0.457 0.24 277.023);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.585 0.233 277.117);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17212f;
+  --sidebar-primary: #1b5e9e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8f0f8;
+  --sidebar-accent-foreground: #154b80;
+  --sidebar-border: #d5dae1;
+  --sidebar-ring: #1b5e9e;
 }
 
-/* Dark theme (ready for later; not switched on anywhere yet) */
+/* Dark theme: the same roles on a deep blue-grey (every pair re-checked for contrast). */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.673 0.182 276.935); /* lighter indigo for dark backgrounds */
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  color-scheme: dark;
 
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: #10161f;
+  --foreground: #e6eaf0; /* 15:1 on background */
+  --card: #18202b;
+  --card-foreground: #e6eaf0;
+  --popover: #18202b;
+  --popover-foreground: #e6eaf0;
+  --primary: #6ca6e0; /* 6.4:1 on card */
+  --primary-foreground: #0b1a2a; /* 6.8:1 on primary */
+  --secondary: #222b37;
+  --secondary-foreground: #e6eaf0;
+  --muted: #222b37;
+  --muted-foreground: #9aa5b4; /* 6.6:1 on card */
+  --accent: #1d2c3d;
+  --accent-foreground: #a9ccf0; /* 8.5:1 on accent */
+  --destructive: #f2877d;
+  --destructive-foreground: #2a0b08; /* 7.4:1 on destructive */
+  --attention: #2e2414;
+  --attention-foreground: #f5c46b; /* 9.4:1 on attention */
+  --attention-border: #6b5222;
+  --success: #5fcb8a; /* 8.1:1 on card */
+  --border: #2a3441;
+  --input: #6b7788; /* 3.6:1 on card */
+  --ring: #6ca6e0;
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --chart-1: #6ca6e0;
+  --chart-2: #9aa5b4;
+  --chart-3: #f5c46b;
+  --chart-4: #5fcb8a;
+  --chart-5: #f2877d;
+
+  --sidebar: #18202b;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-primary: #6ca6e0;
+  --sidebar-primary-foreground: #0b1a2a;
+  --sidebar-accent: #1d2c3d;
+  --sidebar-accent-foreground: #a9ccf0;
+  --sidebar-border: #2a3441;
+  --sidebar-ring: #6ca6e0;
 }
 
 @layer base {

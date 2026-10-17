@@ -152,7 +152,7 @@ export function AddClassForm() {
         </p>
       )}
       {message && (
-        <p role="status" className="text-sm text-emerald-700">
+        <p role="status" className="text-sm text-success">
           {message}
         </p>
       )}

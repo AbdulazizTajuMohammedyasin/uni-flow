@@ -101,7 +101,7 @@ export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, withCre
 ```
 
 - The access token is kept in memory only.
-- **Tokens:** the access token is kept **in memory only** (`api/tokenStore.ts`). The refresh token is in a **secure httpOnly cookie** set by the backend, and page scripts never see it. Nothing goes into `localStorage`.
+- **Tokens:** the access token is kept **in memory only** (`api/tokenStore.ts`). The refresh token is in a **secure httpOnly cookie** set by the backend, and page scripts never see it. No login data goes into `localStorage`; the only thing kept there is the chosen theme (`uniflow-theme`: light or dark, see `lib/theme.ts`).
 - On page load, `AuthContext` calls `jwt/refresh/` (the browser sends the cookie). If that works it loads `users/me/`; otherwise the visitor is logged out.
 - On a 401, `api/client.ts` refreshes once and repeats the request. Several failing requests share one refresh. `components/RequireAuth.tsx` sends visitors who are not logged in to `/login?next=...`.
 - `ApiError {code, message, fields}` reads the backend's error format. Forms pass `fields` to React Hook Form's `setError`.

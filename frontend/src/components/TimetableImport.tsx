@@ -234,7 +234,7 @@ function Confirmed({ timetableImport, onDone }: { timetableImport: TimetableImpo
   const differences = timetableImport.report.differences?.length ?? 0
   return (
     <div className="space-y-2">
-      <p role="status" className="text-sm text-emerald-700">
+      <p role="status" className="text-sm text-success">
         Added {added} class{added === 1 ? '' : 'es'} to your timetable.
         {differences > 0 &&
           ` ${differences} already existed with different times; UniFlow kept the existing times.`}

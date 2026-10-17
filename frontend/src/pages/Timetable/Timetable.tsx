@@ -65,7 +65,7 @@ export function TimetablePage() {
       <section className="space-y-3 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">My sections</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" variant={panel === 'import' ? 'default' : 'outline'} onClick={() => setPanel(panel === 'import' ? 'none' : 'import')}>
               Add my timetable
             </Button>

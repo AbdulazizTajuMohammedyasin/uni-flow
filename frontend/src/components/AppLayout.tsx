@@ -12,21 +12,21 @@ import { HealthBadge } from './HealthBadge'
 const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'block rounded-lg px-3 py-2 text-sm font-medium',
-    isActive ? 'bg-brand-50 text-brand-700' : 'text-slate-700 hover:bg-slate-100',
+    isActive ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-muted',
   ].join(' ')
 
 const bottomLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'flex min-h-11 flex-col items-center justify-center px-1 text-xs font-medium',
-    isActive ? 'text-brand-700' : 'text-slate-600',
+    isActive ? 'text-primary' : 'text-muted-foreground',
   ].join(' ')
 
 /** Student-area frame: sidebar on md+ screens, top bar + bottom navigation on phones. */
 export default function AppLayout() {
   return (
     <div className="min-h-screen md:flex">
-      <aside className="hidden md:flex md:w-60 md:shrink-0 md:flex-col md:border-r md:border-slate-200 md:bg-white">
-        <div className="px-6 py-5 text-xl font-bold text-brand-600">UniFlow</div>
+      <aside className="hidden md:flex md:w-60 md:shrink-0 md:flex-col md:border-r md:border-border md:bg-sidebar">
+        <div className="px-6 py-5 text-xl font-bold text-primary">UniFlow</div>
         <nav aria-label="Sidebar" className="flex flex-col gap-1 px-3">
           {studentNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={sidebarLinkClass}>
@@ -34,7 +34,7 @@ export default function AppLayout() {
               {item.badge && <UnreadBadge />}
             </NavLink>
           ))}
-          <StaffDashboardLink className="mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100" />
+          <StaffDashboardLink className="mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted" />
         </nav>
         <div className="mt-auto space-y-3 px-6 py-4">
           {import.meta.env.DEV && <HealthBadge />}
@@ -43,12 +43,12 @@ export default function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:hidden">
-          <span className="text-lg font-bold text-brand-600">UniFlow</span>
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
+          <span className="text-lg font-bold text-primary">UniFlow</span>
           <div className="flex items-center gap-3">
             {import.meta.env.DEV && <HealthBadge />}
-            <StaffDashboardLink className="text-sm font-medium text-brand-700" />
-            <Link to="/profile" className="text-sm font-medium text-brand-700">
+            <StaffDashboardLink className="text-sm font-medium text-primary" />
+            <Link to="/profile" className="text-sm font-medium text-primary">
               Profile
             </Link>
           </div>
@@ -62,7 +62,7 @@ export default function AppLayout() {
 
       <nav
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-slate-200 bg-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 grid grid-cols-5 border-t border-border bg-card md:hidden"
       >
         {studentNavItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={bottomLinkClass}>
@@ -85,7 +85,7 @@ function UnreadBadge() {
   return (
     <span
       aria-label={`${count} unread`}
-      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-destructive-foreground"
     >
       {count > 99 ? '99+' : count}
     </span>
@@ -103,7 +103,7 @@ function UserMenu() {
   }
 
   return (
-    <div className="border-t border-slate-200 pt-3">
+    <div className="border-t border-border pt-3">
       <p className="truncate text-sm font-medium">{user?.full_name}</p>
       <div className="mt-2 flex gap-2">
         <Button asChild size="sm" variant="outline">

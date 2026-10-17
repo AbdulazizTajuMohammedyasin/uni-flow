@@ -7,7 +7,7 @@ import { staffNavItems } from '@/lib/navigation'
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'block shrink-0 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap',
-    isActive ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white',
+    isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-muted',
   ].join(' ')
 
 /**
@@ -20,12 +20,12 @@ export default function StaffLayout() {
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="border-b border-slate-200 bg-slate-900 text-slate-100 md:w-60 md:shrink-0 md:border-r md:border-b-0">
+      <aside className="border-b border-border bg-sidebar text-sidebar-foreground md:w-60 md:shrink-0 md:border-r md:border-b-0">
         <div className="flex items-center justify-between px-4 py-3 md:block md:px-6 md:py-5">
           <p className="text-lg font-bold">
-            UniFlow <span className="font-medium text-brand-100">Staff</span>
+            UniFlow <span className="font-medium text-muted-foreground">Staff</span>
           </p>
-          <Link to="/" className="text-sm text-slate-300 hover:text-white md:mt-2 md:block">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground md:mt-2 md:block">
             ← Back to UniFlow
           </Link>
         </div>

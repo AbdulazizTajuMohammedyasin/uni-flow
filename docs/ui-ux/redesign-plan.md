@@ -151,7 +151,7 @@ These are additions to and replacements for the values in `index.css`, still exp
 
 - **`index.css`:** new token values; add `--attention`, `--attention-foreground`, `--success` and `--danger`-foreground utilities.
 - **Replace the raw palette classes in all 19 files** with semantic classes.
-- **shadcn components to add** (allowed by [05-frontend.md](../05-frontend.md) line 23: "added one at a time … only when a screen needs them"):
+- **shadcn components to add**, each in the milestone whose screen first uses it, following [05-frontend.md](../05-frontend.md) line 23 ("added one at a time … only when a screen needs them"). In UI-1 no screen needed them yet, so none were added:
   - `skeleton`
   - `tabs` (Today / Week, notification filters)
   - `dropdown-menu` (account menu, group actions)

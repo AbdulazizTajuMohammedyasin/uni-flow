@@ -43,7 +43,7 @@ export function TodayBox() {
         </ul>
       )}
       {waiting.length > 0 && (
-        <p className="rounded-lg bg-amber-50 p-2 text-sm ring-1 ring-amber-200">
+        <p className="rounded-lg bg-attention p-2 text-sm ring-1 ring-attention-border">
           {waiting.length === 1 ? '1 class change is' : `${waiting.length} class changes are`} waiting for
           you.{' '}
           <Link to="/timetable" className="font-medium text-primary underline">

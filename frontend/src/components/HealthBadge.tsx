@@ -18,5 +18,5 @@ export function HealthBadge() {
       </Badge>
     )
   }
-  return <Badge className="bg-emerald-600 text-white">API: ok</Badge>
+  return <Badge className="bg-success text-background">API: ok</Badge>
 }

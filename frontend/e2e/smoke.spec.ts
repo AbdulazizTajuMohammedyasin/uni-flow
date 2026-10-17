@@ -3,13 +3,9 @@ import { expect, test } from '@playwright/test'
 import { mockApi, NOW } from './mock-api'
 import { screens, smokeWidths } from './routes'
 
-/**
- * Problems already known from the Phase 1 audit (docs/ui-ux/page-inventory.md). They are
- * expected to fail until the redesign fixes them; Playwright reports it if one starts passing.
- */
-const KNOWN_OVERFLOW = new Set(
-  ['timetable-today--busy', 'timetable-week--busy', 'timetable--empty'].flatMap((name) => [`${name}:360`, `${name}:390`]),
-)
+/** Known problems expected to fail until the redesign fixes them (none right now). Playwright
+ * reports it when one starts passing, so the list stays honest. */
+const KNOWN_OVERFLOW = new Set<string>([])
 
 for (const screen of screens) {
   test.describe(screen.name, () => {
@@ -29,6 +25,22 @@ for (const screen of screens) {
       await page.goto(screen.path)
       await expect(page.getByText(screen.ready).first()).toBeVisible()
       expect(errors).toEqual([])
+    })
+
+    test('buttons and fields are easy to tap on a phone (44 px)', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 })
+      await page.clock.setFixedTime(NOW)
+      await mockApi(page, screen.scenario)
+      await page.goto(screen.path)
+      await expect(page.getByText(screen.ready).first()).toBeVisible()
+      // Native checkboxes (inside a bigger label) and text links inside sentences are exempt.
+      const small = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('button, select, input:not([type=checkbox]):not([type=radio]), [role=radio]')]
+          .filter((element) => element.offsetWidth > 1 && element.offsetHeight > 1)
+          .filter((element) => element.getBoundingClientRect().height < 43.5)
+          .map((element) => `${element.tagName.toLowerCase()} "${(element.textContent || element.getAttribute('aria-label') || '').trim().slice(0, 30)}" ${Math.round(element.getBoundingClientRect().height)}px`),
+      )
+      expect(small).toEqual([])
     })
 
     for (const width of smokeWidths) {
