@@ -47,13 +47,14 @@ const detail: FeedDetail = {
   dismissed: false,
 }
 
-function renderPage() {
+function renderPage(initialEntries = ['/insights/7']) {
   const router = createMemoryRouter(
     [
       { path: '/insights/:insightId', element: <InsightPage /> },
       { path: '/', element: <h1>For you</h1> },
+      { path: '/search', element: <h1>Search</h1> },
     ],
-    { initialEntries: ['/insights/7'] },
+    { initialEntries, initialIndex: initialEntries.length - 1 },
   )
   render(
     <QueryClientProvider client={createQueryClient()}>
@@ -104,6 +105,17 @@ describe('Insight page', () => {
     })
     renderPage()
     expect(await screen.findByRole('link', { name: 'Confirm or reject it on your timetable' })).toBeTruthy()
+  })
+
+  it('goes back to the page I came from', async () => {
+    const router = renderPage(['/search', '/insights/7'])
+    fireEvent.click(await screen.findByRole('button', { name: 'Back' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/search'))
+  })
+
+  it('links to For you when opened directly', async () => {
+    renderPage()
+    expect((await screen.findByRole('link', { name: 'For you' })).getAttribute('href')).toBe('/')
   })
 
   it('says so when the item is not mine', async () => {

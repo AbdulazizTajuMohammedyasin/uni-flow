@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router'
 
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
-import { FeedItemCard } from '@/components/FeedItemCard'
+import { ItemList, ItemRow } from '@/components/ItemRow'
+import { ListSkeleton } from '@/components/ListSkeleton'
 import { PageHeader } from '@/components/PageHeader'
-import { PageLoading } from '@/components/PageLoading'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -46,17 +46,17 @@ export function SearchPage() {
           Searches everything UniFlow showed you: titles, summaries, places and the original messages.
         </p>
       ) : results.isPending ? (
-        <PageLoading />
+        <ListSkeleton />
       ) : results.isError ? (
         <ErrorState title="Could not search right now" />
       ) : results.data.length === 0 ? (
         <EmptyState title="Nothing found" description={`No items of yours mention "${query}".`} />
       ) : (
-        <ul className="space-y-2">
+        <ItemList>
           {results.data.map((item) => (
-            <FeedItemCard key={item.id} item={item} />
+            <ItemRow key={item.id} item={item} />
           ))}
-        </ul>
+        </ItemList>
       )}
     </div>
   )

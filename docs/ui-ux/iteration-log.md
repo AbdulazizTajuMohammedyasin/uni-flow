@@ -11,6 +11,44 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-3: For you, item page, digest (2026-10-17)
+
+**Changes**
+- `pages/ForYou/ForYou.tsx`:
+  - "Needs you (n)" (h2) groups the Direct attention and Action required levels (h3, amber list edge, icons). Important updates and Digest are h2.
+  - Digest rows are compact, with a link to `/digest`.
+  - The page description includes today's date (Malaysia time).
+  - From `xl` (1280 px) up: two columns, with the Today rail on the right, sticky.
+  - The four level regions and their names are unchanged (the tests depend on them), and the API calls are unchanged.
+- `components/TodayBox.tsx`: the Today rail, a timeline with "Now", "Next" and greyed-out finished classes (in words, not colour alone). The pending-change note is in the attention style. Uses the new `nowInMalaysia()` and `todayInMalaysia()` in `lib/timetable.ts`.
+- `components/ItemRow.tsx` (new, replaces `FeedItemCard.tsx`): `ItemList` (one bordered list with dividers, optional attention edge) and `ItemRow` (unread dot with the "Unread" label, title, Official / Not confirmed badges, 2-line summary, byline). Also used by Search.
+- `components/ListSkeleton.tsx` (new) plus shadcn `ui/skeleton.tsx`: loading rows with `role="status"`, `aria-busy` and an sr-only "Loading…". The pulse animation stops under reduced motion. Used by For you, Insight, Digest and Search.
+- `components/BackLink.tsx` (new): goes back in history when there is one, otherwise links to For you. Used by Insight and Digest.
+- `pages/Insight/Insight.tsx`:
+  - "Why you see this" sits under the title with a primary rule.
+  - When / Deadline / Where are an icon grid.
+  - "What to do" and the pending-change note are attention panels.
+  - "Open the link" and "Open original" are outline buttons (same accessible names).
+  - Evidence is one divided list; the actions sit under a divider.
+  - The mark-as-read and dismiss / not-relevant behaviour is untouched.
+- `pages/Digest/Digest.tsx`: groups with counts, divided list rows, `BackLink`, skeleton.
+- Tests:
+  - For you: "Needs you (2)" plus the digest link, and the Today rail's Now / Next with the time frozen.
+  - Insight: Back returns to the previous page, and the "For you" link shows when the page is opened directly.
+
+**Iteration 01** (`artifacts/ui/ui3-iteration-01/`)
+- Checked by eye: `for-you--busy` (light desktop, dark phone), `insight--busy` (light desktop), `for-you--loading` (light phone), `digest--busy` (dark desktop).
+- **P2:** the digest still had the old plain "← For you" text link, inconsistent with the item page.
+
+**Iteration 02** (`artifacts/ui/ui3-iteration-02/`)
+- Fix: the shared `BackLink`. Checked by eye: `digest--busy` (light phone).
+
+**Checks:**
+- `npm test`: 119 passed (4 new). `typecheck` and `lint`: clean.
+- `npm run e2e`: 196 passed.
+
+**Still a proposal (needs an API change, not done):** showing the source group on feed rows (redesign plan, section 9).
+
 ## UI-2: app frame (2026-10-17)
 
 **Changes**

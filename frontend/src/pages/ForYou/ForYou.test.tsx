@@ -95,6 +95,43 @@ describe('For you page', () => {
     expect(screen.getAllByLabelText('Unread')).toHaveLength(2)
   })
 
+  it('groups the urgent levels under "Needs you" and links the digest', async () => {
+    renderPage()
+
+    expect(await screen.findByRole('heading', { name: 'Needs you (2)' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Open the daily digest' }).getAttribute('href')).toBe('/digest')
+  })
+
+  it('marks the class happening now and the next one on the Today rail', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-19T09:30:00+08:00'))
+    const slot = (start: string, end: string, code: string) => ({
+      section_id: Number(start.slice(0, 2)),
+      course_code: code,
+      course_name: code,
+      section_code: 'A',
+      lecturer_name: '',
+      start_time: start,
+      end_time: end,
+      meeting_type: 'lecture' as const,
+      building: '',
+      room: '',
+      change: null,
+    })
+    vi.mocked(feedApi.getHome).mockResolvedValue({
+      ...emptyHome,
+      todays_classes: [slot('08:00', '09:00', 'AAA1013'), slot('09:00', '11:00', 'BBB1013'), slot('14:00', '16:00', 'CCC1013')],
+    })
+    renderPage()
+
+    const today = await screen.findByRole('region', { name: 'Today' })
+    const rows = within(today).getAllByRole('listitem')
+    expect(within(rows[0]).queryByText('Now')).toBeNull()
+    expect(within(rows[1]).getByText('Now')).toBeTruthy()
+    expect(within(rows[2]).getByText('Next')).toBeTruthy()
+    vi.useRealTimers()
+  })
+
   it('explains what to do when nothing is there yet', async () => {
     vi.mocked(feedApi.getFeed).mockResolvedValue([])
     renderPage()

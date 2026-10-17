@@ -1,9 +1,10 @@
 import { Link, useSearchParams } from 'react-router'
 
+import { BackLink } from '@/components/BackLink'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
+import { ListSkeleton } from '@/components/ListSkeleton'
 import { PageHeader } from '@/components/PageHeader'
-import { PageLoading } from '@/components/PageLoading'
 import { Badge } from '@/components/ui/badge'
 import { useDigest } from '@/hooks/useFeed'
 import { formatDay } from '@/lib/timetable'
@@ -16,7 +17,7 @@ export function DigestPage() {
   const [params] = useSearchParams()
   const digest = useDigest(params.get('date') ?? undefined)
 
-  if (digest.isPending) return <PageLoading />
+  if (digest.isPending) return <ListSkeleton />
   if (digest.isError) return <ErrorState title="Could not load your digest" />
 
   const { date, items } = digest.data
@@ -26,10 +27,8 @@ export function DigestPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div className="space-y-3">
-        <Link to="/" className="text-sm text-muted-foreground hover:underline">
-          ← For you
-        </Link>
+      <div className="space-y-2">
+        <BackLink />
         <PageHeader
           title="Daily digest"
           description={date ? `Good to know, ${formatDay(date)}.` : 'Your first digest arrives one evening at 7 pm.'}
@@ -44,8 +43,10 @@ export function DigestPage() {
       ) : (
         groups.map((group) => (
           <section key={group.label} aria-label={group.label} className="space-y-2">
-            <h2 className="font-semibold">{group.label}</h2>
-            <ul className="space-y-2">
+            <h2 className="text-lg font-semibold">
+              {group.label} <span className="font-normal text-muted-foreground tabular-nums">({group.items.length})</span>
+            </h2>
+            <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
               {group.items.map((item) => (
                 <DigestRow key={item.id} item={item} />
               ))}
@@ -62,13 +63,13 @@ function DigestRow({ item }: { item: FeedItem }) {
     <li>
       <Link
         to={`/insights/${item.id}`}
-        className="block rounded-xl bg-card p-3 shadow-sm ring-1 ring-border hover:ring-primary/40"
+        className="block space-y-1 px-4 py-3.5 outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
       >
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium">{item.title}</p>
+          <p className="text-[0.9375rem] leading-snug font-medium">{item.title}</p>
           {item.not_confirmed && <Badge variant="outline">Not confirmed</Badge>}
         </div>
-        <p className="text-sm text-muted-foreground">{item.summary}</p>
+        <p className="line-clamp-2 text-sm text-muted-foreground">{item.summary}</p>
       </Link>
     </li>
   )

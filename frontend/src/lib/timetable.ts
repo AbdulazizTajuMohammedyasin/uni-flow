@@ -17,6 +17,26 @@ export function formatDay(isoDate: string): string {
   })
 }
 
+/** The time now in Malaysia (UniFlow's time zone) as "HH:MM", to compare with class times. */
+export function nowInMalaysia(now: Date = new Date()): string {
+  return now.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kuala_Lumpur',
+  })
+}
+
+/** Today's date in Malaysia, e.g. "Monday 19 October". */
+export function todayInMalaysia(now: Date = new Date()): string {
+  return now.toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'Asia/Kuala_Lumpur',
+  })
+}
+
 /** "2026-03-30" plus `days` days, as YYYY-MM-DD. */
 export function shiftDate(isoDate: string, days: number): string {
   const date = new Date(`${isoDate}T00:00:00Z`)
