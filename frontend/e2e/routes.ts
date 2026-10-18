@@ -26,7 +26,7 @@ export const screens: Screen[] = [
   { name: 'insight-change--busy', path: '/insights/103', scenario: 'busy', ready: 'Where it came from' },
   { name: 'digest--busy', path: '/digest', scenario: 'busy', ready: 'AI hackathon registration open' },
   { name: 'timetable-today--busy', path: '/timetable', scenario: 'busy', ready: 'My sections' },
-  { name: 'timetable-week--busy', path: '/timetable?view=week', scenario: 'busy', ready: 'Next week' },
+  { name: 'timetable-week--busy', path: '/timetable?view=week', scenario: 'busy', ready: '19 Oct – 25 Oct' },
   { name: 'groups--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs' },
   { name: 'search--busy', path: '/search?q=internship', scenario: 'busy', ready: /internship at a Kuala Lumpur/ },
   { name: 'notifications--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read' },
@@ -53,6 +53,8 @@ export const screens: Screen[] = [
 
 export const viewports = {
   phone: { width: 390, height: 844 },
+  // A common laptop: 1366 x 768 at Windows' default 125% scaling gives the browser ~1093 px.
+  laptop: { width: 1093, height: 614 },
   desktop: { width: 1440, height: 1000 },
 }
 

@@ -11,6 +11,64 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-4: Timetable (2026-10-17)
+
+**Decision change:** the user shared AIU's official timetable image (BCS2B, Semester 2 25/26): days as rows, one-hour slots 8:30–22:30 as columns. The desktop week view follows that format instead of the planned 7 day-columns.
+
+**Changes**
+- `components/WeekGrid.tsx` (new): a semantic `<table>` (caption, day row headers, a time column header).
+  - The hour columns are on AIU's :30 grid, 08:30–22:30, widened to fit classes outside that range.
+  - Class blocks are positioned by minutes. Overlapping classes are split into lanes.
+  - Today's row is accent-tinted and labelled "Today", with a now-line behind the blocks and a "Now" tag in the class.
+  - Pending changes get an attention ring and label; confirmed changes get a label; cancelled classes are struck through.
+  - The table scrolls inside its card (`min-w-[60rem]`), never the page.
+- `hooks/useMediaQuery.ts` (new): the grid renders only at ≥1280 px. Jsdom has no media queries, so tests see the list.
+- `pages/Timetable/Timetable.tsx`:
+  - Order: header, shared-timetable offer, classes (Today or Week), changes to confirm (`#changes`), My sections.
+  - The week view has an attention notice linking to `#changes`, and a date range between the chevron buttons (labels hidden on phones, accessible names "Previous week" / "Next week").
+  - Day lists are divided row lists, with Now / Next on today.
+  - My sections: name on its own line; a quieter Remove; "Add classes" with icons and `aria-expanded`; the open tool sits in a titled box with a Close button.
+  - The page widens to the full content width in the week grid.
+- `components/ClassChanges.tsx`: an explanation line, the change text in bold, one divided list, and wrapping buttons. Accessible names are unchanged.
+- `lib/timetable.ts`: `todayIsoInMalaysia()`.
+- Tests:
+  - `Timetable.test.tsx`: the button name "Next week →" becomes "Next week" (the arrow is now an icon). This is the only test edit.
+  - `WeekGrid.test.tsx` (new): row layout, the hour range widened for a 23:30 class, the change label, and the Now tag.
+- E2E: the week screen's ready text is now "19 Oct – 25 Oct".
+
+**Iteration 01** (`artifacts/ui/ui4-iteration-01/`)
+- P2: the now-line was drawn over the class text.
+- P2: rooms were truncated ("B09_…").
+- P2: on phones, the course name wrapped beside the code in My sections.
+
+**Iteration 02** (`artifacts/ui/ui4-iteration-02/`)
+- Fixes: the now-line moved behind the blocks; the room got its own line, with taller rows (6.5rem); the course name moved to its own line.
+- P3 left: the "Now" tag was truncated ("No…") next to the course code.
+
+**Iteration 03** (`artifacts/ui/ui4-iteration-03/`)
+- Fix: "Now" moved to the time line. Checked by eye: `timetable-week--busy` (light, desktop).
+
+**Iteration 04** (2026-10-18, `artifacts/ui/ui4-iteration-04/`, after user feedback)
+- The user still saw rows, not a table. Cause: the grid only showed from 1280 px. A typical laptop (1366×768 at Windows' 125% scaling) gives the browser ~1093 px, so it got the list.
+- Fixes:
+  - The grid now shows from **1024 px**.
+  - The table min width went from 60rem to 46rem (day column `w-20`, tighter block padding), so it fits at ~1093 px with no inner scrolling.
+  - A new `laptop` (1093×614) screenshot viewport in `e2e/routes.ts`.
+- At that width:
+  - "Now" moved to its own label line, and the current class is filled primary.
+  - The time no longer wraps; change labels truncate with the full text in the block's tooltip.
+- Checked by eye: `timetable-week--busy` (laptop, light and dark).
+
+**Follow-up** (2026-10-18, real data)
+- The user still saw no table. Checking their real data: all 7 sections are in "2025/2026 Semester 3" (3 Aug – 2 Oct 2026), the term has ended, and no 2026/27 term exists yet. So `timetable/week/` correctly returns no classes, and the grid drew seven empty rows.
+- This is data, not a layout bug.
+- UI fix: a whole empty week now shows "No classes this week" with the term name and what to do (use the arrows, or add new classes), instead of an empty table.
+- Test: `Timetable.test.tsx` covers the empty-week message.
+
+**Checks:**
+- `npm test`: 122 passed. `typecheck` and `lint`: clean.
+- `npm run e2e`: 196 passed. 2 checks (register at 768 px, the account menu) timed out once while the user's own dev servers were also running; they passed on re-run, so this is load, not app behaviour.
+
 ## UI-3: For you, item page, digest (2026-10-17)
 
 **Changes**

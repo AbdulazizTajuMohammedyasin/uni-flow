@@ -143,9 +143,18 @@ describe('Timetable page', () => {
     expect(await screen.findByText('Sunday 5 Apr')).toBeTruthy()
     expect(router.state.location.search).toBe('?view=week')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Next week →' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next week' }))
     expect(await screen.findByText('Monday 6 Apr')).toBeTruthy()
     expect(timetableApi.getWeek).toHaveBeenLastCalledWith('2026-04-06')
+  })
+
+  it('says so when the whole week has no classes (e.g. the term has ended)', async () => {
+    vi.mocked(timetableApi.getWeek).mockResolvedValue({ ...week('2026-03-30'), days: week('2026-03-30').days.map((day) => ({ ...day, classes: [] })) })
+    renderTimetable('/timetable?view=week')
+
+    expect(await screen.findByText('No classes this week')).toBeTruthy()
+    expect(screen.getByText(/Your classes are from 2025\/2026 Semester 2/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Previous week' })).toBeTruthy()
   })
 
   it('offers to choose sections when the student has none, and adds one', async () => {

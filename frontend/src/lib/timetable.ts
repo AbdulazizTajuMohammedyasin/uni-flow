@@ -27,6 +27,11 @@ export function nowInMalaysia(now: Date = new Date()): string {
   })
 }
 
+/** Today's date in Malaysia as YYYY-MM-DD (the format the timetable API uses). */
+export function todayIsoInMalaysia(now: Date = new Date()): string {
+  return now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' })
+}
+
 /** Today's date in Malaysia, e.g. "Monday 19 October". */
 export function todayInMalaysia(now: Date = new Date()): string {
   return now.toLocaleDateString('en-GB', {
