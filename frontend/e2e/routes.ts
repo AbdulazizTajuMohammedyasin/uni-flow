@@ -8,7 +8,7 @@ export type Screen = {
   /** Text that proves the page has finished loading (Playwright waits for it). */
   ready: string | RegExp
   /** Something to do before the screenshot, e.g. open the account menu. */
-  action?: 'open-account-menu'
+  action?: 'open-account-menu' | 'open-needs-you' | 'paste-into-group'
 }
 
 export const screens: Screen[] = [
@@ -28,8 +28,10 @@ export const screens: Screen[] = [
   { name: 'timetable-today--busy', path: '/timetable', scenario: 'busy', ready: 'My sections' },
   { name: 'timetable-week--busy', path: '/timetable?view=week', scenario: 'busy', ready: '19 Oct – 25 Oct' },
   { name: 'groups--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs' },
+  { name: 'groups-paste--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs', action: 'paste-into-group' },
   { name: 'search--busy', path: '/search?q=internship', scenario: 'busy', ready: /internship at a Kuala Lumpur/ },
   { name: 'notifications--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read' },
+  { name: 'notifications-needs-you--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read', action: 'open-needs-you' },
   { name: 'profile--busy', path: '/profile', scenario: 'busy', ready: 'Your studies' },
   { name: 'account-menu--busy', path: '/', scenario: 'busy', ready: 'Project meeting with Dr Farah', action: 'open-account-menu' },
 

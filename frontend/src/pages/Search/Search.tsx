@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { Search } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 
 import { EmptyState } from '@/components/EmptyState'
@@ -26,19 +27,24 @@ export function SearchPage() {
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader title="Search" />
-      <form onSubmit={onSubmit} role="search" className="flex items-end gap-2">
-        <div className="flex-1 space-y-1.5">
-          <Label htmlFor="search-text">Search your items</Label>
-          <Input
-            id="search-text"
-            placeholder="e.g. Petronas internship"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-          />
+      <form onSubmit={onSubmit} role="search" className="space-y-1.5">
+        <Label htmlFor="search-text">Search your items</Label>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="search-text"
+              type="search"
+              placeholder="e.g. Petronas internship"
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              className="h-12 pl-11 text-base md:h-11 md:text-base"
+            />
+          </div>
+          <Button type="submit" className="h-12 px-5 md:h-11" disabled={text.trim().length < 2}>
+            Search
+          </Button>
         </div>
-        <Button type="submit" disabled={text.trim().length < 2}>
-          Search
-        </Button>
       </form>
 
       {query.length < 2 ? (
@@ -52,11 +58,16 @@ export function SearchPage() {
       ) : results.data.length === 0 ? (
         <EmptyState title="Nothing found" description={`No items of yours mention "${query}".`} />
       ) : (
-        <ItemList>
-          {results.data.map((item) => (
-            <ItemRow key={item.id} item={item} />
-          ))}
-        </ItemList>
+        <div className="space-y-2">
+          <p role="status" className="text-sm text-muted-foreground">
+            {results.data.length} result{results.data.length === 1 ? '' : 's'} for “{query}”
+          </p>
+          <ItemList>
+            {results.data.map((item) => (
+              <ItemRow key={item.id} item={item} />
+            ))}
+          </ItemList>
+        </div>
       )}
     </div>
   )

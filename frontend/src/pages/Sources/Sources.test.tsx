@@ -31,6 +31,12 @@ const group: Source = {
   message_count: 12,
 }
 
+/** Radix menus open from the keyboard (jsdom has no pointer events). */
+async function chooseFromMenu(item: string) {
+  fireEvent.keyDown(await screen.findByRole('button', { name: 'Add messages to CDE2313 Sec A' }), { key: 'Enter' })
+  fireEvent.click(await screen.findByRole('menuitem', { name: item }))
+}
+
 function renderPage() {
   render(
     <QueryClientProvider client={createQueryClient()}>
@@ -97,7 +103,25 @@ describe('Groups page', () => {
       { ...group, platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'pending', message_count: 0 },
     ])
     renderPage()
-    expect(await screen.findByText(/WhatsApp group · 0 messages · Waiting for UniFlow to join/)).toBeTruthy()
+    expect(await screen.findByText('WhatsApp group · 0 messages')).toBeTruthy()
+    expect(screen.getByText('Waiting to join')).toBeTruthy()
+  })
+
+  it('says when a group is disconnected', async () => {
+    vi.mocked(sourcesApi.getMySources).mockResolvedValue([
+      { ...group, platform: 'telegram_channel', platform_label: 'Telegram channel', status: 'disconnected' },
+    ])
+    renderPage()
+    expect(await screen.findByText('Disconnected')).toBeTruthy()
+    expect(screen.getByText('New messages from this group are ignored.')).toBeTruthy()
+  })
+
+  it('explains why Add group is not available yet', async () => {
+    renderPage()
+    const button = await screen.findByRole('button', { name: 'Add group' })
+    expect((button as HTMLButtonElement).disabled).toBe(true)
+    expect(button.getAttribute('aria-describedby')).toBe('add-group-hint')
+    expect(screen.getByText('Type a group name first.')).toBeTruthy()
   })
 
   it("explains a link UniFlow can't use", async () => {
@@ -122,7 +146,7 @@ describe('Groups page', () => {
     vi.mocked(sourcesApi.pasteMessages).mockResolvedValue({ added: 2, already_stored: 1 })
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Paste messages' }))
+    await chooseFromMenu('Paste messages')
     fireEvent.change(screen.getByLabelText('Messages'), {
       target: { value: '[09:12, 01/10/2026] Dr Lee: Class moved to 2 PM.' },
     })
@@ -136,7 +160,7 @@ describe('Groups page', () => {
     vi.mocked(sourcesApi.uploadExport).mockResolvedValue({ added: 1, already_stored: 0 })
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Upload WhatsApp export' }))
+    await chooseFromMenu('Upload WhatsApp export')
     const file = new File(['01/10/2026, 09:12 - Dr Lee: hi'], 'chat.txt', { type: 'text/plain' })
     fireEvent.change(screen.getByLabelText('WhatsApp export (.txt)'), { target: { files: [file] } })
     fireEvent.click(screen.getByRole('button', { name: 'Upload' }))
@@ -156,7 +180,7 @@ describe('Groups page', () => {
     )
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Upload WhatsApp export' }))
+    await chooseFromMenu('Upload WhatsApp export')
     const file = new File(['%PDF'], 'chat.pdf')
     fireEvent.change(screen.getByLabelText('WhatsApp export (.txt)'), { target: { files: [file] } })
     fireEvent.click(screen.getByRole('button', { name: 'Upload' }))

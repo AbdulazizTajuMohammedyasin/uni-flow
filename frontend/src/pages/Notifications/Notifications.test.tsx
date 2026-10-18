@@ -1,11 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as notificationsApi from '@/api/notifications'
 import { createQueryClient } from '@/lib/queryClient'
-import { notificationLink, timeAgo } from '@/lib/notifications'
+import { dayLabel, groupByDay, notificationLink, timeAgo } from '@/lib/notifications'
 import type { AppNotification } from '@/types/notifications'
 
 import { NotificationsPage } from './Notifications'
@@ -89,6 +89,25 @@ describe('Notifications page', () => {
     expect(notificationsApi.markNotificationRead).not.toHaveBeenCalled() // already read
   })
 
+  it('marks unread alerts with the word New and groups them by day', async () => {
+    renderPage()
+    const today = await screen.findByRole('region', { name: 'Today' })
+    expect(within(today).getByText('See Dr Lee about your FYP')).toBeTruthy()
+    expect(within(today).getByText('New ·')).toBeTruthy()
+    // The digest is already read, so only one "New".
+    expect(screen.getAllByText('New ·')).toHaveLength(1)
+  })
+
+  it('"Needs you" keeps only alerts that ask something of me', async () => {
+    renderPage()
+    const tab = await screen.findByRole('tab', { name: 'Needs you (1)' })
+    fireEvent.mouseDown(tab)
+
+    const panel = screen.getByRole('tabpanel')
+    expect(within(panel).getByText('See Dr Lee about your FYP')).toBeTruthy()
+    expect(within(panel).queryByText('Your daily digest: 4 new items')).toBeNull()
+  })
+
   it('marks all as read', async () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Mark all as read' }))
@@ -115,5 +134,17 @@ describe('notification helpers', () => {
     expect(timeAgo('2026-10-09T11:59:40Z', now)).toBe('just now')
     expect(timeAgo('2026-10-09T09:00:00Z', now)).toBe('3 h ago')
     expect(timeAgo('2026-10-01T09:00:00Z', now)).toBe('1 Oct')
+  })
+
+  it('names the day in Malaysia time', () => {
+    const now = Date.parse('2026-10-19T09:30:00+08:00')
+    expect(dayLabel('2026-10-19T00:10:00+08:00', now)).toBe('Today')
+    expect(dayLabel('2026-10-18T23:50:00+08:00', now)).toBe('Yesterday')
+    expect(dayLabel('2026-10-16T10:30:00+08:00', now)).toBe('Fri 16 Oct')
+    const days = groupByDay(
+      [alert({ id: 1, created_at: '2026-10-19T08:00:00+08:00' }), alert({ id: 2, created_at: '2026-10-18T20:00:00+08:00' }), alert({ id: 3, created_at: '2026-10-18T19:00:00+08:00' })],
+      now,
+    )
+    expect(days.map((day) => [day.label, day.notifications.length])).toEqual([['Today', 1], ['Yesterday', 2]])
   })
 })

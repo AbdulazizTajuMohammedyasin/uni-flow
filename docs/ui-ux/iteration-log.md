@@ -11,6 +11,36 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-5: Groups, Search, Notifications (2026-10-18)
+
+**Changes**
+- `components/ui/tabs.tsx` (new, `npx shadcn@latest add tabs`; it uses `radix-ui`, which was already installed).
+- `lib/notifications.ts`: `NEEDS_YOU_KINDS` (named, action required, class change to confirm), `dayLabel()` ("Today", "Yesterday", "Fri 16 Oct" in Malaysia time) and `groupByDay()`.
+- `pages/Notifications/Notifications.tsx`:
+  - "All" / "Needs you (n)" tabs, filtered on the client; "All" is the default, so nothing is hidden on arrival.
+  - Alerts grouped under day headings (each a labelled region).
+  - Each row has an icon for its kind; unread rows show a dot, the word "New" and a bold title (not colour alone).
+  - A list skeleton while loading; an empty state for an empty "Needs you" tab.
+- `pages/Search/Search.tsx`: a larger field with a search icon (`type="search"`), and a result count ("1 result for “petronas”") announced as a status.
+- `pages/Sources/Sources.tsx` (Groups):
+  - The groups are one divided list; each has a platform icon and a status badge with icon and word: Connected, Waiting to join, Disconnected (no badge for pasted or staff groups).
+  - Waiting and disconnected groups get one line saying what that means ("New messages from this group are ignored." is the admin action's own wording).
+  - "Paste messages" / "Upload WhatsApp export" moved into one "Add messages" menu per group; the chosen form opens in a titled box with a Close button, and focus moves into it.
+  - A disabled "Add group" says why ("Type a group name first.", linked with `aria-describedby`).
+- Tests: 5 new unit tests (day names and groups, "New", the "Needs you" tab, the disconnected badge, the Add group hint), plus a result-count check in the existing Search test; Groups tests open the menu from the keyboard.
+- e2e: two new screens, `notifications-needs-you--busy` and `groups-paste--busy` (with actions in `screens.spec.ts`).
+
+**Iteration 01** (`artifacts/ui/ui5-iteration-01/`, light and dark, phone/laptop/desktop)
+- P1: after choosing "Paste messages" from the menu, focus went nowhere (the menu's focus trap stopped `autoFocus`). Fixed: the menu's close handler moves focus to the chosen form's field.
+- P2: the paste box said "Paste messages" twice (title and field label). The field label is now screen-reader-only.
+- P3: uneven space after "New ·".
+
+**Iteration 02** (`artifacts/ui/ui5-iteration-02/`)
+- P1 (smoke test): the tabs were 37 px tall on phones. They are now 44 px on phones and 32 px from `md`.
+- No P0–P2 issues left in the captured screens.
+
+**Checks:** `npm test` (all unit tests), `typecheck`, `lint` and `npm run e2e` (smoke).
+
 ## UI-4: Timetable (2026-10-17)
 
 **Decision change:** the user shared AIU's official timetable image (BCS2B, Semester 2 25/26): days as rows, one-hour slots 8:30–22:30 as columns. The desktop week view follows that format instead of the planned 7 day-columns.

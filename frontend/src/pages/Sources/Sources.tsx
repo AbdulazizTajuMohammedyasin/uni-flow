@@ -1,11 +1,31 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
+import {
+  Building2,
+  ChevronDown,
+  CircleCheck,
+  ClipboardPaste,
+  Clock,
+  FileUp,
+  MessageCircle,
+  Send,
+  Unplug,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 
 import { ApiError } from '@/api/errors'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { PageHeader } from '@/components/PageHeader'
 import { PageLoading } from '@/components/PageLoading'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -54,7 +74,7 @@ export function SourcesPage() {
           description="Add a group above with its invite link, or paste its messages by hand."
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
           {sources.data.map((source) => (
             <GroupCard key={source.id} source={source} />
           ))}
@@ -118,9 +138,16 @@ function AddGroupForm() {
         In WhatsApp: open the group → tap its name → Invite via link → Copy link. Without a
         link, you can still paste the group's messages by hand.
       </p>
-      <Button type="submit" disabled={busy || !title.trim()}>
-        Add group
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={busy || !title.trim()} aria-describedby={title.trim() ? undefined : 'add-group-hint'}>
+          Add group
+        </Button>
+        {!title.trim() && (
+          <p id="add-group-hint" className="text-sm text-muted-foreground">
+            Type a group name first.
+          </p>
+        )}
+      </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {errorText(error)}
@@ -137,39 +164,117 @@ function AddGroupForm() {
   )
 }
 
-/** "Waiting to join" etc. next to the platform name. */
-function statusText(source: Source): string {
-  if (source.status === 'pending') return ' · Waiting for UniFlow to join'
-  if (source.status === 'disconnected') return ' · Disconnected'
-  return ''
+const PLATFORM_ICONS: Record<Source['platform'], LucideIcon> = {
+  whatsapp_group: MessageCircle,
+  telegram_group: Send,
+  telegram_channel: Send,
+  staff: Building2,
+  manual: ClipboardPaste,
 }
 
+/** Whether UniFlow's number or bot is in the group, as an icon plus a word (not colour alone).
+ * Groups fed by hand or by staff have no connection, so no badge. */
+function StatusBadge({ source }: { source: Source }) {
+  if (source.platform === 'manual' || source.platform === 'staff') return null
+  if (source.status === 'pending') {
+    return (
+      <Badge className="bg-attention text-attention-foreground">
+        <Clock aria-hidden />
+        Waiting to join
+      </Badge>
+    )
+  }
+  if (source.status === 'disconnected') {
+    return (
+      <Badge variant="destructive">
+        <Unplug aria-hidden />
+        Disconnected
+      </Badge>
+    )
+  }
+  return (
+    <Badge className="bg-success/10 text-success">
+      <CircleCheck aria-hidden />
+      Connected
+    </Badge>
+  )
+}
+
+type Panel = 'none' | 'paste' | 'upload'
+
 function GroupCard({ source }: { source: Source }) {
-  const [open, setOpen] = useState<'none' | 'paste' | 'upload'>('none')
-  const toggle = (panel: 'paste' | 'upload') => setOpen(open === panel ? 'none' : panel)
+  const [open, setOpen] = useState<Panel>('none')
+  // Choosing from the menu moves focus into the new form, not back to the menu button.
+  const chosen = useRef<Panel>('none')
+  const Icon = PLATFORM_ICONS[source.platform]
+  const choose = (panel: Panel) => {
+    chosen.current = panel
+    setOpen(panel)
+  }
 
   return (
-    <li className="space-y-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="font-medium">{source.title}</p>
-          <p className="text-sm text-muted-foreground">
-            {source.platform_label} · {source.message_count} message
-            {source.message_count === 1 ? '' : 's'}
-            {statusText(source)}
-          </p>
+    <li className="space-y-3 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Icon aria-hidden className="size-4" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className="font-medium">{source.title}</p>
+              <StatusBadge source={source} />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {source.platform_label} · {source.message_count} message
+              {source.message_count === 1 ? '' : 's'}
+            </p>
+            {source.status === 'pending' && (
+              <p className="text-sm text-muted-foreground">UniFlow's number will join soon; then new messages arrive by themselves.</p>
+            )}
+            {source.status === 'disconnected' && (
+              <p className="text-sm text-muted-foreground">New messages from this group are ignored.</p>
+            )}
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={open === 'paste' ? 'default' : 'outline'} onClick={() => toggle('paste')}>
-            Paste messages
-          </Button>
-          <Button size="sm" variant={open === 'upload' ? 'default' : 'outline'} onClick={() => toggle('upload')}>
-            Upload WhatsApp export
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline" aria-label={`Add messages to ${source.title}`}>
+              Add messages
+              <ChevronDown aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-auto min-w-56"
+            onCloseAutoFocus={(event) => {
+              if (chosen.current === 'none') return
+              event.preventDefault()
+              document.getElementById(`${chosen.current}-${source.id}`)?.focus()
+              chosen.current = 'none'
+            }}
+          >
+            <DropdownMenuItem onSelect={() => choose('paste')}>
+              <ClipboardPaste aria-hidden />
+              Paste messages
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => choose('upload')}>
+              <FileUp aria-hidden />
+              Upload WhatsApp export
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      {open === 'paste' && <PasteForm source={source} />}
-      {open === 'upload' && <UploadForm source={source} />}
+      {open !== 'none' && (
+        <div className="space-y-2 rounded-lg bg-muted/50 p-3 ring-1 ring-border">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold">{open === 'paste' ? 'Paste messages' : 'Upload a WhatsApp export'}</h3>
+            <Button size="icon-sm" variant="ghost" aria-label="Close" onClick={() => setOpen('none')}>
+              <X aria-hidden />
+            </Button>
+          </div>
+          {open === 'paste' ? <PasteForm source={source} /> : <UploadForm source={source} />}
+        </div>
+      )}
     </li>
   )
 }
@@ -185,7 +290,10 @@ function PasteForm({ source }: { source: Source }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <Label htmlFor={`paste-${source.id}`}>Messages</Label>
+      {/* The panel's "Paste messages" title already says what goes here. */}
+      <Label htmlFor={`paste-${source.id}`} className="sr-only">
+        Messages
+      </Label>
       <textarea
         id={`paste-${source.id}`}
         rows={6}

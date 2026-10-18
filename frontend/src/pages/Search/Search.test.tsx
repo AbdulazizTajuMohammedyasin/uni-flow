@@ -56,6 +56,7 @@ describe('Search page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     expect(await screen.findByText('Petronas internship')).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toBe('1 result for “petronas”')
     expect(feedApi.searchFeed).toHaveBeenCalledWith('petronas')
     expect(router.state.location.search).toBe('?q=petronas')
     expect(screen.getByRole('link', { name: /Petronas internship/ }).getAttribute('href')).toBe('/insights/9')

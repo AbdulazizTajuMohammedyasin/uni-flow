@@ -31,9 +31,18 @@ for (const theme of themes) {
             await page.getByRole('button', { name: 'Account menu' }).filter({ visible: true }).click()
             await expect(page.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
           }
+          if (screen.action === 'open-needs-you') {
+            await page.getByRole('tab', { name: /Needs you/ }).click()
+            await expect(page.getByRole('tab', { name: /Needs you/ })).toHaveAttribute('data-state', 'active')
+          }
+          if (screen.action === 'paste-into-group') {
+            await page.getByRole('button', { name: /^Add messages to CCS2213/ }).click()
+            await page.getByRole('menuitem', { name: 'Paste messages' }).click()
+            await expect(page.getByLabel('Messages', { exact: true })).toBeFocused()
+          }
           await page.screenshot({
             path: path.join(root, theme, device, `${screen.name}.png`),
-            fullPage: !screen.action, // an open menu is drawn over the first screen
+            fullPage: screen.action !== 'open-account-menu', // an open menu is drawn over the first screen
             animations: 'disabled',
           })
         })
