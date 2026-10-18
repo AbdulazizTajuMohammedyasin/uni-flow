@@ -24,11 +24,12 @@ They share authentication, the API client, the UI components and the build. Spli
 | Forms | React Hook Form + Zod (through `@hookform/resolvers`, which connects the two) | Approved |
 | Dates | date-fns (formats times in Asia/Kuala_Lumpur) | Approved |
 | Markdown | react-markdown (raw HTML turned off) | Approved |
-| Calendar | FullCalendar React | Approved but **not used yet**: the timetable shows simple day lists (M3.8). Add it only if a real calendar grid is needed. |
+| Calendar | FullCalendar React | Approved but **not used**: the week view on computers is UniFlow's own small grid in AIU's format (`components/WeekGrid.tsx`, UI-4), so no calendar library is needed. |
 | Lint | **oxlint**. The current Vite template ships oxlint instead of ESLint. It is configured in `.oxlintrc.json`. | Approved as part of the template |
 | Tests | Vitest + React Testing Library, with `jsdom` as the test environment | Approved |
 | API types | `openapi-typescript` (generates TypeScript types from the OpenAPI schema) | **Deferred.** Reconsider after the frontend foundation works (M0.15). Until then, types are written by hand in each feature's `types.ts`. |
-| Not planned | Radix, sonner, MSW, Playwright, Redux or Zustand | Add one only when a real need appears |
+| Browser tests | `@playwright/test` (dev only, uses the installed Chrome): smoke, accessibility and screenshot checks in `frontend/e2e/` | Approved (UI-0, 2026-10-17) |
+| Not planned | sonner, MSW, axe, Redux or Zustand | Add one only when a real need appears (Radix already comes with shadcn/ui) |
 
 Toasts, dialogs and dropdowns come from shadcn (`components/ui/`), added when a screen needs them.
 

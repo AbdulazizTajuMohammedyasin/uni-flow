@@ -11,6 +11,44 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-7: accessibility and regression pass (2026-10-18)
+
+**New checks** (`frontend/e2e/a11y.spec.ts`, run by `npm run e2e`; no new dependency, axe was not approved):
+- For every page and state in `e2e/routes.ts` (desktop 1440×1000):
+  - exactly one visible `h1` and one `main`;
+  - no button, link, field, tab or menu item without a name (from Playwright's accessibility tree);
+  - a keyboard walk of up to 60 Tab stops, where every stop must show a focus ring and be on screen.
+- App frame:
+  - "Skip to content" is the first Tab stop and moves focus to `main`;
+  - the For you first screen at 390×844 shows the Today box and the first "Needs you" item;
+  - with reduced motion requested, skeleton animations and button transitions are off.
+- Colour contrast, light and dark: 27 token pairs measured in the browser, including tinted backgrounds such as `primary/10` on a card. Text needs 4.5:1; field edges, focus rings and button edges need 3:1.
+
+**Baseline run** (before fixes): 7 of 67 failed.
+- P1: no skip link, so keyboard users had to pass the whole menu on every page. Added `components/SkipLink.tsx` to `AppLayout` and `StaffLayout`; `main` got `id="main"` and `tabIndex={-1}`.
+- P1: a student opening `/staff` saw "No access" with no `main` landmark. `RequireCapability` now wraps that case (the staff area itself, not its sections) in `main`.
+- P2: the Notifications tab panel took focus with no ring. It now has a ring.
+- P2: in the light theme, `--input` was 2.8:1 on the page background (the Search box). Changed from `#8c95a3` to `#828b99`: 3.4:1 on white, 3.1:1 on the page.
+- Reduced motion: only the skeletons handled it. A global `prefers-reduced-motion` rule in `index.css` now stops the remaining animations and transitions.
+- Two test-side corrections: the "Needs you" block is a heading over regions, not one region; the interest chips hide the real checkbox and show focus on the chip.
+
+**After fixes:** all 67 accessibility checks pass.
+
+**Acceptance criteria** ([redesign-plan.md](redesign-plan.md) section 11):
+- No sideways scrolling at 360/390/768/1024/1440: met (smoke).
+- 44 px tap targets on phones: met for buttons, fields, selects and radios (smoke). Links are not measured.
+- Contrast: met; measured, not just read from the token table.
+- No raw palette classes: met (the grep returns nothing).
+- `npm test`: 127 pass; `typecheck` and `lint` are clean.
+- No changes in `backend/`, `src/api/` or `src/context/` across the whole redesign. In `src/hooks/`, two new files only (`useTheme`, `useMediaQuery`); no existing hook changed. In `router.tsx`, one line: `handle: { frame: 'reading' }` on `/privacy`; no address changed.
+- For you first screen on a phone: met (now a test).
+
+**Final screenshots:** `artifacts/ui/final/` (light and dark × phone, laptop, desktop × 31 states).
+
+**Checks:** `npm test` (127), `typecheck`, `lint`, `npm run e2e` (284: smoke and accessibility), `npm run screens` (186).
+
+**Not covered by automation:** screen-reader listening (only the accessibility tree is checked), pages with more than 60 Tab stops (only the first 60 are walked), and focus inside open dialogs/menus beyond the account menu.
+
 ## UI-6: Profile, Onboarding, Auth, Privacy, 404/403/error (2026-10-18)
 
 **Changes**

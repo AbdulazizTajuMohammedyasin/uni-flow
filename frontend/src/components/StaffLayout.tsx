@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router'
 import { useAuth } from '@/context/AuthContext'
 import { can } from '@/lib/capabilities'
 import { staffNavItems } from '@/lib/navigation'
+import { SkipLink } from '@/components/SkipLink'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -20,6 +21,7 @@ export default function StaffLayout() {
 
   return (
     <div className="min-h-screen md:flex">
+      <SkipLink />
       <aside className="border-b border-border bg-sidebar text-sidebar-foreground md:w-60 md:shrink-0 md:border-r md:border-b-0">
         <div className="flex items-center justify-between px-4 py-3 md:block md:px-6 md:py-5">
           <p className="text-lg font-bold">
@@ -41,7 +43,7 @@ export default function StaffLayout() {
         </nav>
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-8">
+      <main id="main" tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 outline-none md:px-8">
         <Outlet />
       </main>
     </div>

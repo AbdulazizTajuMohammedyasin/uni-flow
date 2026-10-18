@@ -91,7 +91,7 @@
   --attention-border: #e9c46a;
   --success: #17663a; /* "Saved", "Added": 6.5:1 on paper */
   --border: #d5dae1; /* dividers (decorative) */
-  --input: #8c95a3; /* input and checkbox edges: 3:1 on white */
+  --input: #828b99; /* input and checkbox edges: 3.4:1 on white, 3.1:1 on paper */
   --ring: #1b5e9e;
 
   --chart-1: #1b5e9e;
@@ -163,5 +163,17 @@
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
+  }
+}
+
+/* Less motion when the device asks for it: menus, fades and pulses finish at once. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

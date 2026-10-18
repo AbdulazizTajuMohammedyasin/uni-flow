@@ -37,6 +37,8 @@ const KIND_ICONS: Record<NotificationKind, LucideIcon> = {
 }
 
 type Tab = 'all' | 'needs-you'
+// The panel itself takes keyboard focus (after the tabs), so it needs a visible ring.
+const PANEL = 'rounded-xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-4 focus-visible:ring-offset-background'
 
 /** /notifications — my alerts, newest first and split by day. "Needs you" keeps only the
  * ones that ask something of me. Tapping one marks it read and opens it. */
@@ -79,10 +81,10 @@ export function NotificationsPage() {
               Needs you ({needsYou.length})
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="all">
+          <TabsContent value="all" className={PANEL}>
             <DayGroups notifications={notifications.data} />
           </TabsContent>
-          <TabsContent value="needs-you">
+          <TabsContent value="needs-you" className={PANEL}>
             {needsYou.length === 0 ? (
               <EmptyState
                 title="Nothing needs you"

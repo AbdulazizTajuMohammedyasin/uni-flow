@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 import { AccountMenu } from './AccountMenu'
 import { HealthBadge } from './HealthBadge'
+import { SkipLink } from '@/components/SkipLink'
 
 /** Desktop sidebar link: the active page gets a tinted background, a bar and bold text
  * (not colour alone), plus aria-current="page" from NavLink. */
@@ -32,6 +33,7 @@ const bottomLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function AppLayout() {
   return (
     <div className="min-h-screen md:flex">
+      <SkipLink />
       <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:border-r md:border-sidebar-border md:bg-sidebar">
         <Link
           to="/"
@@ -71,7 +73,7 @@ export default function AppLayout() {
         </header>
 
         {/* Bottom padding on phones keeps content clear of the bottom bar. */}
-        <main className="flex-1 px-4 pt-5 pb-28 md:px-10 md:pt-10 md:pb-12">
+        <main id="main" tabIndex={-1} className="flex-1 scroll-mt-16 px-4 pt-5 pb-28 outline-none md:px-10 md:pt-10 md:pb-12">
           <div className="mx-auto w-full max-w-5xl">
             <Outlet />
           </div>

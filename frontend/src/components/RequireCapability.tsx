@@ -14,5 +14,14 @@ type RequireCapabilityProps = {
 export function RequireCapability({ cap }: RequireCapabilityProps) {
   const { user } = useAuth()
   const allowed = cap ? can(user, cap) : canUseStaffArea(user)
-  return allowed ? <Outlet /> : <NoAccessPage />
+  if (allowed) return <Outlet />
+  // A section inside the staff area already sits in the layout's <main>; the staff area itself
+  // has no layout around it yet, so there the message is the page's main content.
+  return cap ? (
+    <NoAccessPage />
+  ) : (
+    <main>
+      <NoAccessPage />
+    </main>
+  )
 }

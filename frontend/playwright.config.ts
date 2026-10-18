@@ -22,7 +22,7 @@ export default defineConfig({
     timezoneId: 'Asia/Kuala_Lumpur',
   },
   projects: [
-    { name: 'smoke', testMatch: 'smoke.spec.ts' },
+    { name: 'smoke', testMatch: ['smoke.spec.ts', 'a11y.spec.ts'] },
     { name: 'screens', testMatch: 'screens.spec.ts' },
   ],
   webServer: {
