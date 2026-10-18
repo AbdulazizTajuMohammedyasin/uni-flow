@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { MailCheck } from 'lucide-react'
 import { Link, Navigate } from 'react-router'
 import { z } from 'zod'
 
 import { register as registerAccount } from '@/api/auth'
 import { ApiError } from '@/api/errors'
 import { FormField } from '@/components/FormField'
+import { ResultIcon } from '@/components/ResultIcon'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
@@ -73,7 +75,8 @@ export function RegisterPage() {
   if (registeredEmail) {
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+        <ResultIcon icon={MailCheck} />
+        <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           We sent an activation link to <span className="font-medium">{registeredEmail}</span>.
           Open it to activate your account, then log in.
@@ -87,7 +90,7 @@ export function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
       <p className="mt-1 text-sm text-muted-foreground">For AIU students ({STUDENT_DOMAIN}).</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">

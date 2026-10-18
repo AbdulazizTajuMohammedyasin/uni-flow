@@ -1,7 +1,8 @@
+import { TriangleAlert } from 'lucide-react'
 import { isRouteErrorResponse, useRouteError } from 'react-router'
 
+import { StatusMessage } from '@/components/StatusMessage'
 import { Button } from '@/components/ui/button'
-import { ErrorState } from '@/components/ErrorState'
 
 import { NotFoundPage } from '../NotFound/NotFound'
 
@@ -14,17 +15,21 @@ export function RouteErrorPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <ErrorState
+    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+      {/* Announced by screen readers, like the old error box. */}
+      <div role="alert">
+        <StatusMessage
+          icon={TriangleAlert}
+          tone="destructive"
           title="Something went wrong"
-          message="An unexpected error occurred. Reloading the page usually helps."
           action={
             <Button type="button" size="lg" onClick={() => window.location.reload()}>
               Reload page
             </Button>
           }
-        />
+        >
+          An unexpected error occurred. Reloading the page usually helps.
+        </StatusMessage>
       </div>
     </main>
   )

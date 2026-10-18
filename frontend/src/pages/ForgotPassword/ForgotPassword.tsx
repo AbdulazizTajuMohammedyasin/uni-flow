@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { MailCheck } from 'lucide-react'
 import { Link } from 'react-router'
 import { z } from 'zod'
 
 import { requestPasswordReset } from '@/api/auth'
 import { ApiError } from '@/api/errors'
 import { FormField } from '@/components/FormField'
+import { ResultIcon } from '@/components/ResultIcon'
 import { Button } from '@/components/ui/button'
 
 const schema = z.object({ email: z.email('Enter a valid email address.') })
@@ -36,7 +38,8 @@ export function ForgotPasswordPage() {
   if (sentTo) {
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+        <ResultIcon icon={MailCheck} />
+        <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           If <span className="font-medium">{sentTo}</span> has a UniFlow account, we sent it a link
           to choose a new password.
@@ -50,7 +53,7 @@ export function ForgotPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Forgot your password?</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Forgot your password?</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Enter your email and we'll send you a link to choose a new one.
       </p>

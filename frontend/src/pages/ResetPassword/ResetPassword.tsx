@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { CircleCheck } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { z } from 'zod'
 
 import { confirmPasswordReset } from '@/api/auth'
 import { ApiError } from '@/api/errors'
 import { FormField } from '@/components/FormField'
+import { ResultIcon } from '@/components/ResultIcon'
 import { Button } from '@/components/ui/button'
 
 const schema = z
@@ -55,7 +57,8 @@ export function ResetPasswordPage() {
   if (done) {
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Password changed</h1>
+        <ResultIcon icon={CircleCheck} tone="success" />
+        <h1 className="text-2xl font-semibold tracking-tight">Password changed</h1>
         <p className="mt-3 text-sm text-muted-foreground">You can now log in with your new password.</p>
         <Button asChild size="lg" className="mt-6 w-full">
           <Link to="/login">Log in</Link>
@@ -66,7 +69,7 @@ export function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Choose a new password</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Choose a new password</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">
         <FormField

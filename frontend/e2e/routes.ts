@@ -51,6 +51,7 @@ export const screens: Screen[] = [
   // Other roles and steps
   { name: 'onboarding--new', path: '/onboarding', scenario: 'new', ready: /Welcome, Aisha/ },
   { name: 'staff--staff', path: '/staff', scenario: 'staff', ready: 'Staff dashboard' },
+  { name: 'no-access--busy', path: '/staff', scenario: 'busy', ready: 'No access' },
 ]
 
 export const viewports = {

@@ -53,7 +53,7 @@ export function LoginPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Log in</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
       <p className="mt-1 text-sm text-muted-foreground">Use your AIU student email.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">

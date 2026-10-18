@@ -94,8 +94,10 @@ describe('Onboarding page', () => {
     await screen.findByRole('option', { name: 'Bachelor in Computer Science (Honours)' })
     select('Programme', 10)
     select('Intake', 100)
+    expect(screen.getByText('Step 1 of 2 · Your studies')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     await screen.findByRole('heading', { name: 'What matters to you?' })
+    expect(screen.getByText('Step 2 of 2 · Your interests (optional)')).toBeTruthy()
   }
 
   it('saves the studies, then asks for interests (which can be skipped)', async () => {

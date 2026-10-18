@@ -6,8 +6,8 @@ import { Link } from 'react-router'
  * Keep it in plain words and in step with what UniFlow really does. */
 export function PrivacyPage() {
   return (
-    <article className="space-y-5 text-sm leading-relaxed">
-      <h1 className="text-2xl font-bold tracking-tight">Privacy notice</h1>
+    <article className="space-y-6 text-[0.9375rem] leading-relaxed md:text-base">
+      <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight md:text-[1.75rem]">Privacy notice</h1>
       <p>
         UniFlow is a student information assistant for Albukhary International University. It reads academic
         group messages so that each student sees only the information that matters to them. This notice says
@@ -15,7 +15,7 @@ export function PrivacyPage() {
       </p>
 
       <Part title="What UniFlow reads">
-        <ul className="list-disc space-y-1 pl-5">
+        <ul className="list-disc space-y-2 pl-5 marker:text-muted-foreground">
           <li>
             Messages in <strong>academic WhatsApp and Telegram groups</strong> that students added to UniFlow
             (UniFlow's own number or bot is a member, and it posts a notice when it joins), and messages students
@@ -30,7 +30,7 @@ export function PrivacyPage() {
       </Part>
 
       <Part title="What UniFlow keeps, and for how long">
-        <ul className="list-disc space-y-1 pl-5">
+        <ul className="list-disc space-y-2 pl-5 marker:text-muted-foreground">
           <li>
             Message text and files are <strong>deleted after 60 days</strong>. What was learned from them (for
             example "class moved to 2 PM") is kept with a <strong>short quote</strong> of the original message, so
@@ -54,7 +54,7 @@ export function PrivacyPage() {
       </Part>
 
       <Part title="Your choices">
-        <ul className="list-disc space-y-1 pl-5">
+        <ul className="list-disc space-y-2 pl-5 marker:text-muted-foreground">
           <li>
             <strong>If you're in a group UniFlow reads and don't want your messages read</strong>, ask the UniFlow
             team: your messages will be skipped from then on, and the ones already stored will be erased. A group
@@ -68,7 +68,7 @@ export function PrivacyPage() {
         </ul>
       </Part>
 
-      <p className="text-muted-foreground">
+      <p className="border-t border-border pt-5 text-sm text-muted-foreground">
         <Link to="/register" className="text-primary hover:underline">
           Create an account
         </Link>{' '}
@@ -84,7 +84,7 @@ export function PrivacyPage() {
 function Part({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">{title}</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
       {children}
     </section>
   )

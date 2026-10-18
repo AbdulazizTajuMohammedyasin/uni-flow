@@ -86,6 +86,16 @@ describe('Profile page', () => {
 
     expect(await screen.findByText('ali@student.aiu.edu.my')).toBeTruthy()
     expect(screen.getByText('Student')).toBeTruthy()
+    const sections = screen.getByRole('navigation', { name: 'Profile sections' })
+    expect([...sections.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual([
+      '#account',
+      '#studies',
+      '#interests',
+      '#appearance',
+      '#password',
+      '#privacy',
+    ])
+    expect(screen.getByRole('region', { name: 'Your studies' })).toBeTruthy()
     await waitFor(() => {
       expect((screen.getByLabelText('School') as HTMLSelectElement).value).toBe('1')
       expect((screen.getByLabelText('Programme') as HTMLSelectElement).value).toBe('10')

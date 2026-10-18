@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { CircleAlert, CircleCheck } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { z } from 'zod'
 
 import { activateAccount, resendActivation } from '@/api/auth'
 import { ApiError } from '@/api/errors'
 import { FormField } from '@/components/FormField'
+import { ResultIcon } from '@/components/ResultIcon'
 import { Button } from '@/components/ui/button'
 
 type Status = 'activating' | 'activated' | 'already-used' | 'invalid' | 'error'
@@ -40,7 +42,8 @@ export function ActivateAccountPage() {
   if (status === 'activated' || status === 'already-used') {
     return (
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">
+        <ResultIcon icon={CircleCheck} tone="success" />
+        <h1 className="text-2xl font-semibold tracking-tight">
           {status === 'activated' ? 'Your account is active' : 'Account already activated'}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">You can now log in to UniFlow.</p>
@@ -53,8 +56,9 @@ export function ActivateAccountPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">This link didn't work</h1>
-      <p className="mt-3 text-sm text-muted-foreground">
+      <ResultIcon icon={CircleAlert} tone="destructive" />
+      <h1 className="text-center text-2xl font-semibold tracking-tight">This link didn't work</h1>
+      <p className="mt-3 text-center text-sm text-muted-foreground">
         {status === 'invalid'
           ? 'The activation link is invalid or incomplete.'
           : 'Something went wrong while activating your account.'}{' '}

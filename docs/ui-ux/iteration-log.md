@@ -11,6 +11,31 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## UI-6: Profile, Onboarding, Auth, Privacy, 404/403/error (2026-10-18)
+
+**Changes**
+- `components/AuthLayout.tsx`:
+  - On computers (lg and up), two panels: on the left, what UniFlow does in three true lines plus the privacy link; on the right, the form. Phones get one column with the wordmark and a one-line tagline.
+  - A route can ask for a wide reading frame with `handle: { frame: 'reading' }`. `/privacy` uses it (`router.tsx`; the URLs are unchanged).
+- `pages/Privacy/Privacy.tsx`: a ~68-character column with larger text, bigger section headings and a divider above the closing links. The wording is unchanged.
+- `pages/Onboarding/Onboarding.tsx`: "Step 1 of 2 · Your studies" / "Step 2 of 2 · Your interests (optional)" with a two-part bar.
+- `components/ResultIcon.tsx` (new): a round icon above finished steps. It is used on "Check your email" (register and forgot password), "Password changed", "Your account is active" and "This link didn't work".
+- Auth headings use `font-semibold`, like the rest of the app.
+- `components/StatusMessage.tsx` (new): one look for 404 (compass), 403 (lock) and "Something went wrong" (warning icon, still announced as an alert). The copy is unchanged.
+- `pages/Profile/Profile.tsx`:
+  - Section links (Account, Your studies, Your interests, Appearance, Password, Privacy): chips on phones, a sticky list beside the sections on computers.
+  - Each section is a labelled region with one explanation line where it helps. The save buttons stay per section.
+- Tests: section links and regions in the Profile test; the step text in the Onboarding test.
+- e2e: a new `no-access--busy` screen (a student opening `/staff`).
+
+**Iteration 01** (`artifacts/ui/ui6-iteration-01/`, light and dark, phone/laptop/desktop)
+- No P0 or P1 issues.
+- P3: on phones, onboarding's tagline and intro sentence both say "the information that matters to you". Left as it is.
+- Note: the Profile screenshots catch the School/Programme/Intake lists before they load (the screenshot's ready text appears first). This is a capture-timing issue, not a page bug.
+- Known, not changed: "No access" shows without the app menu because `RequireCapability` sits outside `AppLayout` in the route tree. Changing that would be a routing change.
+
+**Checks:** `npm test` passes 127 out of 127; `typecheck` and `lint` are clean; `npm run e2e` passes 217 out of 217.
+
 ## UI-5: Groups, Search, Notifications (2026-10-18)
 
 **Changes**

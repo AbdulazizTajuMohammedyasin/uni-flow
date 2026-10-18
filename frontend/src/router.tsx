@@ -128,6 +128,7 @@ export function createAppRoutes(): RouteObject[] {
             },
             {
               path: '/privacy', // the privacy notice: public, also for people who aren't students
+              handle: { frame: 'reading' }, // one wide text column, not the form frame
               lazy: { Component: async () => (await import('./pages/Privacy/Privacy')).PrivacyPage },
             },
             {
