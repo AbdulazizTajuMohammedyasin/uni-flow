@@ -10,7 +10,7 @@ from pathlib import Path
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers as default_cors_headers
 
-from config.env import env_list, env_str, load_env_file, postgres_from_url
+from config.env import env_list, env_str, load_env_file, postgres_from_url, s3_storage_from_env
 
 # backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -139,6 +139,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env_str("MEDIA_ROOT", str(BASE_DIR / "media")))
 # Uploaded files (timetable images, PDFs, spreadsheets) are private: no URL serves MEDIA_ROOT.
+STORAGES = {
+    # A private Supabase Storage bucket when S3_BUCKET is set (always online on Render, and
+    # on your laptop if you choose: M9.6h), otherwise the disk (MEDIA_ROOT).
+    "default": s3_storage_from_env() or {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 MAX_UPLOAD_MB = int(env_str("MAX_UPLOAD_MB", "10"))
 
 

@@ -4,10 +4,10 @@ Hardened for being online (M9.5): `manage.py check --deploy` is clean with these
 (CI checks it). The host (Render) sits in front of Django and handles HTTPS (docs/10).
 """
 
-from config.env import env_bool, env_list, env_str, s3_storage_from_env
+from config.env import env_bool, env_list, env_str
 
 from .base import *  # noqa: F401,F403
-from .base import DATABASES, MIDDLEWARE
+from .base import DATABASES, MIDDLEWARE, STORAGES
 
 SECRET_KEY = env_str("DJANGO_SECRET_KEY")
 DEBUG = False
@@ -20,11 +20,9 @@ DATABASES["default"]["CONN_MAX_AGE"] = 60
 # in front to do it; on your laptop runserver does). Right after SecurityMiddleware.
 MIDDLEWARE = [*MIDDLEWARE[:1], "whitenoise.middleware.WhiteNoiseMiddleware", *MIDDLEWARE[1:]]
 # Compressed, with file names that change when the file changes, so browsers can keep them for
-# a long time (needs `collectstatic`).
+# a long time (needs `collectstatic`). Uploaded files: as in base.py (Supabase if S3_BUCKET).
 STORAGES = {
-    # Uploaded timetable files: a private Supabase Storage bucket when S3_BUCKET is set (on
-    # Render, M9.6h), otherwise this machine's disk (MEDIA_ROOT, e.g. the Docker try-out).
-    "default": s3_storage_from_env() or {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    **STORAGES,
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 

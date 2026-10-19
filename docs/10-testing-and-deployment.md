@@ -78,7 +78,7 @@ Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`)
 
 ### Uploaded files online: Supabase Storage (M9.6h)
 
-Timetable images, PDFs and spreadsheets are saved by the web service and read by the worker. On Render each service has its **own** disk, so online they go to one **private Supabase Storage bucket** that both reach. Supabase speaks the same language as Amazon S3, so Django uses it through `django-storages` (with `boto3`); nothing else in the code changes. On your laptop, and in the Docker try-out when `S3_BUCKET` is empty, files stay on the disk.
+Timetable images, PDFs and spreadsheets are saved by the web service and read by the worker. On Render each service has its **own** disk, so online they go to one **private Supabase Storage bucket** that both reach. Supabase speaks the same language as Amazon S3, so Django uses it through `django-storages` (with `boto3`); nothing else in the code changes. The same five `S3_…` settings also work on your laptop (in `backend/.env`); with `S3_BUCKET` empty, files stay on the disk (`backend/media/`). **Tests always use the disk**, whatever `.env` says. Tip: use a separate bucket for your laptop (e.g. `uniflow-files-dev`) so test uploads never mix with students' files.
 
 **Set it up once (about 5 minutes):**
 

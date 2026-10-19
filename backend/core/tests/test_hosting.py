@@ -63,6 +63,10 @@ def test_files_go_to_a_private_supabase_bucket(monkeypatch):
     assert "X-Amz-Signature=" in link
 
 
+def test_tests_never_use_the_bucket(settings):
+    assert settings.STORAGES["default"]["BACKEND"] == "django.core.files.storage.FileSystemStorage"
+
+
 def test_a_bucket_without_its_keys_is_refused(monkeypatch):
     monkeypatch.setenv("S3_BUCKET", "uniflow-files")
     for name in ("S3_ENDPOINT_URL", "S3_REGION", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"):

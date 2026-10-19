@@ -13,6 +13,13 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 
+# Tests never touch Supabase Storage, even when backend/.env has the S3_ settings: files stay
+# on the disk.
+STORAGES = {
+    **STORAGES,  # noqa: F405
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+}
+
 # Tests never call the real AI (no key, no quota used): see providers.FakeProvider.
 AI_PROVIDER = "fake"
 # One model each, so a fake "too many requests" reaches the retry logic (fallback tests

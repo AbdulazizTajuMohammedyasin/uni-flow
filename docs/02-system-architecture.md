@@ -181,7 +181,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
 | `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |
 | `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |
-| `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | *(empty)* | Production only (M9.6h): uploaded files go to a private **Supabase Storage** bucket through its S3-compatible connection (`django-storages`). Empty means the disk (`MEDIA_ROOT`). See [10](10-testing-and-deployment.md#uploaded-files-online-supabase-storage-m96h). |
+| `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | *(empty)* | When set (always online, optional on your laptop; never in tests), uploaded files go to a private **Supabase Storage** bucket (M9.6h) through its S3-compatible connection (`django-storages`). Empty means the disk (`MEDIA_ROOT`). See [10](10-testing-and-deployment.md#uploaded-files-online-supabase-storage-m96h). |
 
 ### MySQL configuration (local, native install, no Docker)
 
@@ -200,7 +200,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 |---|---|
 | What is stored | `MessageFile` rows: images (PNG, JPG, WEBP), PDFs and spreadsheets (XLSX) from connected groups or uploaded on the Timetable page. Other attachments from groups are ignored. WhatsApp chat exports (`.txt`) are parsed and **not** kept. |
 | Checks | Extension **and** real contents (magic bytes, `filetype`); 10 MB per file; chat exports 5 MB |
-| Storage | `message_files/{yyyy}/{mm}/{uuid4}.{ext}`: on the disk (`MEDIA_ROOT`) locally, in a private Supabase Storage bucket online (M9.6h); never public; only the student who uploaded it, or the members of the group it came from, can open it through the API |
+| Storage | `message_files/{yyyy}/{mm}/{uuid4}.{ext}`: in a private Supabase Storage bucket when `S3_BUCKET` is set (online, and locally if you choose), otherwise on the disk (`MEDIA_ROOT`) (M9.6h); never public; only the student who uploaded it, or the members of the group it came from, can open it through the API |
 | Google Drive links | Only `drive.google.com` and `docs.google.com` hosts, public files only, downloaded as PDF or XLSX, same size limit |
 | Retention | Deleted with the message text after `MESSAGE_RETENTION_DAYS`; the classes read from them stay |
 
