@@ -42,7 +42,7 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 ## 21. Deployment considerations
 
-**Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). M9.6b made the code ready for it (PostgreSQL, whitenoise, the Vercel forwarding below); the step-by-step Render guide follows once uploaded files have a home that every Render service can reach (open decision, see PROGRESS.md).
+**Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). M9.6b made the code ready for it (PostgreSQL, whitenoise, the Vercel forwarding below); uploaded files live in **Supabase Storage** (M9.6h, below), because Render's services don't share a disk. The step-by-step Render guide comes next.
 
 ### Environments
 
@@ -76,6 +76,20 @@ The browser only ever talks to the **Vercel address**, so the login cookie is a 
 
 Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`) never go into an image; settings are given when a container starts.
 
+### Uploaded files online: Supabase Storage (M9.6h)
+
+Timetable images, PDFs and spreadsheets are saved by the web service and read by the worker. On Render each service has its **own** disk, so online they go to one **private Supabase Storage bucket** that both reach. Supabase speaks the same language as Amazon S3, so Django uses it through `django-storages` (with `boto3`); nothing else in the code changes. On your laptop, and in the Docker try-out when `S3_BUCKET` is empty, files stay on the disk.
+
+**Set it up once (about 5 minutes):**
+
+1. At [supabase.com](https://supabase.com), create a project. Pick the **Southeast Asia (Singapore)** region, the closest to Malaysia.
+2. **Storage → New bucket**, named e.g. `uniflow-files`, with **Public bucket turned off** (it must stay private).
+3. **Storage → Settings → S3 connection** (on older dashboards: Project Settings → Storage): copy the **Endpoint** (`https://<project-ref>.storage.supabase.co/storage/v1/s3`) and the **Region** (e.g. `ap-southeast-1`), then **New access key** and copy the **Access key ID** and **Secret access key**. The secret is only shown once.
+4. In Render, give the **web service and the worker** (Beat doesn't need them, but it does no harm) these settings: `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. **Never** put them in git or a screenshot: the key can read and delete every file in the project's storage.
+5. Check: upload a timetable image on the Timetable page; it appears in Supabase under `uniflow-files/message_files/<year>/<month>/`, and its classes are read by the worker. After `MESSAGE_RETENTION_DAYS` it disappears from the bucket.
+
+**Good to know (free plan):** 1 GB of storage (plenty: 10 MB per file, deleted after 60 days) and 50 MB per file. A free project **pauses after about a week without activity** (e.g. a semester break); uploads then fail until you press **Restore** in the Supabase dashboard. If the key leaks: delete it in Supabase, create a new one, update Render.
+
 ### Trying the backend locally with Docker Desktop (`deploy/docker-compose.yml`)
 
 Not used by Render: it starts the same images on your computer, with **PostgreSQL** and Redis, so you can see the backend run as it will online.
@@ -87,5 +101,5 @@ Not used by Render: it starts the same images on your computer, with **PostgreSQ
 Useful: `docker compose ps`, `docker compose logs -f backend`, `docker compose down` (the data stays in volumes). **Never** `docker compose down -v`: it deletes the volumes (the database and the WhatsApp login).
 
 - `manage.py check --deploy` must pass (M9.5: it does with `config/settings/prod.py`, and CI checks it on every push). Production is HTTPS-only: the host (Render) handles HTTPS and passes `X-Forwarded-Proto: https`; `http://` is redirected (except `/api/v1/health/` and the connector's `/api/v1/internal/` on the private network, whose requests are signed); HSTS starts at one hour (`DJANGO_HSTS_SECONDS`) and is raised to a year once HTTPS works; the admin login and CSRF cookies are HTTPS-only.
-- **Backups:** daily PostgreSQL backups (Render's, or `pg_dump`), plus uploaded files and the WhatsApp login disk, kept for 30 days. Restoring is tested once per term. *(Set up with hosting.)*
+- **Backups:** daily PostgreSQL backups (Render's, or `pg_dump`), plus the WhatsApp login disk, kept for 30 days; uploaded files live in Supabase Storage and are short-lived (deleted after `MESSAGE_RETENTION_DAYS`), the classes read from them are in the database. Restoring is tested once per term. *(Set up with hosting.)*
 - The API domain and `/api/v1/` must stay stable once a mobile build ships.

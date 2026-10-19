@@ -27,7 +27,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/0
       MEDIA_ROOT: /data/media
     volumes:
-      - media:/data/media # uploaded timetables (private: never served)
+      - media:/data/media # uploaded timetables (private: never served); unused if S3_BUCKET is set
     depends_on: &backend-needs
       db:
         condition: service_healthy

@@ -4,7 +4,7 @@ Hardened for being online (M9.5): `manage.py check --deploy` is clean with these
 (CI checks it). The host (Render) sits in front of Django and handles HTTPS (docs/10).
 """
 
-from config.env import env_bool, env_list, env_str
+from config.env import env_bool, env_list, env_str, s3_storage_from_env
 
 from .base import *  # noqa: F401,F403
 from .base import DATABASES, MIDDLEWARE
@@ -22,7 +22,9 @@ MIDDLEWARE = [*MIDDLEWARE[:1], "whitenoise.middleware.WhiteNoiseMiddleware", *MI
 # Compressed, with file names that change when the file changes, so browsers can keep them for
 # a long time (needs `collectstatic`).
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    # Uploaded timetable files: a private Supabase Storage bucket when S3_BUCKET is set (on
+    # Render, M9.6h), otherwise this machine's disk (MEDIA_ROOT, e.g. the Docker try-out).
+    "default": s3_storage_from_env() or {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 

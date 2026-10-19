@@ -181,7 +181,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
 | `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |
 | `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |
-| *[Later]* `STORAGE_BACKEND`, `AWS_*` | | Not used in the MVP |
+| `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | *(empty)* | Production only (M9.6h): uploaded files go to a private **Supabase Storage** bucket through its S3-compatible connection (`django-storages`). Empty means the disk (`MEDIA_ROOT`). See [10](10-testing-and-deployment.md#uploaded-files-online-supabase-storage-m96h). |
 
 ### MySQL configuration (local, native install, no Docker)
 
@@ -200,7 +200,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 |---|---|
 | What is stored | `MessageFile` rows: images (PNG, JPG, WEBP), PDFs and spreadsheets (XLSX) from connected groups or uploaded on the Timetable page. Other attachments from groups are ignored. WhatsApp chat exports (`.txt`) are parsed and **not** kept. |
 | Checks | Extension **and** real contents (magic bytes, `filetype`); 10 MB per file; chat exports 5 MB |
-| Storage | Private local storage (`MEDIA_ROOT/message_files/{yyyy}/{mm}/{uuid4}.{ext}`), never public; only the student who uploaded it, or the members of the group it came from, can open it through the API |
+| Storage | `message_files/{yyyy}/{mm}/{uuid4}.{ext}`: on the disk (`MEDIA_ROOT`) locally, in a private Supabase Storage bucket online (M9.6h); never public; only the student who uploaded it, or the members of the group it came from, can open it through the API |
 | Google Drive links | Only `drive.google.com` and `docs.google.com` hosts, public files only, downloaded as PDF or XLSX, same size limit |
 | Retention | Deleted with the message text after `MESSAGE_RETENTION_DAYS`; the classes read from them stay |
 
@@ -209,7 +209,7 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | Aspect | Rule | Even later |
 |---|---|---|
 | Model | Every uploaded file is a `Document` row: library items and attachments go through one model, one set of checks and one download path. Event posters are the exception and are stored directly on `Event`. | |
-| Storage | Local `MEDIA_ROOT` (`backend/media/`, git-ignored), using Django's storage API | S3-compatible storage through `django-storages`, with no model changes |
+| Storage | The same as timetable files: Django's storage API, so the disk locally and Supabase Storage online (M9.6h), with no model changes | |
 | Paths | `documents/{yyyy}/{mm}/{uuid4}.{ext}` and `posters/{yyyy}/{mm}/{uuid4}.{ext}`. The original filename is stored in a database column and never used as the path. | |
 | Allowed types | PDF, DOCX, XLSX, PPTX, PNG, JPG, WEBP. The platform checks both the extension **and** the file's actual contents (magic bytes). | |
 | Size limits | 15 MB for documents and 5 MB for images, both configurable | |

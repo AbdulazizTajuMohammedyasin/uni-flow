@@ -102,3 +102,31 @@ def postgres_from_url(url: str) -> dict:
         "OPTIONS": dict(parse_qsl(parsed.query)),  # e.g. sslmode=require
         "TEST": {"NAME": "test_uniflow"},
     }
+
+
+def s3_storage_from_env() -> dict | None:
+    """Where uploaded files go online: a private bucket in S3-compatible storage (Supabase
+    Storage), when S3_BUCKET is set. None means "keep them on this machine's disk" (MEDIA_ROOT).
+
+    Online, Render's web service and worker each have their own disk, so a timetable saved by
+    one could not be read by the other; a bucket is one place both can reach."""
+    bucket = env_str("S3_BUCKET", "")
+    if not bucket:
+        return None
+    return {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": bucket,
+            # e.g. https://<project-ref>.storage.supabase.co/storage/v1/s3 and ap-southeast-1
+            "endpoint_url": env_str("S3_ENDPOINT_URL"),
+            "region_name": env_str("S3_REGION"),
+            "access_key": env_str("S3_ACCESS_KEY_ID"),
+            "secret_key": env_str("S3_SECRET_ACCESS_KEY"),
+            "addressing_style": "path",  # what Supabase expects: <endpoint>/<bucket>/<file>
+            "signature_version": "s3v4",
+            # Private: no public links; any link ever made to a file is signed and expires.
+            "default_acl": None,
+            "querystring_auth": True,
+            "file_overwrite": False,  # never replace an existing file with the same name
+        },
+    }

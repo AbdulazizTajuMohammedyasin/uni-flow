@@ -1,14 +1,16 @@
-"""Running online on Render behind Vercel's forwarding (M9.6b)."""
+"""Running online on Render behind Vercel's forwarding (M9.6b), with files in Supabase (M9.6h)."""
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
 from rest_framework.test import APIClient
 from rest_framework.throttling import ScopedRateThrottle
+from storages.backends.s3 import S3Storage
 
-from config.env import postgres_from_url
+from config.env import postgres_from_url, s3_storage_from_env
 
 LOGIN = "/api/v1/auth/jwt/create/"
 VERCEL = "76.76.21.21"  # what Django sees as the sender: Vercel, not the student
+SUPABASE = "https://abcdefgh.storage.supabase.co/storage/v1/s3"
 
 
 def test_render_database_address_becomes_postgresql_settings():
@@ -32,6 +34,41 @@ def test_render_database_address_becomes_postgresql_settings():
 def test_wrong_database_addresses_are_refused(url):
     with pytest.raises(ImproperlyConfigured):
         postgres_from_url(url)
+
+
+def test_files_stay_on_the_disk_without_a_bucket(monkeypatch):
+    monkeypatch.delenv("S3_BUCKET", raising=False)
+    assert s3_storage_from_env() is None
+
+
+def test_files_go_to_a_private_supabase_bucket(monkeypatch):
+    for name, value in {
+        "S3_BUCKET": "uniflow-files",
+        "S3_ENDPOINT_URL": SUPABASE,
+        "S3_REGION": "ap-southeast-1",
+        "S3_ACCESS_KEY_ID": "test-key-id",
+        "S3_SECRET_ACCESS_KEY": "test-secret",
+    }.items():
+        monkeypatch.setenv(name, value)
+
+    settings = s3_storage_from_env()
+    assert settings["BACKEND"] == "storages.backends.s3.S3Storage"
+    storage = S3Storage(**settings["OPTIONS"])  # nothing is sent to Supabase here
+    assert storage.default_acl is None  # no public files
+    assert storage.file_overwrite is False
+
+    # Supabase's address style: <endpoint>/<bucket>/<file>, and any link is signed.
+    link = storage.url("message_files/2026/10/abc.png")
+    assert link.startswith(f"{SUPABASE}/uniflow-files/message_files/2026/10/abc.png?")
+    assert "X-Amz-Signature=" in link
+
+
+def test_a_bucket_without_its_keys_is_refused(monkeypatch):
+    monkeypatch.setenv("S3_BUCKET", "uniflow-files")
+    for name in ("S3_ENDPOINT_URL", "S3_REGION", "S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    with pytest.raises(ImproperlyConfigured):
+        s3_storage_from_env()
 
 
 @pytest.mark.django_db
