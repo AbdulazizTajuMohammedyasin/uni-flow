@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.services import create_user
 from apps.audiences.models import Audience
-from apps.intelligence import tasks
+from apps.intelligence import functions
 from apps.intelligence.delivery import send_daily_digests
 from apps.intelligence.models import Delivery, Insight
 from apps.notifications.models import Notification
@@ -128,4 +128,4 @@ def test_the_evening_job(monkeypatch):
     ali = student("ali@student.aiu.edu.my")
     item(ali, "Library open late")
     monkeypatch.setattr(timezone, "now", lambda: EVENING)
-    assert tasks.send_daily_digest.delay().get() == 1
+    assert functions.send_daily_digest() == 1

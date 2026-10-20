@@ -197,13 +197,13 @@ def best_tab(tab_names: list[str], profile) -> str:
 
 
 def start_import(user, message_file: MessageFile) -> TimetableImport:
-    """Create the student's import and ask the background worker to read the file."""
+    """Create the student's import and ask Inngest to read the file."""
     timetable_import = TimetableImport.objects.create(
         user=user, message_file=message_file, term=current_term_for(user)
     )
-    from .tasks import read_timetable_import  # tasks imports this module
+    from .functions import TIMETABLE_IMPORT_STARTED, send  # functions imports this module
 
-    transaction.on_commit(lambda: read_timetable_import.delay(timetable_import.id))
+    transaction.on_commit(lambda: send(TIMETABLE_IMPORT_STARTED, import_id=timetable_import.id))
     return timetable_import
 
 
@@ -314,6 +314,6 @@ def offer_to_group(message_file: MessageFile) -> list[TimetableImport]:
 
 def offer_when_saved(message_file: MessageFile) -> None:
     """Called when a group file is saved: offer it to the members in the background."""
-    from .tasks import offer_group_timetable  # tasks imports this module
+    from .functions import GROUP_FILE_SHARED, send  # functions imports this module
 
-    transaction.on_commit(lambda: offer_group_timetable.delay(message_file.id))
+    transaction.on_commit(lambda: send(GROUP_FILE_SHARED, file_id=message_file.id))

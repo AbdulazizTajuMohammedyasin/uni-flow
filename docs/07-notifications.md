@@ -33,7 +33,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 - **Merged duplicates don't notify again.** When a forwarded copy is merged into an existing insight ([12](12-intelligence.md#5-merge-duplicates)), no new notification is sent.
 - **Every notification opens the insight**, and from there the original message.
 - The digest is one notification that opens a digest page listing the day's digest-tier insights, grouped by information type.
-- Notifications are created by a Celery job ([02](02-system-architecture.md#background-jobs)), never inside a web request. For about 10k students, `bulk_create` in batches finishes in well under a second. The daily digest is started by Celery Beat.
+- Notifications are created by a background job (Inngest since M9.6k, [02](02-system-architecture.md#background-jobs)), never inside a web request. For about 10k students, `bulk_create` in batches finishes in well under a second. The daily digest is started by Inngest's schedule.
 
 ## Later
 
@@ -57,7 +57,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 ## Built (M8.3): the daily digest
 
-- Celery Beat runs `send_daily_digest` every day at **19:00** Kuala Lumpur time (`CELERY_BEAT_SCHEDULE`, next to the 03:00 clean-up).
+- Inngest runs `send_daily_digest` every day at **19:00** Kuala Lumpur time (`@function(daily_at="19:00")` in `intelligence/functions.py`, next to the 03:00 clean-up; M9.6l, before that Celery Beat). It is never retried, so no one gets two digests.
 - `send_daily_digests()` (in `intelligence/delivery.py`) collects each student's Digest-tier deliveries not yet in a digest (`digested_at` empty), leaving out dismissed, "not relevant", retracted and expired ones. Students with **nothing new get nothing**.
 - Each other student gets **one** `digest` notification: "Your daily digest: N new items", the top 3 titles by importance as the body, `target_type = "digest"`, `target_id` = the date as a number (e.g. `20261009`), and dedupe key `dig:{date}:u:{user}`, so **at most one per day** even if the job runs twice. The items are then marked `digested_at`.
 - The digest page (`/digest?date=YYYY-MM-DD`, API `GET feed/digest/?date=`; without a date, the latest digest) lists that day's items grouped by information type, each linking to its item page. Digest items also stay in the Digest section of For you.

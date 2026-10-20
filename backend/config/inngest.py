@@ -30,8 +30,16 @@ functions: list[inngest.Function] = []
 _jobs: dict[str, list[Callable[..., object]]] = {}
 
 
-def function(event: str, *, retries: int = 0, one_at_a_time_per: str | None = None):
-    """Make a plain job `run(**event_data, attempt=0)` an Inngest function started by `event`.
+def function(
+    event: str | None = None,
+    *,
+    daily_at: str | None = None,
+    retries: int = 0,
+    one_at_a_time_per: str | None = None,
+):
+    """Make a plain job an Inngest function, started by `event` (it is called as
+    `run(**event_data, attempt=0)`) or every day at `daily_at` (e.g. "19:00", in TIME_ZONE;
+    called as `run(attempt=0)`).
 
     retries: how many more tries after an error (Inngest waits longer each time; a job can
     also raise inngest.RetryAfterError to choose the wait itself).
@@ -40,24 +48,36 @@ def function(event: str, *, retries: int = 0, one_at_a_time_per: str | None = No
 
     The decorated name stays the plain function, so code and tests can still call it.
     """
+    if (event is None) == (daily_at is None):
+        raise ValueError("Give a job either an event or a daily_at time.")
 
     def register(run: Callable[..., object]) -> Callable[..., object]:
         concurrency = None
         if one_at_a_time_per:
             concurrency = [inngest.Concurrency(limit=1, key=f"event.data.{one_at_a_time_per}")]
 
-        def handler(ctx: inngest.ContextSync) -> object:
-            return run(**ctx.event.data, attempt=ctx.attempt)
+        if event:
+            trigger = inngest.TriggerEvent(event=event)
+
+            def handler(ctx: inngest.ContextSync) -> object:
+                return run(**ctx.event.data, attempt=ctx.attempt)
+
+            _jobs.setdefault(event, []).append(run)
+        else:
+            hour, minute = (int(part) for part in daily_at.split(":"))
+            trigger = inngest.TriggerCron(cron=f"TZ={settings.TIME_ZONE} {minute} {hour} * * *")
+
+            def handler(ctx: inngest.ContextSync) -> object:
+                return run(attempt=ctx.attempt)
 
         functions.append(
             client.create_function(
                 fn_id=run.__name__.replace("_", "-"),
-                trigger=inngest.TriggerEvent(event=event),
+                trigger=trigger,
                 retries=retries,
                 concurrency=concurrency,
             )(handler)
         )
-        _jobs.setdefault(event, []).append(run)
         return run
 
     return register

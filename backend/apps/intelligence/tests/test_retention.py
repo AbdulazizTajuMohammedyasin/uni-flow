@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 
 from apps.accounts.services import create_user
-from apps.intelligence import tasks
+from apps.intelligence import functions
 from apps.intelligence.models import Message, MessageFile, Source
 from apps.intelligence.services import clear_old_messages
 
@@ -104,10 +104,8 @@ def test_the_retention_period_is_a_setting(group, settings):
 
 def test_the_daily_job_runs_the_clean_up(group):
     message(group, datetime(2020, 1, 1, tzinfo=UTC))
-    assert tasks.clear_old_messages.delay().get() == {
+    assert functions.clear_old_messages() == {
         "messages_cleared": 1,
         "files_deleted": 0,
         "ai_calls_deleted": 0,
     }
-    schedule = settings.CELERY_BEAT_SCHEDULE["clear-old-messages"]
-    assert schedule["task"] == "apps.intelligence.tasks.clear_old_messages"

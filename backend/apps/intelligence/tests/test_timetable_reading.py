@@ -1,9 +1,9 @@
 from datetime import date, time
 from io import BytesIO
 
+import inngest
 import openpyxl
 import pytest
-from celery.exceptions import Retry
 from django.conf import settings
 from django.core.files.base import ContentFile
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -11,7 +11,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from apps.academics.models import Intake, Programme, School, Term
 from apps.accounts import semesters
 from apps.accounts.services import create_user
-from apps.intelligence import tasks
+from apps.intelligence import functions
 from apps.intelligence.models import MessageFile, TimetableImport
 from apps.intelligence.providers import AIError, AIRateLimited, fake_provider
 from apps.intelligence.timetable_reading import (
@@ -156,7 +156,7 @@ def test_the_tab_matching_programme_and_intake_is_chosen(school):
 def ready_import(student, file, answers=(BBA_CLASSES, BCS_CLASSES)):
     fake_provider().answers.extend(answers)
     timetable_import = start_import(student, file)
-    tasks.read_timetable_import.delay(timetable_import.id)
+    functions.read_timetable_import(timetable_import.id)
     timetable_import.refresh_from_db()
     return timetable_import
 
@@ -224,6 +224,6 @@ def test_problems_are_explained_or_retried(school):
 
     fake_provider().answers.append(AIRateLimited("429"))
     waiting = start_import(ali, xlsx_file())
-    with pytest.raises(Retry):
-        tasks.read_timetable_import.delay(waiting.id)
+    with pytest.raises(inngest.RetryAfterError):
+        functions.read_timetable_import(waiting.id)
     assert TimetableImport.objects.get(pk=waiting.pk).status == "reading"

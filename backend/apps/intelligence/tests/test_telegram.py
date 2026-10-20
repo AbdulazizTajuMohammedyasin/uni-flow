@@ -1,13 +1,14 @@
 """The Telegram bot webhook, with made-up updates (nothing is sent to Telegram)."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 
+import inngest
 import pytest
 from django.core.management import CommandError, call_command
 from rest_framework.test import APIClient
 
-from apps.intelligence import telegram
+from apps.intelligence import functions, telegram
 from apps.intelligence.models import Message, MessageFile, Source
 from apps.intelligence.providers import fake_provider
 
@@ -156,6 +157,26 @@ def test_a_fake_pdf_is_not_kept(monkeypatch, django_capture_on_commit_callbacks)
 
     assert MessageFile.objects.count() == 0
     assert Message.objects.count() == 1
+
+
+def test_telegram_unreachable_tries_again_then_still_sorts_the_message(monkeypatch):
+    def unreachable(method, **params):
+        raise telegram.TelegramError("Telegram is down")
+
+    monkeypatch.setattr(telegram, "call", unreachable)
+    document = {"file_id": "abc", "file_name": "x.pdf", "mime_type": "application/pdf"}
+    send(message(text="", document=document))  # saved; the download job isn't run here
+    stored = Message.objects.get()
+
+    with pytest.raises(inngest.RetryAfterError) as raised:  # tries 1-3: again in a minute
+        functions.fetch_telegram_file(stored.id, "abc", "x.pdf", attempt=0)
+    assert raised.value.retry_after >= datetime.now() + timedelta(seconds=55)
+
+    # The last try gives up on the file, but the message is still sorted (empty: noise).
+    functions.fetch_telegram_file(stored.id, "abc", "x.pdf", attempt=functions.TELEGRAM_TRIES)
+    assert MessageFile.objects.count() == 0
+    stored.refresh_from_db()
+    assert stored.triage == "noise"
 
 
 def test_a_broken_update_still_gets_200():

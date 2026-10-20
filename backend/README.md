@@ -111,7 +111,10 @@ list. Tests don't need either: jobs run immediately there.
    pipenv run celery -A config call config.celery.ping
    ```
 
-4. Daily jobs (added in later milestones) need Celery Beat too: `pipenv run celery -A config beat -l info`.
+4. Daily jobs moved to Inngest in M9.6l, so Celery Beat isn't needed any more.
+
+**Since M9.6l no job runs on Celery**: you don't need Redis or the worker any more (they
+are removed in the next step). Use Inngest's dev server instead (below).
 
 `CELERY_BROKER_URL` defaults to `redis://127.0.0.1:6379/0`. Use `127.0.0.1`, not `localhost`: on
 Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connection waits ~20 s.
@@ -119,8 +122,9 @@ Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connec
 ## Background jobs with Inngest (replacing Celery, from M9.6j)
 
 UniFlow is moving its background jobs from Celery to **Inngest**, one group at a time; until
-that's finished, start both. Since M9.6k, **sorting and understanding messages and the alerts
-run on Inngest**: without its dev server, new messages wait unsorted (and saving them shows an
+that's finished, start both. Since M9.6l, **every background job runs on Inngest** (sorting and
+understanding messages, alerts, reading timetable files, Telegram files, the 03:00 clean-up
+and the 19:00 digest): without its dev server, new messages wait unsorted (and saving them shows an
 error, as Celery did without Redis). With Inngest there is no worker and no Redis: Inngest calls Django
 at `/api/inngest` to run each job (code: `config/inngest.py`). Tests need neither.
 

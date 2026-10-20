@@ -172,9 +172,12 @@ def _store(source: Source, message: dict) -> Message | None:
     if not created:
         return stored
     if attachment:  # download first, then the AI sorts it (a file counts as academic)
-        from .tasks import fetch_telegram_file  # tasks imports this module
+        from .functions import TELEGRAM_FILE_RECEIVED, send  # functions imports this module
 
-        transaction.on_commit(lambda: fetch_telegram_file.delay(stored.id, *attachment))
+        file_id, name = attachment
+        transaction.on_commit(
+            lambda: send(TELEGRAM_FILE_RECEIVED, message_id=stored.id, file_id=file_id, name=name)
+        )
     else:
         queue_triage(source)
     return stored

@@ -7,7 +7,6 @@ Configuration comes from environment variables, optionally loaded from `backend/
 from datetime import timedelta
 from pathlib import Path
 
-from celery.schedules import crontab
 from corsheaders.defaults import default_headers as default_cors_headers
 
 from config.env import (
@@ -264,17 +263,8 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_IGNORE_RESULT = True  # jobs save their results in the database themselves
 CELERY_TASK_ACKS_LATE = True  # a job is only removed from Redis after it finishes
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # take one job at a time (AI calls are slow)
-# Daily jobs, started by Celery Beat (times are Kuala Lumpur time).
-CELERY_BEAT_SCHEDULE = {
-    "clear-old-messages": {
-        "task": "apps.intelligence.tasks.clear_old_messages",
-        "schedule": crontab(hour=3, minute=0),  # every night at 03:00
-    },
-    "send-daily-digest": {
-        "task": "apps.intelligence.tasks.send_daily_digest",
-        "schedule": crontab(hour=19, minute=0),  # every evening at 19:00 (Malaysia time)
-    },
-}
+# The daily jobs (03:00 clean-up, 19:00 digest) are started by Inngest since M9.6l: see
+# apps/intelligence/functions.py.
 
 # Inngest, replacing Celery step by step (config/inngest.py). On: the dev server ("true", or
 # its address, e.g. http://host.docker.internal:8288). Off (empty, "false" or "0", online):
