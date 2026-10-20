@@ -20,6 +20,9 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
 }
 
+# Tests never talk to Inngest Cloud.
+INNGEST_DEV = True
+
 # Tests never call the real AI (no key, no quota used): see providers.FakeProvider.
 AI_PROVIDER = "fake"
 # One model each, so a fake "too many requests" reaches the retry logic (fallback tests

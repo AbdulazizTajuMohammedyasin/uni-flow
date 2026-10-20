@@ -1,0 +1,61 @@
+"""Background jobs with Inngest (M9.6j): no real Inngest server is contacted."""
+
+import json
+
+import inngest
+import inngest.django
+import pytest
+from django.test import RequestFactory
+from inngest.experimental import mocked
+from rest_framework.test import APIClient
+
+from config.inngest import ping
+
+SIGNING_KEY = "signkey-prod-" + "ab" * 32  # made up
+
+
+def test_ping_answers_pong():
+    result = mocked.trigger(ping, inngest.Event(name="uniflow/ping"), mocked.Inngest(app_id="t"))
+    assert result.status is mocked.Status.COMPLETED
+    assert result.output == "pong"
+
+
+def test_inngest_can_reach_uniflow():
+    response = APIClient().get("/api/inngest")
+    assert response.status_code == 200
+    assert response.json()["function_count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("online", "status", "answer"), [(False, 200, b'"pong"'), (True, 401, None)]
+)
+def test_online_only_inngest_can_start_a_job(online, status, answer):
+    """The same unsigned call to /api/inngest runs the job with the dev server, but online
+    (where Inngest signs every call with the signing key) it is refused and nothing runs."""
+    client = inngest.Inngest(app_id="uniflow", is_production=online, signing_key=SIGNING_KEY)
+    view = inngest.django.serve(client, [ping]).callback
+    event = {"name": "uniflow/ping", "data": {}}
+    call = {
+        "event": event,
+        "events": [event],
+        "steps": {},
+        "ctx": {
+            "attempt": 0,
+            "disable_immediate_execution": False,
+            "run_id": "run-1",
+            "stack": {"stack": []},
+        },
+        "use_api": False,
+    }
+    response = view(
+        RequestFactory().post(
+            "/api/inngest?fnId=uniflow-ping&stepId=step",
+            data=json.dumps(call),
+            content_type="application/json",
+        )
+    )
+    assert response.status_code == status
+    if answer:
+        assert response.content == answer
+    else:
+        assert b"pong" not in response.content

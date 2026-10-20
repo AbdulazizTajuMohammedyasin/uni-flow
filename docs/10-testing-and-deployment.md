@@ -90,6 +90,10 @@ Timetable images, PDFs and spreadsheets are saved by the web service and read by
 
 **Good to know (free plan):** 1 GB of storage (plenty: 10 MB per file, deleted after 60 days) and 50 MB per file. A free project **pauses after about a week without activity** (e.g. a semester break); uploads then fail until you press **Restore** in the Supabase dashboard. If the key leaks: delete it in Supabase, create a new one, update Render.
 
+### Background jobs online: Inngest Cloud (from M9.6j)
+
+UniFlow's background jobs are moving from Celery to Inngest, so online there will be **no worker, no Beat and no Redis**: Inngest Cloud calls the web service at `https://<name>.onrender.com/api/inngest` to run each job. The full set-up (create the app at app.inngest.com, give Render `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY`, sync the app) goes into the Render guide once the move is finished. Calls without Inngest's signature are refused (401), so nobody else can start a job. Until the move is finished, `/api/inngest` is only switched on online once `INNGEST_SIGNING_KEY` is set; the last step makes the key required.
+
 ### Trying the backend locally with Docker Desktop (`deploy/docker-compose.yml`)
 
 Not used by Render: it starts the same images on your computer, with **PostgreSQL** and Redis, so you can see the backend run as it will online.

@@ -10,7 +10,13 @@ from pathlib import Path
 from celery.schedules import crontab
 from corsheaders.defaults import default_headers as default_cors_headers
 
-from config.env import env_list, env_str, load_env_file, postgres_from_url, s3_storage_from_env
+from config.env import (
+    env_list,
+    env_str,
+    load_env_file,
+    postgres_from_url,
+    s3_storage_from_env,
+)
 
 # backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -269,6 +275,11 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=19, minute=0),  # every evening at 19:00 (Malaysia time)
     },
 }
+
+# Inngest, replacing Celery step by step (config/inngest.py). On: the dev server ("true", or
+# its address, e.g. http://host.docker.internal:8288). Off (empty, "false" or "0", online):
+# Inngest Cloud, with INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY. Read as Inngest reads it.
+INNGEST_DEV = env_str("INNGEST_DEV", "").strip().lower() not in {"", "false", "0"}
 
 # Privacy: message text and timetable files are deleted after this many days.
 MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))

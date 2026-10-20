@@ -46,6 +46,7 @@ These are the key principles:
 - **Daily jobs** (digest, deleting old message text) are listed in `CELERY_BEAT_SCHEDULE` and started by Celery Beat.
 - **Tests and CI need no Redis:** test settings set `CELERY_TASK_ALWAYS_EAGER`, so jobs run immediately in the same process.
 - **On a Windows PC:** Redis runs in WSL (`sudo service redis-server start`); the worker runs on Windows with `--pool=solo`. Use `127.0.0.1`, not `localhost`, in `CELERY_BROKER_URL`: `localhost` tries IPv6 first, which WSL does not forward, and each connection waits ~20 seconds.
+- **Moving to Inngest (approved, from M9.6j):** Celery, Redis and Beat are being replaced by [Inngest](https://www.inngest.com), one group of jobs at a time (M9.6j setup, then the AI jobs, then the file and daily jobs, then Celery is removed). Django sends an **event** (e.g. `uniflow/ping`) to Inngest, and Inngest calls Django back at **`/api/inngest`** to run the matching **function**, inside the web service: no worker, no broker. Inngest retries failed functions and starts the daily ones on a schedule (cron). Set up in `config/inngest.py`; locally Inngest's **dev server** (`npx inngest-cli dev`, dashboard on port 8288), online **Inngest Cloud**, whose calls must be signed with `INNGEST_SIGNING_KEY` (unsigned calls get 401). Tests use the SDK's offline runner, no server.
 
 ## 6. Backend architecture
 
@@ -179,7 +180,9 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODEL`, `AI_SMART_MODEL` | `gemini`, *(key)*, `gemini-3.1-flash-lite`, `gemini-3.5-flash` | The AI provider ([12](12-intelligence.md#ai-provider)); tests use `fake` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
-| `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. |
+| `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. Goes away when the move to Inngest is finished. |
+| `INNGEST_DEV` | `true` (dev settings), `false` (production) | `true`: Inngest's dev server on this computer; `false`: Inngest Cloud |
+| `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY` | | Online only, from Inngest Cloud: the signing key proves each call to `/api/inngest` comes from Inngest; the event key lets Django send events. Never in git. |
 | `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |
 | `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | *(empty)* | When set (always online, optional on your laptop; never in tests), uploaded files go to a private **Supabase Storage** bucket (M9.6h) through its S3-compatible connection (`django-storages`). Empty means the disk (`MEDIA_ROOT`). See [10](10-testing-and-deployment.md#uploaded-files-online-supabase-storage-m96h). |
 

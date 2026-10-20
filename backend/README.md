@@ -116,6 +116,29 @@ list. Tests don't need either: jobs run immediately there.
 `CELERY_BROKER_URL` defaults to `redis://127.0.0.1:6379/0`. Use `127.0.0.1`, not `localhost`: on
 Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connection waits ~20 s.
 
+## Background jobs with Inngest (replacing Celery, from M9.6j)
+
+UniFlow is moving its background jobs from Celery to **Inngest**, one group at a time; until
+that's finished, start both. With Inngest there is no worker and no Redis: Inngest calls Django
+at `/api/inngest` to run each job (code: `config/inngest.py`). Tests need neither.
+
+1. With `runserver` running, start Inngest's dev server from any folder (needs Node; it is
+   downloaded the first time):
+
+   ```powershell
+   npx --ignore-scripts=false inngest-cli@1.45.1 dev --no-discovery -u http://127.0.0.1:8000/api/inngest
+   ```
+
+2. Open its dashboard at http://127.0.0.1:8288: **Apps** shows `uniflow` as synced.
+3. Check the set-up from `backend/`; the dashboard's **Runs** shows `ping` completed with `pong`:
+
+   ```powershell
+   pipenv run python manage.py inngest_ping
+   ```
+
+`INNGEST_DEV` is `true` by default on your laptop (`config.settings.dev`) and `false` online,
+where Inngest Cloud's `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY` are needed.
+
 ## Database migrations
 
 UniFlow uses a custom, email-based user model (`accounts.User`, `AUTH_USER_MODEL = "accounts.User"`). There is no `username`.
