@@ -48,9 +48,9 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 | Environment | Setup |
 |---|---|
-| Local development | Native MySQL 8.4, Redis in WSL, `python manage.py runserver`, `npm run dev` |
+| Local development | Native MySQL 8.4, `python manage.py runserver`, Inngest's dev server (`npx inngest-cli dev`), `npm run dev` |
 | Trying the online backend locally | Docker Desktop: `docker compose up` in `deploy/` (the same images Render runs) |
-| Production | **Render:** the backend image as a web service (Django on gunicorn), plus background workers from the same image (Celery worker, Celery Beat) and from `connectors/whatsapp/` (always on, with a disk for its login), Render Key Value (Redis) and PostgreSQL. **Vercel:** the website. |
+| Production | **Render:** the backend image as a web service (Django on gunicorn, which also runs the background jobs when Inngest calls it), the WhatsApp connector from `connectors/whatsapp/` as a background worker (always on, with a disk for its login), and PostgreSQL. **Inngest Cloud:** starts the background jobs. **Supabase Storage:** uploaded files. **Vercel:** the website. No Celery worker, Beat or Redis (removed in M9.6m). |
 
 ### How the two hosts fit together: Vercel forwarding (M9.6b)
 
@@ -71,32 +71,32 @@ The browser only ever talks to the **Vercel address**, so the login cookie is a 
 
 | Image | Built from | Runs |
 |---|---|---|
-| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django (with whitenoise serving the admin's styles, production settings only); the same image with another command runs the Celery worker and Beat |
+| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django (with whitenoise serving the admin's styles, production settings only); background jobs run inside it when Inngest calls `/api/inngest` |
 | WhatsApp connector | `connectors/whatsapp/Dockerfile` (Node 24, a non-root user) | UniFlow's WhatsApp number; its login lives in `/app/auth` (a disk or volume) |
 
 Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`) never go into an image; settings are given when a container starts.
 
 ### Uploaded files online: Supabase Storage (M9.6h)
 
-Timetable images, PDFs and spreadsheets are saved by the web service and read by the worker. On Render each service has its **own** disk, so online they go to one **private Supabase Storage bucket** that both reach. Supabase speaks the same language as Amazon S3, so Django uses it through `django-storages` (with `boto3`); nothing else in the code changes. The same five `S3_…` settings also work on your laptop (in `backend/.env`); with `S3_BUCKET` empty, files stay on the disk (`backend/media/`). **Tests always use the disk**, whatever `.env` says. Tip: use a separate bucket for your laptop (e.g. `uniflow-files-dev`) so test uploads never mix with students' files.
+Timetable images, PDFs and spreadsheets are saved when a student uploads them and read later by a background job. On Render a service's disk is temporary and not shared (and was not shared with the old worker), so online they go to one **private Supabase Storage bucket** that every copy of the service reaches. Supabase speaks the same language as Amazon S3, so Django uses it through `django-storages` (with `boto3`); nothing else in the code changes. The same five `S3_…` settings also work on your laptop (in `backend/.env`); with `S3_BUCKET` empty, files stay on the disk (`backend/media/`). **Tests always use the disk**, whatever `.env` says. Tip: use a separate bucket for your laptop (e.g. `uniflow-files-dev`) so test uploads never mix with students' files.
 
 **Set it up once (about 5 minutes):**
 
 1. At [supabase.com](https://supabase.com), create a project. Pick the **Southeast Asia (Singapore)** region, the closest to Malaysia.
 2. **Storage → New bucket**, named e.g. `uniflow-files`, with **Public bucket turned off** (it must stay private).
 3. **Storage → Settings → S3 connection** (on older dashboards: Project Settings → Storage): copy the **Endpoint** (`https://<project-ref>.storage.supabase.co/storage/v1/s3`) and the **Region** (e.g. `ap-southeast-1`), then **New access key** and copy the **Access key ID** and **Secret access key**. The secret is only shown once.
-4. In Render, give the **web service and the worker** (Beat doesn't need them, but it does no harm) these settings: `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. **Never** put them in git or a screenshot: the key can read and delete every file in the project's storage.
-5. Check: upload a timetable image on the Timetable page; it appears in Supabase under `uniflow-files/message_files/<year>/<month>/`, and its classes are read by the worker. After `MESSAGE_RETENTION_DAYS` it disappears from the bucket.
+4. In Render, give the **web service** these settings: `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`. **Never** put them in git or a screenshot: the key can read and delete every file in the project's storage.
+5. Check: upload a timetable image on the Timetable page; it appears in Supabase under `uniflow-files/message_files/<year>/<month>/`, and its classes are read by the background job. After `MESSAGE_RETENTION_DAYS` it disappears from the bucket.
 
 **Good to know (free plan):** 1 GB of storage (plenty: 10 MB per file, deleted after 60 days) and 50 MB per file. A free project **pauses after about a week without activity** (e.g. a semester break); uploads then fail until you press **Restore** in the Supabase dashboard. If the key leaks: delete it in Supabase, create a new one, update Render.
 
 ### Background jobs online: Inngest Cloud (from M9.6j)
 
-UniFlow's background jobs are moving from Celery to Inngest, so online there will be **no worker, no Beat and no Redis**: Inngest Cloud calls the web service at `https://<name>.onrender.com/api/inngest` to run each job. The full set-up (create the app at app.inngest.com, give Render `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY`, sync the app) goes into the Render guide once the move is finished. Calls without Inngest's signature are refused (401), so nobody else can start a job. Until the move is finished, `/api/inngest` is only switched on online once `INNGEST_SIGNING_KEY` is set; the last step makes the key required.
+UniFlow's background jobs run on Inngest (M9.6j–m), so online there is **no worker, no Beat and no Redis**: Inngest Cloud calls the web service at `https://<name>.onrender.com/api/inngest` to run each job. The full set-up (create the app at app.inngest.com, give Render `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY`, sync the app) is part of the Render guide. **Production refuses to start without both keys** (the error names the missing one). Calls without Inngest's signature are refused (401), so nobody else can start a job. Uploaded files are shared through Supabase Storage (above), since the jobs may run in any copy of the web service.
 
 ### Trying the backend locally with Docker Desktop (`deploy/docker-compose.yml`)
 
-Not used by Render: it starts the same images on your computer, with **PostgreSQL** and Redis, so you can see the backend run as it will online.
+Not used by Render: it starts the same images on your computer, with **PostgreSQL**, so you can see the backend run as it will online. Background jobs: start **Inngest's dev server on your computer** (command in `backend/README.md`, with `-u http://localhost:8000/api/inngest`); `INNGEST_DEV` in `deploy/.env` lets the backend container reach it.
 
 1. In `deploy/`: `Copy-Item .env.example .env`, then fill in `DJANGO_SECRET_KEY`, `DB_PASSWORD` (letters and digits), `GEMINI_API_KEY` (and `CONNECTOR_SECRET`, `WHATSAPP_NUMBER` for WhatsApp). `.env` is git-ignored.
 2. `docker compose up -d --build` (add `--profile whatsapp` for the connector). `backend` runs `migrate` and `collectstatic`, then gunicorn.

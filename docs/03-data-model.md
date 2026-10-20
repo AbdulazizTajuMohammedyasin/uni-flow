@@ -312,7 +312,7 @@ The **status is derived and never stored**. It is one of `upcoming`, `open`, `cl
 
 ## Background jobs
 
-There is no job table: jobs are kept in **Redis** by Celery ([02](02-system-architecture.md#background-jobs)). Each job records its own outcome on the rows it works on (for example `Message.triage` and `processed_at`).
+There is no job table: jobs are kept by **Inngest** ([02](02-system-architecture.md#background-jobs)). Each job records its own outcome on the rows it works on (for example `Message.triage` and `processed_at`).
 
 ## notifications [MVP]
 

@@ -254,23 +254,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = (*default_cors_headers, "x-client")
 
 
-# Background jobs: Celery with Redis as the broker (see config/celery.py).
-
-# 127.0.0.1, not "localhost": on Windows "localhost" tries IPv6 first, which WSL does not
-# forward, and every connection then waits ~20 seconds.
-CELERY_BROKER_URL = env_str("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_TASK_IGNORE_RESULT = True  # jobs save their results in the database themselves
-CELERY_TASK_ACKS_LATE = True  # a job is only removed from Redis after it finishes
-CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # take one job at a time (AI calls are slow)
-# The daily jobs (03:00 clean-up, 19:00 digest) are started by Inngest since M9.6l: see
-# apps/intelligence/functions.py.
-
-# Inngest, replacing Celery step by step (config/inngest.py). On: the dev server ("true", or
-# its address, e.g. http://host.docker.internal:8288). Off (empty, "false" or "0", online):
-# Inngest Cloud, with INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY. Read as Inngest reads it.
+# Background jobs: Inngest (config/inngest.py; jobs in each app's functions.py). On: the dev
+# server ("true", or its address, e.g. http://host.docker.internal:8288). Off (empty, "false"
+# or "0", online): Inngest Cloud, with INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY (required in
+# production settings). Read as Inngest reads it.
 INNGEST_DEV = env_str("INNGEST_DEV", "").strip().lower() not in {"", "false", "0"}
-# Tests only: send() runs the jobs at once in the same process (like Celery's eager mode).
+# Tests only: send() runs the jobs at once in the same process, and errors surface.
 INNGEST_RUN_NOW = False
 
 # Privacy: message text and timetable files are deleted after this many days.

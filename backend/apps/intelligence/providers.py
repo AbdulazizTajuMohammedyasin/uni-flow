@@ -9,7 +9,7 @@ On the free tier each model has its own small daily allowance. A busy model is f
 again a few seconds later. When a model says "too many requests" (or is still busy), it
 rests until Google says it can be used again, and the next model
 in the list answers instead. Only when every model of the list is resting is AIRateLimited
-raised, so the Celery job waits and retries later instead of failing.
+raised, so the background job (Inngest) waits and retries later instead of failing.
 
 Providers: "gemini" (Google's Gemini API, key in GEMINI_API_KEY) and "fake" (tests).
 """

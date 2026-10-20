@@ -87,46 +87,13 @@ Accounts use **Djoser's own URLs**. Login and refresh use SimpleJWT with one cha
 
 Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Real sending is set up at deployment (M10).
 
-## Background jobs (Celery + Redis)
+## Background jobs (Inngest)
 
-Slow work (the AI, daily summaries) runs in a Celery **worker**, with **Redis** holding the to-do
-list. Tests don't need either: jobs run immediately there.
-
-1. Start Redis in WSL (install once with `sudo apt install redis-server`):
-
-   ```bash
-   sudo service redis-server start
-   redis-cli ping            # answers PONG
-   ```
-
-2. Start the worker from `backend/` on Windows (`--pool=solo` is needed on Windows):
-
-   ```powershell
-   pipenv run celery -A config worker --pool=solo -l info
-   ```
-
-3. Check the set-up from a second terminal; the worker's window shows `succeeded ... 'pong'`:
-
-   ```powershell
-   pipenv run celery -A config call config.celery.ping
-   ```
-
-4. Daily jobs moved to Inngest in M9.6l, so Celery Beat isn't needed any more.
-
-**Since M9.6l no job runs on Celery**: you don't need Redis or the worker any more (they
-are removed in the next step). Use Inngest's dev server instead (below).
-
-`CELERY_BROKER_URL` defaults to `redis://127.0.0.1:6379/0`. Use `127.0.0.1`, not `localhost`: on
-Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connection waits ~20 s.
-
-## Background jobs with Inngest (replacing Celery, from M9.6j)
-
-UniFlow is moving its background jobs from Celery to **Inngest**, one group at a time; until
-that's finished, start both. Since M9.6l, **every background job runs on Inngest** (sorting and
-understanding messages, alerts, reading timetable files, Telegram files, the 03:00 clean-up
-and the 19:00 digest): without its dev server, new messages wait unsorted (and saving them shows an
-error, as Celery did without Redis). With Inngest there is no worker and no Redis: Inngest calls Django
-at `/api/inngest` to run each job (code: `config/inngest.py`). Tests need neither.
+Slow work runs in the background on **Inngest** (it replaced Celery and Redis in M9.6m): sorting
+and understanding messages, alerts, reading timetable files, Telegram files, the 03:00 clean-up
+and the 19:00 digest. There is no worker and no Redis: Inngest calls Django at `/api/inngest` to
+run each job (code: `config/inngest.py`, jobs in `apps/intelligence/functions.py`). Without its
+dev server, new messages wait unsorted and saving them shows an error. Tests don't need it.
 
 1. With `runserver` running, start Inngest's dev server from any folder (needs Node; it is
    downloaded the first time):

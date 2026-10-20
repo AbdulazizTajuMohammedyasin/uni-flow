@@ -1,10 +1,14 @@
-"""Background jobs with Inngest (M9.6j-l): no real Inngest server is contacted."""
+"""Background jobs with Inngest (M9.6j-m): no real Inngest server is contacted."""
 
 import json
+import os
+import subprocess
+import sys
 
 import inngest
 import inngest.django
 import pytest
+from django.conf import settings
 from django.test import RequestFactory
 from inngest.experimental import mocked
 from rest_framework.test import APIClient
@@ -93,3 +97,32 @@ def test_online_only_inngest_can_start_a_job(online, status, answer):
         assert response.content == answer
     else:
         assert b"pong" not in response.content
+
+
+def start_production(**inngest_settings):
+    """Load the production settings in a separate Python, as Render would start the site."""
+    env = {name: value for name, value in os.environ.items() if not name.startswith("INNGEST_")}
+    env |= {
+        "DJANGO_SETTINGS_MODULE": "config.settings.prod",
+        "DJANGO_SECRET_KEY": "test-only-" + "x" * 50,
+        "DJANGO_ALLOWED_HOSTS": "uniflow.example.com",
+        "INNGEST_DEV": "",  # online: Inngest Cloud (wins over any backend/.env value)
+        **inngest_settings,
+    }
+    return subprocess.run(
+        [sys.executable, "-c", "import django; django.setup(); import config.urls"],
+        cwd=settings.BASE_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+
+
+def test_online_the_site_refuses_to_start_without_the_inngest_keys():
+    missing = start_production(INNGEST_EVENT_KEY="event-key")
+    assert missing.returncode != 0
+    assert "Missing required environment variable: INNGEST_SIGNING_KEY" in missing.stderr
+
+    ready = start_production(INNGEST_SIGNING_KEY=SIGNING_KEY, INNGEST_EVENT_KEY="event-key")
+    assert ready.returncode == 0, ready.stderr

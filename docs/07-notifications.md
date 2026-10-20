@@ -8,7 +8,7 @@ In the MVP, alerts appear **inside UniFlow only** (the bell and the notification
 
 ```
 intelligence: Delivery rows created for an insight (one per affected student, with a tier)
-        │  after the transaction commits → Celery job "notify" for that insight
+        │  after the transaction commits → Inngest job "notify-insight" for that insight
         ▼
 notifications.services.notify_deliveries(insight)
         │  immediate tiers: direct / action / important  → Notification now
@@ -39,7 +39,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run as Celery jobs with retries |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run as Inngest jobs with retries |
 | Email digest | The SMTP settings (M10 release) and a per-user choice |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |

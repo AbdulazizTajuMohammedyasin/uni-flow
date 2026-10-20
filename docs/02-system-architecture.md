@@ -16,10 +16,10 @@
  └──────┬──────────────────┬───────────────────────┬──────────────────────┬─────────────────┘
         │                  │                       │                      │
   ┌─────┴────┐   ┌─────────┴────────┐   ┌──────────┴──────────┐   ┌───────┴──────────┐
-  │ MySQL 8.4│   │ Local file store │   │ Redis (to-do list)  │   │ AI provider API  │
-  │          │   │                  │   │  ▲ Celery worker    │──►│ (one module,     │
-  │          │   └──────────────────┘   │  ▲ Celery Beat      │   │  providers.py)   │
-  └──────────┘                          └─────────────────────┘   └──────────────────┘
+  │ MySQL 8.4│   │ File store: disk │   │ Inngest (events,    │   │ AI provider API  │
+  │ (online: │   │ or Supabase      │   │ retries, schedules) │   │ (one module,     │
+  │ Postgres)│   │ Storage (online) │   │ calls /api/inngest  │   │  providers.py)   │
+  └──────────┘   └──────────────────┘   └─────────────────────┘   └──────────────────┘
         ▲
  ┌──────┴─────────────── React web app ───────────────────────┐     Django admin (/django-admin/)
  │  student area (/ …)            staff dashboard (/staff/…)   │     back-office for developers
@@ -34,19 +34,15 @@ These are the key principles:
 3. **The frontend is never the security boundary.** The staff dashboard hides actions the user is not allowed to take, but it does this purely for convenience. Every management endpoint enforces the same permission checks, using the same functions (see [06](06-auth-and-permissions.md)).
 4. **One API for every client.** The web app, the staff dashboard and the future mobile app all use `/api/v1/` the same way, with login tokens sent as `Authorization: Bearer`. Nothing depends on sessions or server-rendered pages.
 5. **A modular monolith with few apps.** There is one Django project. A new app is created only when separation is genuinely good practice (like `accounts`); related features share an app. The AI pipeline is one app (`intelligence`), with alerts in `notifications`.
-6. **Background work runs in Celery.** AI calls are slow and can fail, so they never run inside a web request. Web requests add a job to **Redis**; a **Celery worker** runs it, and **Celery Beat** starts the daily jobs (see [Background jobs](#background-jobs)). Chosen by the developer before M4.1 over a database job table.
+6. **Background work runs on Inngest.** AI calls are slow and can fail, so they never run inside the request that triggered them. The request sends an **event** to Inngest, which calls Django back at `/api/inngest` to run the job, retries it when it fails, and starts the daily jobs on a schedule (see [Background jobs](#background-jobs)). Celery with Redis did this until M9.6m; the developer switched so that online there's no worker or Redis to host.
 7. **Connectors are thin and replaceable.** The WhatsApp connector is a separate small process that only forwards messages; the Telegram bot is a webhook. Neither contains any understanding logic. See [08](08-messaging-integrations.md).
 8. **The Django admin is the operator's tool in the pilot.** It is used by the developer (super admin) to review new sources, check AI drafts, correct or retract insights, fix timetable data and create official staff posts. React staff pages are built after the pilot. It is mounted at `/django-admin/` so it is not confused with the React `/staff` area.
 
 ### Background jobs
 
-- **Celery** with **Redis** as the broker (the to-do list). Set up in `config/celery.py`; settings start with `CELERY_` in `config/settings/base.py`.
-- Jobs are plain functions marked `@shared_task` in each app's `tasks.py`; Celery finds them automatically. A job saves its own results in MySQL (Celery results are switched off).
-- `CELERY_TASK_ACKS_LATE` keeps a job in Redis until it has finished, and the worker takes one job at a time (AI calls are slow). Jobs that can fail (AI calls) retry with a growing delay.
-- **Daily jobs** (digest, deleting old message text) were started by Celery Beat; since M9.6l Inngest starts them (see below).
-- **Tests and CI need no Redis:** test settings set `CELERY_TASK_ALWAYS_EAGER`, so jobs run immediately in the same process.
-- **On a Windows PC:** Redis runs in WSL (`sudo service redis-server start`); the worker runs on Windows with `--pool=solo`. Use `127.0.0.1`, not `localhost`, in `CELERY_BROKER_URL`: `localhost` tries IPv6 first, which WSL does not forward, and each connection waits ~20 seconds.
-- **Moving to Inngest (approved, from M9.6j):** Celery, Redis and Beat are being replaced by [Inngest](https://www.inngest.com), one group of jobs at a time (M9.6j setup ✅, M9.6k the AI and alert jobs ✅, M9.6l the file and daily jobs ✅: **no job runs on Celery any more**; next Celery and Redis are removed). Django sends an **event** (e.g. `uniflow/ping`) to Inngest, and Inngest calls Django back at **`/api/inngest`** to run the matching **function**, inside the web service: no worker, no broker. Inngest retries failed functions and starts the daily ones on a schedule (cron). Set up in `config/inngest.py`; locally Inngest's **dev server** (`npx inngest-cli dev`, dashboard on port 8288), online **Inngest Cloud**, whose calls must be signed with `INNGEST_SIGNING_KEY` (unsigned calls get 401). Jobs are plain functions in each app's `functions.py`, registered with `@function(event, retries=…, one_at_a_time_per=…)` or `@function(daily_at="19:00")` (a cron in `TIME_ZONE`) (Inngest's concurrency key: never two runs for the same group at once) and started with `send(event, **data)` after the save commits. "Too many requests" from the AI raises Inngest's `RetryAfterError` (at least 1, 2, 4… minutes). In tests `INNGEST_RUN_NOW` makes `send()` run the jobs at once in the same process, like Celery's eager mode.
+- **[Inngest](https://www.inngest.com)** (M9.6j–m; it replaced Celery, Redis and Celery Beat, one group of jobs at a time). Django sends an **event** (e.g. `uniflow/ping`) to Inngest, and Inngest calls Django back at **`/api/inngest`** to run the matching **function**, inside the web service: no worker, no broker. Inngest retries failed functions and starts the daily ones on a schedule (cron). Set up in `config/inngest.py`; locally Inngest's **dev server** (`npx inngest-cli dev`, dashboard on port 8288), online **Inngest Cloud**, whose calls must be signed with `INNGEST_SIGNING_KEY` (unsigned calls get 401). Jobs are plain functions in each app's `functions.py`, registered with `@function(event, retries=…, one_at_a_time_per=…)` or `@function(daily_at="19:00")` (a cron in `TIME_ZONE`) (Inngest's concurrency key: never two runs for the same group at once) and started with `send(event, **data)` after the save commits. "Too many requests" from the AI raises Inngest's `RetryAfterError` (at least 1, 2, 4… minutes). In tests `INNGEST_RUN_NOW` makes `send()` run the jobs at once in the same process, so tests and CI need no Inngest.
+- A job saves its own results in the database (for example `Message.triage`); Inngest keeps only the run history shown in its dashboard.
+- **Online, both keys are required:** production settings refuse to start without `INNGEST_SIGNING_KEY` and `INNGEST_EVENT_KEY`, naming the missing one.
 
 ## 6. Backend architecture
 
@@ -74,7 +70,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | Spreadsheets | `openpyxl` | Approved (M5.4): turns each tab of an `.xlsx` timetable into text for the model | M5.4 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `google-genai` (Google's official Gemini library) | Approved (M5.1): the developer chose Gemini | M5.1 |
-| Background jobs | `celery` (5.6) and `redis` (the Python client), with a Redis server | Approved before M4.1 | M4.1 |
+| Background jobs | `inngest` (Inngest's Python library), with Inngest Cloud online and its dev server locally | Approved (M9.6j); replaced `celery` and `redis` (approved before M4.1, removed in M9.6m) | M9.6j |
 | WhatsApp connector | **Baileys 7.0.0-rc14** (Node.js 24) | **Approved** in M6.3 (chosen over neonize: more used, fixed faster). Lives in `connectors/whatsapp/`, outside Django. | M6.3 |
 
 ### Layering inside each app
@@ -180,7 +176,6 @@ The configuration lives in `backend/.env`. That file is ignored by git, and `bac
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODEL`, `AI_SMART_MODEL` | `gemini`, *(key)*, `gemini-3.1-flash-lite`, `gemini-3.5-flash` | The AI provider ([12](12-intelligence.md#ai-provider)); tests use `fake` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | | The Telegram bot ([08](08-messaging-integrations.md)) |
 | `CONNECTOR_SECRET` | | Signs requests from the WhatsApp connector to `/api/v1/internal/` |
-| `CELERY_BROKER_URL` | `redis://127.0.0.1:6379/0` | Redis for Celery. `127.0.0.1`, not `localhost`, on Windows with WSL. Goes away when the move to Inngest is finished. |
 | `INNGEST_DEV` | `true` (dev settings), `false` (production) | `true`: Inngest's dev server on this computer; `false`: Inngest Cloud |
 | `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY` | | Online only, from Inngest Cloud: the signing key proves each call to `/api/inngest` comes from Inngest; the event key lets Django send events. Never in git. |
 | `MESSAGE_RETENTION_DAYS` | `60` | Raw message text is deleted after this ([09](09-security.md)) |

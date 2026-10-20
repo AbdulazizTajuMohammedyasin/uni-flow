@@ -15,10 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-import os
-
 import inngest.django
-from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -29,11 +26,7 @@ urlpatterns = [
     path("django-admin/", admin.site.urls),
     # The versioned REST API used by the web app (and later the mobile app).
     path("api/v1/", include("config.api_v1")),
+    # Inngest calls this to run background jobs (config/inngest.py); online every call must be
+    # signed with INNGEST_SIGNING_KEY, and unsigned calls are refused.
+    inngest.django.serve(client, functions),
 ]
-
-# Inngest calls /api/inngest to run background jobs (config/inngest.py); online every call
-# must be signed with INNGEST_SIGNING_KEY. While Celery still runs the real jobs, online it is
-# only switched on once that key is set, so nothing breaks before Inngest Cloud is set up; the
-# last step of the move makes the key required.
-if settings.INNGEST_DEV or os.environ.get("INNGEST_SIGNING_KEY"):
-    urlpatterns.append(inngest.django.serve(client, functions))

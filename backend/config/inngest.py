@@ -1,5 +1,5 @@
-"""Inngest: runs slow work (the AI, daily jobs) in the background, replacing Celery step by
-step (M9.6j onwards). No worker program and no Redis are needed.
+"""Inngest: runs slow work (the AI, files, daily jobs) in the background (M9.6j-m; it replaced
+Celery and Redis). No worker program and no Redis are needed.
 
 How it works: Django sends an event (e.g. "uniflow/ping") to Inngest; Inngest then calls
 Django back at /api/inngest to run every function waiting for that event. If a function
@@ -87,7 +87,7 @@ def send(event: str, **data) -> None:
     """Start the functions waiting for `event`, e.g. send("uniflow/messages.added", source_id=3).
 
     In tests (INNGEST_RUN_NOW) they run at once in this process instead, and errors are
-    raised, like Celery's "eager" mode; nothing is sent to Inngest."""
+    raised; nothing is sent to Inngest."""
     if settings.INNGEST_RUN_NOW:
         for run in _jobs.get(event, []):
             run(**data)

@@ -9,10 +9,6 @@ ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 # Fast, insecure hashing is fine for tests and makes user creation much quicker.
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-# Tests never need Redis: jobs run immediately in the same process, and errors surface.
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
-
 # Tests never touch Supabase Storage, even when backend/.env has the S3_ settings: files stay
 # on the disk.
 STORAGES = {

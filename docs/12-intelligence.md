@@ -33,7 +33,7 @@ This keeps the system explainable, testable, cheap and safe: a strange or malici
  7 Notify       immediate (direct attention, action required, important) or digest
 ```
 
-Each step runs as a **Celery job** (see [02](02-system-architecture.md#background-jobs)), so a slow or failed AI call never blocks a web request, and failed steps are retried.
+Each step runs as a **background job on Inngest** (see [02](02-system-architecture.md#background-jobs)), so a slow or failed AI call never blocks a web request, and failed steps are retried.
 
 ## Step details
 
@@ -225,14 +225,14 @@ At the start of a semester, timetables are shared in groups as images, PDFs, spr
 ## AI provider
 
 - All model calls go through **one small module**, `apps/intelligence/providers.py`, with a single interface (`triage(messages)`, `extract(window, context)`). The rest of the code never imports a vendor SDK.
-- **Model fallback (free tier, October 2026):** the code asks `ask("fast" | "smart", …)`, and the provider tries the models of `AI_FAST_MODELS` / `AI_SMART_MODELS` in order. On Gemini's free tier each model has its **own daily allowance**. A model that answers "too many requests" rests for as long as Google's `retryDelay` says (in the cache), and a busy one (500/503) for a minute; the next model answers instead. Only when every model of the list is resting is `AIRateLimited` raised, and the Celery job waits as long as the soonest model needs (at most an hour). Each insight records the model that actually answered (`model_version`). Defaults, checked with a new free key: fast `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite-preview`, `gemini-flash-lite-latest`; smart `gemini-3.5-flash`, `gemini-3-flash-preview`, `gemini-flash-latest`. `manage.py check_ai` tries every listed model. Backup models may be less accurate: compare them with `evaluate_intelligence`.
+- **Model fallback (free tier, October 2026):** the code asks `ask("fast" | "smart", …)`, and the provider tries the models of `AI_FAST_MODELS` / `AI_SMART_MODELS` in order. On Gemini's free tier each model has its **own daily allowance**. A model that answers "too many requests" rests for as long as Google's `retryDelay` says (in the cache), and a busy one (500/503) for a minute; the next model answers instead. Only when every model of the list is resting is `AIRateLimited` raised, and the background job (Inngest) waits as long as the soonest model needs (at most an hour). Each insight records the model that actually answered (`model_version`). Defaults, checked with a new free key: fast `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite-preview`, `gemini-flash-lite-latest`; smart `gemini-3.5-flash`, `gemini-3-flash-preview`, `gemini-flash-latest`. `manage.py check_ai` tries every listed model. Backup models may be less accurate: compare them with `evaluate_intelligence`.
 - **Gemini** (Google), through Google's official `google-genai` library, chosen by the developer in M5.1:
   - `AI_FAST_MODEL` = **`gemini-3.1-flash-lite`** for triage ("is this message academic?"),
   - `AI_SMART_MODEL` = **`gemini-3.5-flash`** for understanding messages and reading timetable images, PDFs and sheets.
 
   These are the **oldest models that still work for a new key** (checked in M5.3: the Gemini 2.5 models answer "no longer available to new users"), because on the free tier older models usually allow many more requests than the newest ones (the developer's experience; the exact limits are shown per project in Google AI Studio). Both are settings, so other models can be used without code changes. Answers are requested as JSON matching a schema (`ask_json`).
 - **Free tier for now (developer's choice).** On Gemini's free tier, Google may use what is sent to improve its products ("Used to improve our products: Yes"; the paid tier says "No"). Decide on the paid tier before real students' messages are processed.
-- **Limits:** the free tier has per-minute and daily request limits (shown in Google AI Studio). When Gemini answers "too many requests", `providers.AIRateLimited` is raised and the Celery job waits and retries later.
+- **Limits:** the free tier has per-minute and daily request limits (shown in Google AI Studio). When Gemini answers "too many requests", `providers.AIRateLimited` is raised and Inngest tries the job again later (at least 1, 2, 4… minutes).
 - Tests never call Gemini: `AI_PROVIDER = "fake"` uses `providers.FakeProvider` with prepared answers. `manage.py check_ai` sends one tiny question to each model to check the key.
 - Messages can be in English, Malay, Arabic or a mix; the model handles this, and summaries are written in English.
 - Reading timetables needs a model that accepts images and PDFs (Gemini Flash models do).

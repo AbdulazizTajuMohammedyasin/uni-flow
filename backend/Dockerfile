@@ -1,4 +1,4 @@
-# UniFlow backend image: Django (gunicorn), and the Celery worker and scheduler use it too.
+# UniFlow backend image: Django on gunicorn; background jobs run inside it too, called by Inngest.
 # Built by deploy/docker-compose.yml (see docs/10-testing-and-deployment.md).
 FROM python:3.13-slim
 

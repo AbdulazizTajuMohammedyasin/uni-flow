@@ -5,6 +5,8 @@
 #   1. Copy-Item .env.example .env      (then fill it in; never commit it)
 #   2. docker compose up -d --build     (add --profile whatsapp for the WhatsApp connector)
 #   3. http://localhost:8000/api/v1/health/ and http://localhost:8000/django-admin/
+# Background jobs: start Inngest's dev server on your computer (not in Docker), pointed at
+# http://localhost:8000/api/inngest (command in backend/README.md).
 # Full guide: docs/10-testing-and-deployment.md, section 21.
 name: uniflow
 
@@ -20,47 +22,25 @@ services:
     ports:
       - "8000:8000" # only for trying it here; online, Render gives it an https:// address
     env_file: .env
-    environment: &backend-environment
+    environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
       # PostgreSQL, like on Render (Render gives DATABASE_URL the same way).
       DATABASE_URL: postgresql://${DB_USER:?Set DB_USER in .env}:${DB_PASSWORD:?Set DB_PASSWORD in .env}@db:5432/${DB_NAME:-uniflow}
-      CELERY_BROKER_URL: redis://redis:6379/0
       MEDIA_ROOT: /data/media
+    # Lets the backend reach Inngest's dev server on your computer (INNGEST_DEV in .env).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - media:/data/media # uploaded timetables (private: never served); unused if S3_BUCKET is set
-    depends_on: &backend-needs
+    depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/')"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
-
-  # Background jobs: AI sorting and understanding, alerts, timetable reading.
-  worker:
-    build: ../backend
-    restart: unless-stopped
-    command: celery -A config worker -l info --concurrency 2
-    env_file: .env
-    environment: *backend-environment
-    volumes:
-      - media:/data/media
-    depends_on: *backend-needs
-
-  # The scheduler: the 03:00 privacy clean-up and the 19:00 daily digest.
-  beat:
-    build: ../backend
-    restart: unless-stopped
-    command: celery -A config beat -l info --schedule /data/beat/celerybeat-schedule
-    env_file: .env
-    environment: *backend-environment
-    volumes:
-      - beat:/data/beat
-    depends_on: *backend-needs
 
   # UniFlow's WhatsApp number. Only started with --profile whatsapp (it needs the number
   # and CONNECTOR_SECRET in .env). The first time, read the pairing code with:
@@ -96,12 +76,7 @@ services:
       retries: 10
       start_period: 30s
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-
 volumes:
   postgres-data:
   media:
-  beat:
   whatsapp-auth:

@@ -7,11 +7,18 @@ Hardened for being online (M9.5): `manage.py check --deploy` is clean with these
 from config.env import env_bool, env_list, env_str
 
 from .base import *  # noqa: F401,F403
-from .base import DATABASES, MIDDLEWARE, STORAGES
+from .base import DATABASES, INNGEST_DEV, MIDDLEWARE, STORAGES
 
 SECRET_KEY = env_str("DJANGO_SECRET_KEY")
 DEBUG = False
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
+
+# Background jobs: Inngest Cloud calls /api/inngest (config/inngest.py). Both keys are needed
+# (the signing key proves a call comes from Inngest; the event key lets Django send events), so
+# without them the site refuses to start, with the missing name in the error.
+if not INNGEST_DEV:
+    env_str("INNGEST_SIGNING_KEY")
+    env_str("INNGEST_EVENT_KEY")
 
 # Reuse database connections between requests.
 DATABASES["default"]["CONN_MAX_AGE"] = 60

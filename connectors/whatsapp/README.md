@@ -32,7 +32,7 @@ the connector, delete `auth/`, and start it.
 2. Within a few minutes the connector joins it, posts the notice, and the source becomes
    *Active*. If the group needs admin approval, it waits until an admin accepts.
 3. Send a message in the group: it appears under Intelligence → Messages and is sorted by
-   the AI (with Redis and the Celery worker running).
+   the AI (with Inngest's dev server running: see backend/README.md).
 4. Stop the connector, send a message, start it again: the missed message arrives once.
 
 ## If linking fails ("Couldn't link device")
