@@ -42,6 +42,8 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 
 ## 21. Deployment considerations
 
+> Production setup, configuration and free-tier trade-offs: **[deployment.md](deployment.md)** (M9.6n).
+
 **Decided (M9.6):** the **backend runs on Render** from Docker images, the **website on Vercel** (Vercel builds `frontend/` itself; no Docker), and the **production database is PostgreSQL** (Render has no MySQL; development stays on MySQL). M9.6b made the code ready for it (PostgreSQL, whitenoise, the Vercel forwarding below); uploaded files live in **Supabase Storage** (M9.6h, below), because Render's services don't share a disk. The step-by-step Render guide comes next.
 
 ### Environments
@@ -50,7 +52,7 @@ Every roadmap task lists its own verification steps (see [11](11-roadmap.md#deve
 |---|---|
 | Local development | Native MySQL 8.4, `python manage.py runserver`, Inngest's dev server (`npx inngest-cli dev`), `npm run dev` |
 | Trying the online backend locally | Docker Desktop: `docker compose up` in `deploy/` (the same images Render runs) |
-| Production | **Render:** the backend image as a web service (Django on gunicorn, which also runs the background jobs when Inngest calls it), the WhatsApp connector from `connectors/whatsapp/` as a background worker (always on, with a disk for its login), and PostgreSQL. **Inngest Cloud:** starts the background jobs. **Supabase Storage:** uploaded files. **Vercel:** the website. No Celery worker, Beat or Redis (removed in M9.6m). |
+| Production ($0, M9.6n) | **Render** (free, Singapore): the backend image as a web service (Django on gunicorn, which also runs the background jobs when Inngest calls it). **Supabase** (free, Singapore): PostgreSQL and file storage. **Inngest Cloud:** starts the background jobs. **Vercel:** the website. **WhatsApp connector:** on the developer's computer for now (Render's free plan sleeps and has no disk for its login); later a free cloud computer. No Celery worker, Beat or Redis (removed in M9.6m). |
 
 ### How the two hosts fit together: Vercel forwarding (M9.6b)
 
@@ -71,7 +73,7 @@ The browser only ever talks to the **Vercel address**, so the login cookie is a 
 
 | Image | Built from | Runs |
 |---|---|---|
-| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django (with whitenoise serving the admin's styles, production settings only); background jobs run inside it when Inngest calls `/api/inngest` |
+| Backend | `backend/Dockerfile` (Python 3.13, `pipenv install --deploy`, gunicorn, a non-root user) | Django (with whitenoise serving the admin's styles, production settings only); background jobs run inside it when Inngest calls `/api/inngest`. Each start runs `migrate` and `collectstatic`, then gunicorn on `$PORT` (Render) or 8000, with 2 workers and a 120-second limit per request (AI jobs can take over 30 s) |
 | WhatsApp connector | `connectors/whatsapp/Dockerfile` (Node 24, a non-root user) | UniFlow's WhatsApp number; its login lives in `/app/auth` (a disk or volume) |
 
 Each has a `.dockerignore`, so secrets (`.env`) and the WhatsApp login (`auth/`) never go into an image; settings are given when a container starts.
@@ -105,5 +107,5 @@ Not used by Render: it starts the same images on your computer, with **PostgreSQ
 Useful: `docker compose ps`, `docker compose logs -f backend`, `docker compose down` (the data stays in volumes). **Never** `docker compose down -v`: it deletes the volumes (the database and the WhatsApp login).
 
 - `manage.py check --deploy` must pass (M9.5: it does with `config/settings/prod.py`, and CI checks it on every push). Production is HTTPS-only: the host (Render) handles HTTPS and passes `X-Forwarded-Proto: https`; `http://` is redirected (except `/api/v1/health/` and the connector's `/api/v1/internal/` on the private network, whose requests are signed); HSTS starts at one hour (`DJANGO_HSTS_SECONDS`) and is raised to a year once HTTPS works; the admin login and CSRF cookies are HTTPS-only.
-- **Backups:** daily PostgreSQL backups (Render's, or `pg_dump`), plus the WhatsApp login disk, kept for 30 days; uploaded files live in Supabase Storage and are short-lived (deleted after `MESSAGE_RETENTION_DAYS`), the classes read from them are in the database. Restoring is tested once per term. *(Set up with hosting.)*
+- **Backups:** daily PostgreSQL backups (Supabase's free plan keeps a few days; a weekly `pg_dump` from your laptop adds safety), plus the WhatsApp login folder (`connectors/whatsapp/auth/`), kept for 30 days; uploaded files live in Supabase Storage and are short-lived (deleted after `MESSAGE_RETENTION_DAYS`), the classes read from them are in the database. Restoring is tested once per term. *(Set up with hosting.)*
 - The API domain and `/api/v1/` must stay stable once a mobile build ships.

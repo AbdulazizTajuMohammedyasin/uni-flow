@@ -20,11 +20,15 @@ RUN pipenv install --deploy --system
 
 COPY . .
 
-# Run as a normal user, never root. /data holds uploaded files and the scheduler's state.
+# Run as a normal user, never root. /data/media holds uploaded files when no bucket is set.
 RUN useradd --create-home uniflow \
-    && mkdir -p /data/media /data/beat /app/staticfiles \
+    && mkdir -p /data/media /app/staticfiles \
     && chown -R uniflow /data /app/staticfiles
 USER uniflow
 
+# On every start: apply database changes and collect the admin's styles, then serve. (Render's
+# free plan has no separate "before deploy" step, so the start does it.) Render gives the port
+# in PORT; 8000 elsewhere. 2 workers fit the free 512 MB. --timeout 120: background jobs run
+# inside requests from Inngest, and reading a timetable with the AI can take over 30 seconds.
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--access-logfile", "-"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120 --access-logfile -"]
