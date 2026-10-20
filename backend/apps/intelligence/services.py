@@ -157,10 +157,10 @@ def store_messages(source: Source, parsed: list[ParsedMessage]) -> tuple[int, in
 
 
 def queue_triage(source: Source) -> None:
-    """Ask the background worker to sort the new messages, once the save is committed."""
-    from .tasks import triage_source  # tasks imports this module
+    """Ask Inngest to sort the new messages, once the save is committed."""
+    from .functions import MESSAGES_ADDED, send  # functions imports this module
 
-    transaction.on_commit(lambda: triage_source.delay(source.id))
+    transaction.on_commit(lambda: send(MESSAGES_ADDED, source_id=source.id))
 
 
 def paste_messages(user, source: Source, *, text: str, sender_name: str = "") -> tuple[int, int]:
@@ -306,9 +306,9 @@ def retract_insight(insight: Insight, user) -> Insight:
     alerted about a class change are told it was taken back."""
     archive(insight, user)
     retract_changes(insight)
-    from .tasks import notify_retraction  # tasks imports this module
+    from .functions import INSIGHT_RETRACTED, send  # functions imports this module
 
-    transaction.on_commit(lambda: notify_retraction.delay(insight.id))
+    transaction.on_commit(lambda: send(INSIGHT_RETRACTED, insight_id=insight.id))
     return insight
 
 

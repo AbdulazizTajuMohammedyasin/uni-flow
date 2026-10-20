@@ -280,6 +280,8 @@ CELERY_BEAT_SCHEDULE = {
 # its address, e.g. http://host.docker.internal:8288). Off (empty, "false" or "0", online):
 # Inngest Cloud, with INNGEST_SIGNING_KEY and INNGEST_EVENT_KEY. Read as Inngest reads it.
 INNGEST_DEV = env_str("INNGEST_DEV", "").strip().lower() not in {"", "false", "0"}
+# Tests only: send() runs the jobs at once in the same process (like Celery's eager mode).
+INNGEST_RUN_NOW = False
 
 # Privacy: message text and timetable files are deleted after this many days.
 MESSAGE_RETENTION_DAYS = int(env_str("MESSAGE_RETENTION_DAYS", "60"))

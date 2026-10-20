@@ -261,9 +261,9 @@ def notify_retraction(insight: Insight) -> int:
 
 def queue_notifications(insight: Insight) -> None:
     """Send the alerts in the background, once the current save is committed."""
-    from .tasks import notify_insight  # tasks imports this module
+    from .functions import INSIGHT_DELIVERED, send  # functions imports this module
 
-    transaction.on_commit(lambda: notify_insight.delay(insight.id))
+    transaction.on_commit(lambda: send(INSIGHT_DELIVERED, insight_id=insight.id))
 
 
 # --- The daily digest (M8.3) ----------------------------------------------------------------

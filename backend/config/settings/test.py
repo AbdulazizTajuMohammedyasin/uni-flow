@@ -20,8 +20,9 @@ STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
 }
 
-# Tests never talk to Inngest Cloud.
+# Tests never talk to Inngest: send() runs the jobs at once, and errors surface.
 INNGEST_DEV = True
+INNGEST_RUN_NOW = True
 
 # Tests never call the real AI (no key, no quota used): see providers.FakeProvider.
 AI_PROVIDER = "fake"

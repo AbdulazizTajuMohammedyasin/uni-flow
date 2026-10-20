@@ -9,6 +9,7 @@ from apps.audiences.models import Audience
 from apps.publishing.models import Status
 
 from . import services
+from .functions import MESSAGES_ADDED, send
 from .models import (
     AICall,
     Delivery,
@@ -23,7 +24,6 @@ from .models import (
     SourceMember,
     TimetableImport,
 )
-from .tasks import triage_source
 
 # No "date_hierarchy" (the year/month/day bar): on MySQL it needs the time-zone tables, which
 # a Windows MySQL install usually lacks, and the page then crashes. Date filters ("Today",
@@ -118,7 +118,7 @@ class SourceAdmin(admin.ModelAdmin):
     @admin.action(description="Sort new messages now (academic or noise)")
     def sort_new_messages(self, request, queryset):
         for source in queryset:
-            triage_source.delay(source.id)
+            send(MESSAGES_ADDED, source_id=source.id)
         self.message_user(request, f"Sorting started for {queryset.count()} group(s).")
 
 

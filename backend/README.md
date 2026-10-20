@@ -119,7 +119,9 @@ Windows `localhost` tries IPv6 first, which WSL doesn't forward, and each connec
 ## Background jobs with Inngest (replacing Celery, from M9.6j)
 
 UniFlow is moving its background jobs from Celery to **Inngest**, one group at a time; until
-that's finished, start both. With Inngest there is no worker and no Redis: Inngest calls Django
+that's finished, start both. Since M9.6k, **sorting and understanding messages and the alerts
+run on Inngest**: without its dev server, new messages wait unsorted (and saving them shows an
+error, as Celery did without Redis). With Inngest there is no worker and no Redis: Inngest calls Django
 at `/api/inngest` to run each job (code: `config/inngest.py`). Tests need neither.
 
 1. With `runserver` running, start Inngest's dev server from any folder (needs Node; it is

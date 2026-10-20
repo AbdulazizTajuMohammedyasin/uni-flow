@@ -1,12 +1,12 @@
 from datetime import UTC, datetime, timedelta
 from unittest import mock
 
+import inngest
 import pytest
-from celery.exceptions import Retry
 from django.conf import settings
 
 from apps.accounts.services import create_user
-from apps.intelligence import services, tasks
+from apps.intelligence import functions, services
 from apps.intelligence.models import Message, MessageFile, Source, SourceMember
 from apps.intelligence.providers import AIError, AIRateLimited, fake_provider
 from apps.intelligence.triage import BATCH_SIZE, triage_source
@@ -92,15 +92,24 @@ def test_many_messages_are_sent_in_batches(group):
 def test_the_job_waits_and_retries_when_the_ai_is_busy(group):
     add(group, "Class moved.")
     fake_provider().answers.append(AIRateLimited("429 too many requests"))
-    with pytest.raises(Retry):
-        tasks.triage_source.delay(group.id)
+    with pytest.raises(inngest.RetryAfterError) as raised:
+        functions.triage_source(group.id)
     assert Message.objects.get().triage == "pending"
+    # First try again after at least a minute (Inngest waits until then).
+    assert raised.value.retry_after >= datetime.now() + timedelta(seconds=55)
+
+
+def test_google_s_own_wait_is_used_but_never_more_than_an_hour():
+    soon = functions._try_again_later(AIRateLimited("429", retry_after=600), attempt=0)
+    assert soon.retry_after >= datetime.now() + timedelta(seconds=595)
+    capped = functions._try_again_later(AIRateLimited("429", retry_after=49332), attempt=0)
+    assert capped.retry_after <= datetime.now() + timedelta(seconds=3600)
 
 
 def test_other_ai_problems_leave_messages_for_the_next_run(group):
     add(group, "Class moved.")
     fake_provider().answers.append(AIError("bad key"))
-    assert tasks.triage_source.delay(group.id).get() is None
+    assert functions.triage_source(group.id) is None
     assert Message.objects.get().triage == "pending"
 
 
@@ -108,12 +117,12 @@ def test_new_messages_start_the_job_once_they_are_saved(group, django_capture_on
     student = create_user("ali@student.aiu.edu.my", "Str0ng-pass-99", full_name="Ali")
     SourceMember.objects.create(source=group, user=student)
 
-    with mock.patch.object(tasks.triage_source, "delay") as delay:
+    with mock.patch.object(functions, "send") as send:
         with django_capture_on_commit_callbacks(execute=True):
             services.paste_messages(student, group, text="Industry visit on Friday.")
-        delay.assert_called_once_with(group.id)
+        send.assert_called_once_with(functions.MESSAGES_ADDED, source_id=group.id)
 
-        delay.reset_mock()
+        send.reset_mock()
         with django_capture_on_commit_callbacks(execute=True):
             services.paste_messages(student, group, text="Industry visit on Friday.")  # again
-        delay.assert_not_called()  # nothing new, nothing to sort
+        send.assert_not_called()  # nothing new, nothing to sort

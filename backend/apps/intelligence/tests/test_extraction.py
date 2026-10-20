@@ -1,12 +1,12 @@
 from datetime import UTC, date, datetime, time, timedelta
 
+import inngest
 import pytest
-from celery.exceptions import Retry
 from django.conf import settings
 
 from apps.academics.models import Course, School, Term
 from apps.accounts.services import create_user
-from apps.intelligence import tasks
+from apps.intelligence import functions
 from apps.intelligence.extraction import extract_source
 from apps.intelligence.models import Insight, Message, Source, SourceMember
 from apps.intelligence.providers import AIRateLimited, fake_provider
@@ -207,7 +207,7 @@ def test_triage_hands_academic_messages_to_extraction(group, cde):
         [{"results": [{"id": moved.id, "academic": True}]}, {"changes": [change(moved)]}]
     )
 
-    tasks.triage_source.delay(group.id)
+    functions.triage_source(group.id)  # its event starts extraction (at once in tests)
 
     assert Insight.objects.get().kind == "class_moved"
 
@@ -215,6 +215,6 @@ def test_triage_hands_academic_messages_to_extraction(group, cde):
 def test_too_many_requests_keeps_messages_for_the_retry(group, cde):
     moved = add(group, "CDE2313 moved to 2 PM.")
     fake_provider().answers.append(AIRateLimited("429 too many requests"))
-    with pytest.raises(Retry):
-        tasks.extract_source.delay(group.id)
+    with pytest.raises(inngest.RetryAfterError):
+        functions.extract_source(group.id)
     assert Message.objects.get(pk=moved.pk).extracted_at is None
