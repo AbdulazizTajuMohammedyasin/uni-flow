@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
 /** /privacy — the privacy notice (docs/09-security.md). Public: anyone can read it before
- * registering, and members of a group UniFlow reads are pointed here by the join notice.
- * Keep it in plain words and in step with what UniFlow really does. */
+ * registering, and members of a group UniFlow reads are pointed here (by the UniFlow team, or
+ * by the join notice when SEND_JOIN_NOTICE is on). Keep it in plain words and in step with what
+ * UniFlow really does (docs/pilot-checklist.md re-checks it before launch). */
 export function PrivacyPage() {
   return (
     <article className="space-y-6 text-[0.9375rem] leading-relaxed md:text-base">
@@ -18,8 +19,8 @@ export function PrivacyPage() {
         <ul className="list-disc space-y-2 pl-5 marker:text-muted-foreground">
           <li>
             Messages in <strong>academic WhatsApp and Telegram groups</strong> that students added to UniFlow
-            (UniFlow's own number or bot is a member, and it posts a notice when it joins), and messages students
-            paste or upload from such groups.
+            (UniFlow's own number or bot is a member of the group, and the UniFlow team tells the group), and
+            messages students paste or upload from such groups.
           </li>
           <li>Timetable files and links that students upload or that are shared in those groups.</li>
           <li>
@@ -38,6 +39,10 @@ export function PrivacyPage() {
           </li>
           <li>Senders are recorded by name as shown in the group and a scrambled id, never a phone number.</li>
           <li>
+            Everything is stored with UniFlow's hosting providers (Render, Supabase and Vercel), in private storage
+            that only UniFlow can reach.
+          </li>
+          <li>
             Your account: your university email, name, school, programme, intake, your classes, and the interests
             and nicknames you choose (nicknames are only used to notice when someone mentions you).
           </li>
@@ -46,9 +51,9 @@ export function PrivacyPage() {
 
       <Part title="Artificial intelligence">
         <p>
-          To understand messages, UniFlow sends the message text (never your profile) to Google's Gemini AI
-          service. UniFlow uses Gemini's <strong>free tier</strong>: under Google's terms for it, Google may use
-          the text it receives to improve its products. Deciding what is relevant to you is done by UniFlow
+          To understand messages and timetables, UniFlow sends the message text and timetable files (never your
+          profile) to Google's Gemini AI service. UniFlow uses Gemini's <strong>free tier</strong>: under Google's
+          terms for it, Google may use what it receives to improve its products. Deciding what is relevant to you is done by UniFlow
           itself, not by the AI. A class change only changes your timetable when you confirm it.
         </p>
       </Part>
