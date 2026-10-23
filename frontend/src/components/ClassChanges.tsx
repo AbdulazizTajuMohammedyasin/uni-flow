@@ -14,17 +14,17 @@ export function ClassChanges() {
   if (waiting.length === 0) return null
 
   return (
-    <section aria-label="Changes to confirm" className="space-y-3 rounded-xl bg-attention p-4 ring-1 ring-attention-border md:p-5">
+    <section aria-label="Changes to confirm" className="island space-y-4 rounded-2xl p-4 md:p-5">
       <div>
-        <h2 className="flex items-center gap-2 font-medium">
-          <CircleAlert aria-hidden className="size-[1.125rem] text-attention-foreground" />
+        <h2 className="flex items-center gap-2 text-lg font-medium">
+          <CircleAlert aria-hidden className="size-[1.125rem] text-primary" />
           {waiting.length === 1 ? 'A class may have changed' : `${waiting.length} classes may have changed`}
         </h2>
-        <p className="mt-0.5 text-sm text-foreground">
+        <p className="mt-0.5 text-sm text-island-muted">
           UniFlow found this in a group message. Only your own timetable changes, and only if you confirm.
         </p>
       </div>
-      <ul className="divide-y divide-border overflow-hidden rounded-lg bg-card ring-1 ring-border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card text-card-foreground">
         {waiting.map((change) => (
           <ChangeCard key={change.id} change={change} />
         ))}

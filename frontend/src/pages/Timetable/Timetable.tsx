@@ -95,7 +95,7 @@ export function TimetablePage() {
         </div>
       )}
 
-      <section aria-labelledby="my-sections" className="space-y-4 rounded-xl bg-card p-4 ring-1 ring-border md:p-6">
+      <section aria-labelledby="my-sections" className="space-y-4 rounded-2xl bg-card p-4 md:p-6 dark:ring-1 dark:ring-border">
         <h2 id="my-sections" className="text-lg font-medium">
           My sections
         </h2>
@@ -135,7 +135,7 @@ export function TimetablePage() {
 function AddPanel({ panel, onClose, children }: { panel: Exclude<Panel, 'none'>; onClose: () => void; children: ReactNode }) {
   const { label, hint } = PANELS.find((item) => item.value === panel)!
   return (
-    <div className="space-y-4 rounded-lg bg-background p-4 ring-1 ring-border">
+    <div className="space-y-4 rounded-xl bg-background p-4 ring-1 ring-border">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium">{label}</p>
@@ -156,13 +156,13 @@ function ChangesNotice() {
   const waiting = changes.data?.filter((change) => change.my_status === 'pending').length ?? 0
   if (waiting === 0) return null
   return (
-    <p className="flex flex-wrap items-center gap-2 rounded-xl bg-attention p-3 text-sm text-foreground ring-1 ring-attention-border">
-      <CircleAlert aria-hidden className="size-4 shrink-0 text-attention-foreground" />
-      {waiting === 1 ? '1 class change to confirm.' : `${waiting} class changes to confirm.`}
-      <a href="#changes" className="font-medium text-attention-foreground underline underline-offset-2">
-        Review
-      </a>
-    </p>
+    <div className="island flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl py-2.5 pr-2.5 pl-4 text-sm">
+      <CircleAlert aria-hidden className="size-4 shrink-0 text-primary" />
+      <p className="flex-1">{waiting === 1 ? '1 class change to confirm.' : `${waiting} class changes to confirm.`}</p>
+      <Button asChild size="sm">
+        <a href="#changes">Review</a>
+      </Button>
+    </div>
   )
 }
 
@@ -232,7 +232,7 @@ function DayList({ days, emptyText }: { days: TimetableDays['days']; emptyText: 
             {day.classes.length === 0 ? (
               <p className="text-sm text-muted-foreground">{emptyText}</p>
             ) : (
-              <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
+              <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
                 {day.classes.map((slot, index) => (
                   <ClassRow
                     key={`${slot.section_id}-${slot.start_time}`}

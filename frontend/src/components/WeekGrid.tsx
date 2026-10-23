@@ -52,7 +52,7 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
   const now = minutes(nowInMalaysia())
 
   return (
-    <div className="overflow-x-auto rounded-xl bg-card ring-1 ring-border">
+    <div className="overflow-x-auto rounded-2xl bg-card dark:ring-1 dark:ring-border">
       <table className="w-full min-w-[46rem] table-fixed border-collapse text-sm">
         <caption className="sr-only">Classes this week, by day and time</caption>
         <colgroup>
@@ -89,15 +89,17 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
               <tr key={day.date} className="border-b border-border last:border-b-0">
                 <th
                   scope="row"
-                  className={cn(
-                    'px-3 py-2 text-left align-top',
-                    isToday && 'bg-accent text-accent-foreground',
-                  )}
+                  className="px-3 py-2.5 text-left align-top"
                 >
                   <span className="block font-medium">
                     {date.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' })}
                   </span>
-                  <span className={cn('block text-xs', isToday ? 'font-medium' : 'text-muted-foreground')}>
+                  <span
+                    className={cn(
+                      'block w-fit text-xs',
+                      isToday ? 'mt-0.5 rounded-full bg-primary px-2 py-0.5 font-medium text-primary-foreground' : 'text-muted-foreground',
+                    )}
+                  >
                     {isToday ? 'Today' : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
                   </span>
                 </th>
@@ -109,7 +111,7 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
                     ))}
                   </div>
                   {isToday && now >= start && now <= end && (
-                    <span aria-hidden className="absolute inset-y-0 z-0 w-0.5 bg-destructive" style={{ left: at(now) }} />
+                    <span aria-hidden className="absolute inset-y-0 z-0 w-0.5 bg-foreground dark:bg-primary" style={{ left: at(now) }} />
                   )}
                   {day.classes.length === 0 && <span className="sr-only">No classes</span>}
                   <ul>
@@ -145,13 +147,14 @@ function ClassBlock({ slot, style, now }: { slot: ClassSlot; style: CSSPropertie
     <li
       style={style}
       className={cn(
-        'absolute z-10 mx-0.5 overflow-hidden rounded-md px-1.5 py-1 text-xs leading-[1.35] ring-1',
+        'absolute z-10 mx-0.5 overflow-hidden rounded-lg px-2 py-1.5 text-xs leading-[1.35] ring-1',
         cancelled
           ? 'bg-muted text-muted-foreground ring-border'
           : now
             ? 'bg-primary text-primary-foreground ring-primary'
-            : 'bg-accent text-accent-foreground ring-primary/25',
-        pending && 'ring-2 ring-attention-border',
+            : 'bg-background text-foreground ring-border dark:bg-muted',
+        // A change waiting for an answer: a dashed edge (the label below says which change).
+        pending && 'ring-0 outline-[1.5px] -outline-offset-[1.5px] outline-input outline-dashed',
       )}
       title={`${slot.course_code} ${slot.course_name}, section ${slot.section_code}, ${slot.start_time}–${slot.end_time}${place ? `, ${place}` : ''}${slot.change ? ` (${changeLabel(slot.change)})` : ''}`}
     >
@@ -163,9 +166,11 @@ function ClassBlock({ slot, style, now }: { slot: ClassSlot; style: CSSPropertie
         {slot.start_time}–{slot.end_time}
       </span>
       {place && <span className="block truncate">{place}</span>}
-      {now && <span className="mt-0.5 block w-fit rounded bg-card px-1 font-medium text-foreground">Now</span>}
+      {now && (
+        <span className="mt-1 block w-fit rounded-full bg-primary-foreground px-1.5 font-medium text-primary">Now</span>
+      )}
       {slot.change && (
-        <span className={cn('mt-0.5 block max-w-full truncate rounded px-1 font-medium', pending ? 'bg-attention text-attention-foreground' : 'bg-card text-foreground')}>
+        <span className="mt-1 block max-w-full truncate rounded-full bg-card px-1.5 font-medium text-foreground ring-1 ring-input">
           {changeLabel(slot.change)}
         </span>
       )}

@@ -11,6 +11,18 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-5: timetable (2026-10-24)
+
+**Changes**
+- `components/WeekGrid.tsx`: borderless white panel (hairline in dark); today's row is marked by a lime "Today" pill instead of a tinted cell; the time-now line is ink (lime in dark) instead of red; class blocks are paper tiles with a hairline (raised surface in dark), the current class is lime with an ink "Now" pill, a pending change is a dashed edge plus its label pill.
+- `components/ClassChanges.tsx`: "Changes to confirm" is the island; the change cards stay white inside it (`text-card-foreground` so they do not inherit the island's light text).
+- `pages/Timetable/Timetable.tsx`: the week-view notice is an island strip with a lime "Review" button (still the `#changes` link, same name); "My sections" and the day list are borderless white panels.
+
+**Iteration 01** (`artifacts/ui/v2-5-iteration-01/`, the three timetable states in both themes and 3 sizes)
+- Checked by eye: `timetable-week--busy` (light and dark, desktop), `timetable-today--busy` (light, phone). No P0–P2 found.
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 284 passed.
+
 ## V2-4: For you, item page, digest (2026-10-24)
 
 **Changes**
