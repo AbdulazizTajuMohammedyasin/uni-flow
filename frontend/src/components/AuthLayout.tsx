@@ -21,7 +21,7 @@ export default function AuthLayout() {
     return (
       <main className="min-h-screen px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-[68ch]">
-          <Link to="/" className="text-xl font-bold text-primary">
+          <Link to="/" className="text-xl font-medium text-foreground">
             UniFlow
           </Link>
           <div className="mt-6 rounded-xl bg-card p-6 ring-1 ring-border sm:p-10">
@@ -35,19 +35,19 @@ export default function AuthLayout() {
   return (
     <main className="min-h-screen lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <aside className="hidden flex-col justify-between border-r border-border bg-sidebar px-12 py-12 lg:flex">
-        <p className="text-2xl font-bold text-primary">UniFlow</p>
+        <p className="text-2xl font-medium text-foreground">UniFlow</p>
         <div className="max-w-md space-y-8">
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-primary">For Albukhary International University students</p>
+            <p className="text-sm font-medium text-foreground">For Albukhary International University students</p>
             {/* Not a heading: the page's own h1 (e.g. "Log in") comes first for screen readers. */}
-            <p className="text-3xl leading-tight font-semibold tracking-tight text-balance">
+            <p className="text-3xl leading-tight font-medium tracking-tight text-balance">
               Only the information that matters to you.
             </p>
           </div>
           <ul className="space-y-5">
             {POINTS.map(({ icon: Icon, text }) => (
               <li key={text} className="flex gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/25 text-foreground">
                   <Icon aria-hidden className="size-4" />
                 </span>
                 <p className="pt-1.5 text-[0.9375rem] leading-relaxed text-muted-foreground">{text}</p>
@@ -57,7 +57,7 @@ export default function AuthLayout() {
         </div>
         <p className="text-sm text-muted-foreground">
           How UniFlow uses information:{' '}
-          <Link to="/privacy" className="font-medium text-primary hover:underline">
+          <Link to="/privacy" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
             Privacy notice
           </Link>
         </p>
@@ -66,7 +66,7 @@ export default function AuthLayout() {
       <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="mb-6 text-center lg:hidden">
-            <p className="text-2xl font-bold text-primary">UniFlow</p>
+            <p className="text-2xl font-medium text-foreground">UniFlow</p>
             <p className="mt-1 text-sm text-muted-foreground">Only the information that matters to you.</p>
           </div>
           <div className="rounded-xl bg-card p-6 ring-1 ring-border sm:p-8">

@@ -30,7 +30,7 @@ function Section({ id, title, description, children }: SectionInfo & { descripti
   return (
     // scroll-mt keeps the title clear of the phone top bar when jumped to from the section links.
     <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 rounded-xl bg-card p-5 ring-1 ring-border sm:p-6">
-      <h2 id={`${id}-title`} className="text-lg font-semibold">
+      <h2 id={`${id}-title`} className="text-lg font-medium">
         {title}
       </h2>
       {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
@@ -115,7 +115,7 @@ export function ProfilePage() {
             <p className="text-sm text-muted-foreground">
               What UniFlow reads, what it keeps (message text for 60 days), how it uses AI, and how someone can ask
               not to be read.{' '}
-              <Link to="/privacy" className="font-medium text-primary hover:underline">
+              <Link to="/privacy" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
                 Read the privacy notice
               </Link>
             </p>

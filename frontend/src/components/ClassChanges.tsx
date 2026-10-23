@@ -16,7 +16,7 @@ export function ClassChanges() {
   return (
     <section aria-label="Changes to confirm" className="space-y-3 rounded-xl bg-attention p-4 ring-1 ring-attention-border md:p-5">
       <div>
-        <h2 className="flex items-center gap-2 font-semibold">
+        <h2 className="flex items-center gap-2 font-medium">
           <CircleAlert aria-hidden className="size-[1.125rem] text-attention-foreground" />
           {waiting.length === 1 ? 'A class may have changed' : `${waiting.length} classes may have changed`}
         </h2>
@@ -44,7 +44,7 @@ function ChangeCard({ change }: { change: ClassChange }) {
         </p>
         {change.not_confirmed && <Badge variant="outline">Not confirmed</Badge>}
       </div>
-      <p className="text-base font-semibold tabular-nums">{changeText(change)}</p>
+      <p className="text-base font-medium tabular-nums">{changeText(change)}</p>
       {change.evidence.map((evidence) => (
         <blockquote key={evidence.sent_at + evidence.quote} className="border-l-2 border-border pl-3 text-sm text-muted-foreground">
           “{evidence.quote}”

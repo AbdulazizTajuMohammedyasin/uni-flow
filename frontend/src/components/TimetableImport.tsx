@@ -159,7 +159,7 @@ function Review({ timetableImport, onDone }: { timetableImport: TimetableImport;
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold">Is this your timetable?</h3>
+      <h3 className="font-medium">Is this your timetable?</h3>
       {timetableImport.tabs.length > 1 && (
         <SelectField
           label="Tab"

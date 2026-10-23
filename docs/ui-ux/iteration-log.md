@@ -11,6 +11,26 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-1: tokens, typeface, primitives (2026-10-24)
+
+Round 2 ([visual-refresh-plan.md](visual-refresh-plan.md)).
+
+**Changes**
+- `src/index.css`: new light ("paper") and dark tokens; lime `#8fcc2e` as `--primary`; new `--island`, `--island-foreground`, `--island-muted` (used from V2-4); `--attention` becomes a lime tint until V2-4/V2-5 move "needs you" blocks to the island; `--ring` is ink in light, lime in dark; `--radius` 0.75rem.
+- Typeface: `@fontsource-variable/inter` replaces `@fontsource-variable/geist` (approved); `cv11` and `ss01` enabled.
+- `components/ui/`: buttons and badges are pills; `outline` buttons have an ink hairline; `link` variants are ink and underlined; tabs are a pill switcher; inputs and selects use the medium radius and no shadow.
+- Lime is a fill only: every `text-primary` (links, wordmarks, labels, icons) became ink (`text-foreground`, links underlined); icon circles use `bg-primary/25` with ink icons. 27 files.
+- Two weights only: `font-semibold` and `font-bold` became `font-medium`. Where weight marked a state (unread rows, the active bottom-nav item, the active sidebar item), the other state is now `font-normal`, so the difference is kept.
+- `e2e/a11y.spec.ts`: contrast pairs follow the new rule (lime is never measured as text); island pairs added; the "lime button edge" pair removed with the reason in a comment.
+
+**Iteration 01** (`artifacts/ui/v2-1-iteration-01/`, 186 screenshots)
+- Checked by eye: `for-you--busy` (light, desktop), `timetable-today--busy` (dark, desktop), `groups--busy` (light, phone), `login` (light, desktop), `profile--busy` (dark, phone).
+- No P0/P1. Remaining differences from the mockups are layout work in later milestones: the phone top bar is still white (V2-2), the sidebar active item is still a tinted bar (V2-2), the auth panel is not lime yet (V2-3), "Needs you" is not the island yet (V2-4), the theme radio group is not a pill (V2-6).
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 284 passed (smoke, accessibility, contrast in both themes); `npm run screens` 186.
+
+**Found, not changed:** `npm audit --omit=dev` reports a high-severity advisory in `follow-redirects` 1.16.0 (via axios). The same version was locked before this milestone; it needs a separate dependency update.
+
 ## UI-7: accessibility and regression pass (2026-10-18)
 
 **New checks** (`frontend/e2e/a11y.spec.ts`, run by `npm run e2e`; no new dependency, axe was not approved):

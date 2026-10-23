@@ -58,7 +58,7 @@ export function ResetPasswordPage() {
     return (
       <div className="text-center">
         <ResultIcon icon={CircleCheck} tone="success" />
-        <h1 className="text-2xl font-semibold tracking-tight">Password changed</h1>
+        <h1 className="text-2xl font-medium tracking-tight">Password changed</h1>
         <p className="mt-3 text-sm text-muted-foreground">You can now log in with your new password.</p>
         <Button asChild size="lg" className="mt-6 w-full">
           <Link to="/login">Log in</Link>
@@ -69,7 +69,7 @@ export function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Choose a new password</h1>
+      <h1 className="text-2xl font-medium tracking-tight">Choose a new password</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">
         <FormField

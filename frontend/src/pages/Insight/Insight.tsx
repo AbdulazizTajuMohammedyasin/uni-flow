@@ -56,7 +56,7 @@ export function InsightPage() {
       <Details item={item.data} />
 
       <section aria-label="Where it came from" className="space-y-3">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <h2 className="flex items-center gap-2 text-lg font-medium">
           <MessageSquareQuote aria-hidden className="size-[1.125rem] text-muted-foreground" />
           Where it came from
         </h2>
@@ -91,7 +91,7 @@ function Header({ item }: { item: FeedDetail }) {
         {item.official && <Badge>Official</Badge>}
         {item.not_confirmed && <Badge variant="outline">Not confirmed</Badge>}
       </div>
-      <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-balance md:text-[1.75rem]">
+      <h1 className="text-[1.375rem] leading-tight font-medium tracking-tight text-balance md:text-[1.75rem]">
         {item.title}
       </h1>
       <p className="max-w-[65ch] text-base md:text-lg">{item.summary}</p>
@@ -117,7 +117,7 @@ function Details({ item }: { item: FeedDetail }) {
         <p role="note" className="flex gap-2.5 rounded-xl bg-attention p-4 text-sm text-foreground ring-1 ring-attention-border">
           <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-attention-foreground" />
           <span>
-            <span className="font-semibold">What to do:</span> {item.action_text || 'Action needed.'}
+            <span className="font-medium">What to do:</span> {item.action_text || 'Action needed.'}
           </span>
         </p>
       )}
@@ -145,7 +145,7 @@ function Details({ item }: { item: FeedDetail }) {
       {change && change.my_status === 'pending' && (
         <p className="rounded-xl bg-attention p-4 text-sm text-foreground ring-1 ring-attention-border">
           This changes one of your classes.{' '}
-          <Link to="/timetable" className="font-semibold text-attention-foreground underline underline-offset-2">
+          <Link to="/timetable" className="font-medium text-attention-foreground underline underline-offset-2">
             Confirm or reject it on your timetable
           </Link>
           .

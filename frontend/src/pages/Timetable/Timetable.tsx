@@ -96,7 +96,7 @@ export function TimetablePage() {
       )}
 
       <section aria-labelledby="my-sections" className="space-y-4 rounded-xl bg-card p-4 ring-1 ring-border md:p-6">
-        <h2 id="my-sections" className="text-lg font-semibold">
+        <h2 id="my-sections" className="text-lg font-medium">
           My sections
         </h2>
         <MySectionList />
@@ -138,7 +138,7 @@ function AddPanel({ panel, onClose, children }: { panel: Exclude<Panel, 'none'>;
     <div className="space-y-4 rounded-lg bg-background p-4 ring-1 ring-border">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-semibold">{label}</p>
+          <p className="font-medium">{label}</p>
           <p className="text-sm text-muted-foreground">{hint}</p>
         </div>
         <Button size="icon-sm" variant="ghost" onClick={onClose} aria-label="Close">
@@ -159,7 +159,7 @@ function ChangesNotice() {
     <p className="flex flex-wrap items-center gap-2 rounded-xl bg-attention p-3 text-sm text-foreground ring-1 ring-attention-border">
       <CircleAlert aria-hidden className="size-4 shrink-0 text-attention-foreground" />
       {waiting === 1 ? '1 class change to confirm.' : `${waiting} class changes to confirm.`}
-      <a href="#changes" className="font-semibold text-attention-foreground underline underline-offset-2">
+      <a href="#changes" className="font-medium text-attention-foreground underline underline-offset-2">
         Review
       </a>
     </p>
@@ -188,7 +188,7 @@ function WeekView({ date, onDate, grid }: { date?: string; onDate: (date: string
           <ChevronLeft aria-hidden />
           <span className="sr-only md:not-sr-only">Previous week</span>
         </Button>
-        <p className="text-sm font-semibold tabular-nums">
+        <p className="text-sm font-medium tabular-nums">
           {range(monday)} – {range(sunday)}
         </p>
         <Button size="sm" variant="ghost" onClick={() => onDate(shiftDate(monday, 7))}>
@@ -226,7 +226,7 @@ function DayList({ days, emptyText }: { days: TimetableDays['days']; emptyText: 
         const nextIndex = isToday ? day.classes.findIndex((slot) => slot.start_time > now) : -1
         return (
           <section key={day.date} aria-label={formatDay(day.date)} className="space-y-2">
-            <h2 className={cn('text-sm font-semibold', isToday ? 'text-foreground' : 'text-muted-foreground')}>
+            <h2 className={cn('text-sm font-medium', isToday ? 'text-foreground' : 'text-muted-foreground')}>
               {formatDay(day.date)}
             </h2>
             {day.classes.length === 0 ? (
@@ -263,7 +263,7 @@ function ClassRow({ slot, moment, past }: { slot: ClassSlot; moment?: 'Now' | 'N
   const cancelled = slot.change?.kind === 'class_cancelled' && slot.change.status === 'confirmed'
   return (
     <li className={cn('flex gap-4 px-4 py-3.5', moment === 'Now' && 'bg-accent/60', past && 'opacity-60')}>
-      <p className={cn('w-24 shrink-0 text-sm font-semibold tabular-nums', cancelled && 'text-muted-foreground line-through')}>
+      <p className={cn('w-24 shrink-0 text-sm font-medium tabular-nums', cancelled && 'text-muted-foreground line-through')}>
         {slot.start_time}–{slot.end_time}
       </p>
       <div className="min-w-0 flex-1 space-y-0.5">

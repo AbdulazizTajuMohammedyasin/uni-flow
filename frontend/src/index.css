@@ -1,14 +1,14 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/geist';
+@import '@fontsource-variable/inter';
 
 /* Dark mode is class-based: `.dark` on <html>, set by context/ThemeContext.tsx (Light / Dark /
    System) and, before the first paint, by the small script in index.html. */
 @custom-variant dark (&:is(.dark *));
 
 /*
- * UniFlow design tokens (docs/ui-ux/redesign-plan.md, section 3).
+ * UniFlow design tokens (docs/ui-ux/visual-refresh-plan.md, section 4).
  * Components use the semantic names only (bg-card, text-muted-foreground, bg-attention, ...),
  * never raw palette colours, so every screen follows the light and dark theme automatically.
  * Every text pair below was checked: at least 4.5:1, control edges at least 3:1.
@@ -16,7 +16,7 @@
 
 /* Maps shadcn's semantic variables to Tailwind utilities (bg-primary, text-muted-foreground, ...) */
 @theme inline {
-  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
 
   --color-background: var(--background);
@@ -39,6 +39,9 @@
   --color-attention-foreground: var(--attention-foreground);
   --color-attention-border: var(--attention-border);
   --color-success: var(--success);
+  --color-island: var(--island);
+  --color-island-foreground: var(--island-foreground);
+  --color-island-muted: var(--island-muted);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -65,93 +68,99 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Light theme: ink on paper, deep "harbour" blue for actions, amber only for "needs you". */
+/* Light theme: ink on warm paper; lime marks what is live (buttons, "now", unread, the active page). */
 :root {
   color-scheme: light;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  --background: #f5f6f8; /* paper: the page */
-  --foreground: #17212f; /* ink: 15:1 on paper */
+  --background: #f5f5eb; /* paper: the page */
+  --foreground: #14140f; /* ink: text and links, 16.8:1 on paper */
   --card: #ffffff; /* surface: lists, panels, forms */
-  --card-foreground: #17212f;
+  --card-foreground: #14140f;
   --popover: #ffffff;
-  --popover-foreground: #17212f;
-  --primary: #1b5e9e; /* links, main buttons, focus: 6.7:1 with white */
-  --primary-foreground: #ffffff;
-  --secondary: #eef1f5;
-  --secondary-foreground: #17212f;
-  --muted: #eef1f5;
-  --muted-foreground: #586273; /* secondary text: 5.7:1 on paper */
-  --accent: #e8f0f8; /* the active menu item */
-  --accent-foreground: #154b80; /* 7.8:1 on accent */
+  --popover-foreground: #14140f;
+  --primary: #8fcc2e; /* lime: fills only, never text (1.8:1 on paper) */
+  --primary-foreground: #14140f; /* ink on lime: 9.5:1 */
+  --secondary: #ebebdf;
+  --secondary-foreground: #14140f;
+  --muted: #ebebdf;
+  --muted-foreground: #5c5c52; /* secondary text: 6.2:1 on paper */
+  --accent: #ebebdf; /* hovered and selected items */
+  --accent-foreground: #14140f;
   --destructive: #b42318; /* errors, unread count: 6.6:1 with white */
   --destructive-foreground: #ffffff;
-  --attention: #fff4db; /* "needs you" background */
-  --attention-foreground: #8a4b00; /* 6.2:1 on attention */
-  --attention-border: #e9c46a;
-  --success: #17663a; /* "Saved", "Added": 6.5:1 on paper */
-  --border: #d5dae1; /* dividers (decorative) */
-  --input: #828b99; /* input and checkbox edges: 3.4:1 on white, 3.1:1 on paper */
-  --ring: #1b5e9e;
+  --attention: #eef5dd; /* lime tint, until the dark "needs you" block replaces it */
+  --attention-foreground: #3d5c0e; /* 6.9:1 on attention */
+  --attention-border: #8fcc2e;
+  --island: #2a2a24; /* the dark "needs you" block */
+  --island-foreground: #f5f5eb; /* 13.2:1 on island */
+  --island-muted: #b8b8ac; /* 7.2:1 on island */
+  --success: #3a6b10; /* "Saved", "Added": 5.8:1 on paper */
+  --border: #d2d2c8; /* dividers (decorative) */
+  --input: #84847a; /* field and checkbox edges: 3.8:1 on white, 3.4:1 on paper */
+  --ring: #14140f; /* focus: ink, because lime would vanish on paper */
 
-  --chart-1: #1b5e9e;
-  --chart-2: #586273;
-  --chart-3: #8a4b00;
-  --chart-4: #17663a;
+  --chart-1: #8fcc2e;
+  --chart-2: #5c5c52;
+  --chart-3: #3d5c0e;
+  --chart-4: #3a6b10;
   --chart-5: #b42318;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #17212f;
-  --sidebar-primary: #1b5e9e;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8f0f8;
-  --sidebar-accent-foreground: #154b80;
-  --sidebar-border: #d5dae1;
-  --sidebar-ring: #1b5e9e;
+  --sidebar: #f5f5eb;
+  --sidebar-foreground: #14140f;
+  --sidebar-primary: #8fcc2e;
+  --sidebar-primary-foreground: #14140f;
+  --sidebar-accent: #ebebdf;
+  --sidebar-accent-foreground: #14140f;
+  --sidebar-border: #d2d2c8;
+  --sidebar-ring: #14140f;
 }
 
-/* Dark theme: the same roles on a deep blue-grey (every pair re-checked for contrast). */
+/* Dark theme: warm near-black, hairline borders, the same lime (every pair re-checked for contrast). */
 .dark {
   color-scheme: dark;
 
-  --background: #10161f;
-  --foreground: #e6eaf0; /* 15:1 on background */
-  --card: #18202b;
-  --card-foreground: #e6eaf0;
-  --popover: #18202b;
-  --popover-foreground: #e6eaf0;
-  --primary: #6ca6e0; /* 6.4:1 on card */
-  --primary-foreground: #0b1a2a; /* 6.8:1 on primary */
-  --secondary: #222b37;
-  --secondary-foreground: #e6eaf0;
-  --muted: #222b37;
-  --muted-foreground: #9aa5b4; /* 6.6:1 on card */
-  --accent: #1d2c3d;
-  --accent-foreground: #a9ccf0; /* 8.5:1 on accent */
+  --background: #121210;
+  --foreground: #f2f2ea; /* 16.7:1 on background */
+  --card: #1c1c19;
+  --card-foreground: #f2f2ea;
+  --popover: #1c1c19;
+  --popover-foreground: #f2f2ea;
+  --primary: #8fcc2e; /* 9.7:1 on background */
+  --primary-foreground: #14140f; /* 9.5:1 on primary */
+  --secondary: #24241f;
+  --secondary-foreground: #f2f2ea;
+  --muted: #24241f;
+  --muted-foreground: #a3a398; /* 6.7:1 on card */
+  --accent: #2a2a25;
+  --accent-foreground: #f2f2ea; /* 12.8:1 on accent */
   --destructive: #f2877d;
   --destructive-foreground: #2a0b08; /* 7.4:1 on destructive */
-  --attention: #2e2414;
-  --attention-foreground: #f5c46b; /* 9.4:1 on attention */
-  --attention-border: #6b5222;
-  --success: #5fcb8a; /* 8.1:1 on card */
-  --border: #2a3441;
-  --input: #6b7788; /* 3.6:1 on card */
-  --ring: #6ca6e0;
+  --attention: #1e2614;
+  --attention-foreground: #a8dc5c; /* 9.7:1 on attention */
+  --attention-border: #4d6b1c;
+  --island: #262622;
+  --island-foreground: #f2f2ea; /* 13.5:1 on island */
+  --island-muted: #a9a99e; /* 6.4:1 on island */
+  --success: #9fdc5a; /* 10.5:1 on card */
+  --border: #2e2e2a;
+  --input: #6b6b62; /* 3.2:1 on card */
+  --ring: #8fcc2e;
 
-  --chart-1: #6ca6e0;
-  --chart-2: #9aa5b4;
-  --chart-3: #f5c46b;
-  --chart-4: #5fcb8a;
+  --chart-1: #8fcc2e;
+  --chart-2: #a3a398;
+  --chart-3: #a8dc5c;
+  --chart-4: #9fdc5a;
   --chart-5: #f2877d;
 
-  --sidebar: #18202b;
-  --sidebar-foreground: #e6eaf0;
-  --sidebar-primary: #6ca6e0;
-  --sidebar-primary-foreground: #0b1a2a;
-  --sidebar-accent: #1d2c3d;
-  --sidebar-accent-foreground: #a9ccf0;
-  --sidebar-border: #2a3441;
-  --sidebar-ring: #6ca6e0;
+  --sidebar: #121210;
+  --sidebar-foreground: #f2f2ea;
+  --sidebar-primary: #8fcc2e;
+  --sidebar-primary-foreground: #14140f;
+  --sidebar-accent: #2a2a25;
+  --sidebar-accent-foreground: #f2f2ea;
+  --sidebar-border: #2e2e2a;
+  --sidebar-ring: #8fcc2e;
 }
 
 @layer base {
@@ -163,6 +172,7 @@
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01'; /* Inter's single-storey a and open digits */
   }
 }
 

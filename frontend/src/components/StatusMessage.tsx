@@ -18,8 +18,8 @@ export function StatusMessage({ icon, tone = 'primary', code, title, children, a
   return (
     <div className="mx-auto flex max-w-md flex-col items-center text-center">
       <ResultIcon icon={icon} tone={tone} />
-      {code && <p className="text-sm font-semibold text-muted-foreground">{code}</p>}
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-[1.75rem]">{title}</h1>
+      {code && <p className="text-sm font-medium text-muted-foreground">{code}</p>}
+      <h1 className="mt-1 text-2xl font-medium tracking-tight md:text-[1.75rem]">{title}</h1>
       <p className="mt-2 text-muted-foreground">{children}</p>
       <div className="mt-6">{action}</div>
     </div>

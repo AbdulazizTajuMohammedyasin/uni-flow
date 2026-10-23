@@ -40,11 +40,11 @@ export function TodayBox({ className }: { className?: string }) {
   return (
     <section aria-label="Today" className={cn('rounded-xl bg-card p-4 ring-1 ring-border md:p-5', className)}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <CalendarClock aria-hidden className="size-[1.125rem] text-primary" />
+        <h2 className="flex items-center gap-2 font-medium">
+          <CalendarClock aria-hidden className="size-[1.125rem] text-foreground" />
           Today
         </h2>
-        <Link to="/timetable" className="text-sm font-medium text-primary hover:underline">
+        <Link to="/timetable" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
           Timetable
         </Link>
       </div>
@@ -72,7 +72,7 @@ export function TodayBox({ className }: { className?: string }) {
                 </span>
                 <div className={cn('min-w-0 flex-1', moment === 'past' && 'opacity-60')}>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className={cn('text-sm font-semibold tabular-nums', cancelled && 'text-muted-foreground line-through')}>
+                    <span className={cn('text-sm font-medium tabular-nums', cancelled && 'text-muted-foreground line-through')}>
                       {slot.start_time}–{slot.end_time}
                     </span>
                     {moment === 'now' && <Badge>Now</Badge>}
@@ -98,7 +98,7 @@ export function TodayBox({ className }: { className?: string }) {
         <p className="mt-4 rounded-lg bg-attention p-3 text-sm text-foreground ring-1 ring-attention-border">
           {waiting.length === 1 ? '1 class change is' : `${waiting.length} class changes are`} waiting for
           you.{' '}
-          <Link to="/timetable" className="font-semibold text-attention-foreground underline underline-offset-2">
+          <Link to="/timetable" className="font-medium text-attention-foreground underline underline-offset-2">
             Confirm or reject
           </Link>
         </p>

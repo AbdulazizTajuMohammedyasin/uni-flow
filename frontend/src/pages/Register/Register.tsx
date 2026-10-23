@@ -76,7 +76,7 @@ export function RegisterPage() {
     return (
       <div className="text-center">
         <ResultIcon icon={MailCheck} />
-        <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
+        <h1 className="text-2xl font-medium tracking-tight">Check your email</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           We sent an activation link to <span className="font-medium">{registeredEmail}</span>.
           Open it to activate your account, then log in.
@@ -90,7 +90,7 @@ export function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Create your account</h1>
+      <h1 className="text-2xl font-medium tracking-tight">Create your account</h1>
       <p className="mt-1 text-sm text-muted-foreground">For AIU students ({STUDENT_DOMAIN}).</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">
@@ -136,14 +136,14 @@ export function RegisterPage() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Before you register, read how UniFlow uses information:{' '}
-        <Link to="/privacy" className="font-medium text-primary hover:underline">
+        <Link to="/privacy" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
           Privacy notice
         </Link>
       </p>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link to="/login" className="font-medium text-primary hover:underline">
+        <Link to="/login" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
           Log in
         </Link>
       </p>

@@ -53,7 +53,7 @@ export function LoginPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
+      <h1 className="text-2xl font-medium tracking-tight">Log in</h1>
       <p className="mt-1 text-sm text-muted-foreground">Use your AIU student email.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">
@@ -73,7 +73,7 @@ export function LoginPage() {
           {...register('password')}
         />
         <div className="text-right text-sm">
-          <Link to="/forgot-password" className="font-medium text-primary hover:underline">
+          <Link to="/forgot-password" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
             Forgot password?
           </Link>
         </div>
@@ -91,7 +91,7 @@ export function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New to UniFlow?{' '}
-        <Link to="/register" className="font-medium text-primary hover:underline">
+        <Link to="/register" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
           Create an account
         </Link>
       </p>

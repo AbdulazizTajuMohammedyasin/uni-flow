@@ -8,7 +8,7 @@ export function ResultIcon({ icon: Icon, tone = 'primary' }: { icon: LucideIcon;
     <span
       className={cn(
         'mx-auto mb-4 flex size-12 items-center justify-center rounded-full',
-        tone === 'primary' && 'bg-primary/10 text-primary',
+        tone === 'primary' && 'bg-primary/25 text-foreground',
         tone === 'success' && 'bg-success/10 text-success',
         tone === 'destructive' && 'bg-destructive/10 text-destructive',
       )}

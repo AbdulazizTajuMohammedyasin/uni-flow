@@ -41,7 +41,7 @@ export function ItemRow({ item, compact = false }: { item: FeedItem; compact?: b
         </span>
         <span className="min-w-0 flex-1 space-y-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className={cn('text-[0.9375rem] leading-snug text-foreground', item.read ? 'font-medium' : 'font-semibold')}>
+            <span className={cn('text-[0.9375rem] leading-snug text-foreground', item.read ? 'font-normal' : 'font-medium')}>
               {item.title}
             </span>
             {item.official && <Badge variant="secondary">Official</Badge>}

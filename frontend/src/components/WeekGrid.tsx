@@ -94,7 +94,7 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
                     isToday && 'bg-accent text-accent-foreground',
                   )}
                 >
-                  <span className="block font-semibold">
+                  <span className="block font-medium">
                     {date.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' })}
                   </span>
                   <span className={cn('block text-xs', isToday ? 'font-medium' : 'text-muted-foreground')}>
@@ -155,7 +155,7 @@ function ClassBlock({ slot, style, now }: { slot: ClassSlot; style: CSSPropertie
       )}
       title={`${slot.course_code} ${slot.course_name}, section ${slot.section_code}, ${slot.start_time}–${slot.end_time}${place ? `, ${place}` : ''}${slot.change ? ` (${changeLabel(slot.change)})` : ''}`}
     >
-      <span className={cn('block truncate font-semibold', cancelled && 'line-through')}>
+      <span className={cn('block truncate font-medium', cancelled && 'line-through')}>
         {slot.course_code} · {slot.section_code}
       </span>
       <span className="block truncate">{slot.course_name}</span>
@@ -163,7 +163,7 @@ function ClassBlock({ slot, style, now }: { slot: ClassSlot; style: CSSPropertie
         {slot.start_time}–{slot.end_time}
       </span>
       {place && <span className="block truncate">{place}</span>}
-      {now && <span className="mt-0.5 block w-fit rounded bg-card px-1 font-semibold text-foreground">Now</span>}
+      {now && <span className="mt-0.5 block w-fit rounded bg-card px-1 font-medium text-foreground">Now</span>}
       {slot.change && (
         <span className={cn('mt-0.5 block max-w-full truncate rounded px-1 font-medium', pending ? 'bg-attention text-attention-foreground' : 'bg-card text-foreground')}>
           {changeLabel(slot.change)}

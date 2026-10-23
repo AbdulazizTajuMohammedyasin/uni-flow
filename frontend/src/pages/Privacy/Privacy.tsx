@@ -8,7 +8,7 @@ import { Link } from 'react-router'
 export function PrivacyPage() {
   return (
     <article className="space-y-6 text-[0.9375rem] leading-relaxed md:text-base">
-      <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight md:text-[1.75rem]">Privacy notice</h1>
+      <h1 className="text-[1.375rem] leading-tight font-medium tracking-tight md:text-[1.75rem]">Privacy notice</h1>
       <p>
         UniFlow is a student information assistant for Albukhary International University. It reads academic
         group messages so that each student sees only the information that matters to them. This notice says
@@ -74,11 +74,11 @@ export function PrivacyPage() {
       </Part>
 
       <p className="border-t border-border pt-5 text-sm text-muted-foreground">
-        <Link to="/register" className="text-primary hover:underline">
+        <Link to="/register" className="text-foreground underline underline-offset-4 hover:decoration-2">
           Create an account
         </Link>{' '}
         ·{' '}
-        <Link to="/" className="text-primary hover:underline">
+        <Link to="/" className="text-foreground underline underline-offset-4 hover:decoration-2">
           Back to UniFlow
         </Link>
       </p>
@@ -89,7 +89,7 @@ export function PrivacyPage() {
 function Part({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-medium">{title}</h2>
       {children}
     </section>
   )

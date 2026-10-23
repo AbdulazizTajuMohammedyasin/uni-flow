@@ -113,7 +113,7 @@ function AddGroupForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
-      <h2 className="font-semibold">Add a group</h2>
+      <h2 className="font-medium">Add a group</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="group-name">Group name</Label>
@@ -267,7 +267,7 @@ function GroupCard({ source }: { source: Source }) {
       {open !== 'none' && (
         <div className="space-y-2 rounded-lg bg-muted/50 p-3 ring-1 ring-border">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">{open === 'paste' ? 'Paste messages' : 'Upload a WhatsApp export'}</h3>
+            <h3 className="text-sm font-medium">{open === 'paste' ? 'Paste messages' : 'Upload a WhatsApp export'}</h3>
             <Button size="icon-sm" variant="ghost" aria-label="Close" onClick={() => setOpen('none')}>
               <X aria-hidden />
             </Button>

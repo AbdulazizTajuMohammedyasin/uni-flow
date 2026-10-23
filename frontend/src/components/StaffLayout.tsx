@@ -24,7 +24,7 @@ export default function StaffLayout() {
       <SkipLink />
       <aside className="border-b border-border bg-sidebar text-sidebar-foreground md:w-60 md:shrink-0 md:border-r md:border-b-0">
         <div className="flex items-center justify-between px-4 py-3 md:block md:px-6 md:py-5">
-          <p className="text-lg font-bold">
+          <p className="text-lg font-medium">
             UniFlow <span className="font-medium text-muted-foreground">Staff</span>
           </p>
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground md:mt-2 md:block">

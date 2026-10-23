@@ -105,7 +105,7 @@ function DayGroups({ notifications }: { notifications: AppNotification[] }) {
     <div className="space-y-6">
       {groupByDay(notifications).map((group) => (
         <section key={group.label} aria-label={group.label} className="space-y-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">{group.label}</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">{group.label}</h2>
           <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
             {group.notifications.map((notification) => (
               <NotificationRow key={notification.id} notification={notification} />
@@ -142,7 +142,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
         <span
           className={cn(
             'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full',
-            unread ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+            unread ? 'bg-primary/25 text-foreground' : 'bg-muted text-muted-foreground',
           )}
         >
           <Icon aria-hidden className="size-4" />
@@ -151,7 +151,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
           {/* Unread: the word "New", a dot and a bold title, not colour alone. */}
           <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             {unread && (
-              <span className="inline-flex items-center gap-1 font-semibold text-primary">
+              <span className="inline-flex items-center gap-1 font-medium text-foreground">
                 <span aria-hidden className="size-1.5 rounded-full bg-primary" />
                 New ·
               </span>
@@ -160,7 +160,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
               {KIND_LABELS[notification.kind]} · {timeAgo(notification.created_at)}
             </span>
           </span>
-          <span className={cn('block leading-snug text-foreground', unread ? 'font-semibold' : 'font-medium')}>
+          <span className={cn('block leading-snug text-foreground', unread ? 'font-medium' : 'font-normal')}>
             {notification.title}
           </span>
           {notification.body && <span className="block text-sm text-muted-foreground">{notification.body}</span>}

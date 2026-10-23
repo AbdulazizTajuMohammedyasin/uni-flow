@@ -49,7 +49,7 @@ export function ForYouPage() {
               title="Nothing for you yet"
               description="Add your academic groups on the Groups page, and UniFlow will show what matters to you here."
               action={
-                <Link to="/sources" className="text-sm font-semibold text-primary hover:underline">
+                <Link to="/sources" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
                   Go to Groups
                 </Link>
               }
@@ -71,7 +71,7 @@ function Feed({ items }: { items: FeedItem[] }) {
     <>
       {urgent > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-medium">
             Needs you <span className="font-normal text-muted-foreground tabular-nums">({urgent})</span>
           </h2>
           <TierSection tier="direct" items={of('direct')} />
@@ -97,14 +97,14 @@ function TierSection({ tier, items }: { tier: Tier; items: FeedItem[] }) {
     <section aria-label={title} className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-x-3">
         <div>
-          <Heading className={urgent ? 'flex items-center gap-2 text-sm font-semibold' : 'flex items-center gap-2 text-lg font-semibold'}>
+          <Heading className={urgent ? 'flex items-center gap-2 text-sm font-medium' : 'flex items-center gap-2 text-lg font-medium'}>
             <Icon aria-hidden className={urgent ? 'size-4 text-attention-foreground' : 'size-[1.125rem] text-muted-foreground'} />
             {title}
           </Heading>
           <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
         {tier === 'digest' && (
-          <Link to="/digest" className="text-sm font-medium text-primary hover:underline">
+          <Link to="/digest" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
             Open the daily digest
           </Link>
         )}

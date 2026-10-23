@@ -43,7 +43,7 @@ export function DigestPage() {
       ) : (
         groups.map((group) => (
           <section key={group.label} aria-label={group.label} className="space-y-2">
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-medium">
               {group.label} <span className="font-normal text-muted-foreground tabular-nums">({group.items.length})</span>
             </h2>
             <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">

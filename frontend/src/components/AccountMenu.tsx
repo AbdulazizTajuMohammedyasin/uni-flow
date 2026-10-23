@@ -51,7 +51,7 @@ export function AccountMenu({ variant }: { variant: 'full' | 'compact' }) {
       >
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground"
         >
           {initials(user.full_name)}
         </span>
