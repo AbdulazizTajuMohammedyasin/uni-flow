@@ -37,7 +37,7 @@ export function OnboardingPage() {
     return (
       <div>
         <Steps current={2} />
-        <h1 className="text-2xl font-medium tracking-tight">What matters to you?</h1>
+        <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">What matters to you?</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           UniFlow puts these first and keeps the rest out of your way. You can change them later
           in your profile.
@@ -55,7 +55,7 @@ export function OnboardingPage() {
   return (
     <div>
       <Steps current={1} />
-      <h1 className="text-2xl font-medium tracking-tight">Welcome, {user?.full_name.split(' ')[0]}</h1>
+      <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">Welcome, {user?.full_name.split(' ')[0]}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Tell us what you study, so UniFlow can show you the information that matters to you.
       </p>

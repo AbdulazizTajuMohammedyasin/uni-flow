@@ -39,7 +39,7 @@ export function ForgotPasswordPage() {
     return (
       <div className="text-center">
         <ResultIcon icon={MailCheck} />
-        <h1 className="text-2xl font-medium tracking-tight">Check your email</h1>
+        <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">Check your email</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           If <span className="font-medium">{sentTo}</span> has a UniFlow account, we sent it a link
           to choose a new password.
@@ -53,7 +53,7 @@ export function ForgotPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium tracking-tight">Forgot your password?</h1>
+      <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">Forgot your password?</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Enter your email and we'll send you a link to choose a new one.
       </p>

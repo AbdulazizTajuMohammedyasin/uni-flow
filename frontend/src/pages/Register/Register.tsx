@@ -76,7 +76,7 @@ export function RegisterPage() {
     return (
       <div className="text-center">
         <ResultIcon icon={MailCheck} />
-        <h1 className="text-2xl font-medium tracking-tight">Check your email</h1>
+        <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">Check your email</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           We sent an activation link to <span className="font-medium">{registeredEmail}</span>.
           Open it to activate your account, then log in.
@@ -90,7 +90,7 @@ export function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-medium tracking-tight">Create your account</h1>
+      <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">Create your account</h1>
       <p className="mt-1 text-sm text-muted-foreground">For AIU students ({STUDENT_DOMAIN}).</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 space-y-4">

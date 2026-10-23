@@ -8,7 +8,7 @@ import { Link } from 'react-router'
 export function PrivacyPage() {
   return (
     <article className="space-y-6 text-[0.9375rem] leading-relaxed md:text-base">
-      <h1 className="text-[1.375rem] leading-tight font-medium tracking-tight md:text-[1.75rem]">Privacy notice</h1>
+      <h1 className="text-[1.625rem] leading-tight font-medium tracking-[-0.025em] md:text-[2.5rem] md:leading-[1.05] md:tracking-[-0.03em]">Privacy notice</h1>
       <p>
         UniFlow is a student information assistant for Albukhary International University. It reads academic
         group messages so that each student sees only the information that matters to them. This notice says

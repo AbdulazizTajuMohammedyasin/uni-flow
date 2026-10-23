@@ -11,6 +11,26 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-3: public pages (2026-10-24)
+
+**Changes**
+- `components/AuthLayout.tsx`:
+  - computers (`lg` and up): the left half is a lime panel in both themes: inverted wordmark, the existing tagline at 56 px (72 px from `xl`), the three existing lines with outlined icons, the privacy link. Text on it is ink (9.5:1);
+  - phones: a lime band with rounded bottom corners above the form (wordmark, tagline at 32 px); the form starts right under it;
+  - links on lime get an ink focus ring in both themes (the dark theme's lime ring would not show on lime);
+  - the reading frame (privacy notice) uses the wordmark.
+- Page titles on login, register, password, activation and onboarding: 28 px, 32 px from `sm`. Privacy notice title matches `PageHeader` (26/40 px).
+- Copy unchanged.
+
+**Iteration 01** (`artifacts/ui/v2-3-iteration-01/`, the 8 public pages in both themes and 3 sizes)
+- Checked by eye: `login` (light, desktop), `register` (dark, phone), `onboarding--new` (dark, laptop), `login` (light, phone), `not-found` (light, desktop), `privacy` (dark, phone).
+- P2: on phones the form was centred in the remaining height, leaving a large gap under the band. Fixed: centred only from `lg` up.
+
+**Iteration 02** (`artifacts/ui/v2-3-iteration-02/`)
+- `login` (light, phone) and `reset-password` (dark, desktop) checked by eye: as designed.
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 284 passed (one page-load timeout on `for-you--error`, a page outside this milestone, passed when rerun).
+
 ## V2-2: app frame (2026-10-24)
 
 **Changes**

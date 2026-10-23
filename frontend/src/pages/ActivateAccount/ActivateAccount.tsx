@@ -43,7 +43,7 @@ export function ActivateAccountPage() {
     return (
       <div className="text-center">
         <ResultIcon icon={CircleCheck} tone="success" />
-        <h1 className="text-2xl font-medium tracking-tight">
+        <h1 className="text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">
           {status === 'activated' ? 'Your account is active' : 'Account already activated'}
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">You can now log in to UniFlow.</p>
@@ -57,7 +57,7 @@ export function ActivateAccountPage() {
   return (
     <div>
       <ResultIcon icon={CircleAlert} tone="destructive" />
-      <h1 className="text-center text-2xl font-medium tracking-tight">This link didn't work</h1>
+      <h1 className="text-center text-[1.75rem] leading-tight font-medium tracking-[-0.025em] sm:text-[2rem]">This link didn't work</h1>
       <p className="mt-3 text-center text-sm text-muted-foreground">
         {status === 'invalid'
           ? 'The activation link is invalid or incomplete.'
