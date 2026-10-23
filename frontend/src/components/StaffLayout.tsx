@@ -4,11 +4,14 @@ import { useAuth } from '@/context/AuthContext'
 import { can } from '@/lib/capabilities'
 import { staffNavItems } from '@/lib/navigation'
 import { SkipLink } from '@/components/SkipLink'
+import { Wordmark } from '@/components/Wordmark'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   [
-    'block shrink-0 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap',
-    isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-muted',
+    'block shrink-0 rounded-full px-4 py-2 text-sm whitespace-nowrap',
+    isActive
+      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground'
+      : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent',
   ].join(' ')
 
 /**
@@ -24,8 +27,8 @@ export default function StaffLayout() {
       <SkipLink />
       <aside className="border-b border-border bg-sidebar text-sidebar-foreground md:w-60 md:shrink-0 md:border-r md:border-b-0">
         <div className="flex items-center justify-between px-4 py-3 md:block md:px-6 md:py-5">
-          <p className="text-lg font-medium">
-            UniFlow <span className="font-medium text-muted-foreground">Staff</span>
+          <p className="flex items-center gap-2 text-lg">
+            <Wordmark /> <span className="font-normal text-muted-foreground">Staff</span>
           </p>
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground md:mt-2 md:block">
             ← Back to UniFlow

@@ -9,24 +9,32 @@ import { cn } from '@/lib/utils'
 
 import { AccountMenu } from './AccountMenu'
 import { HealthBadge } from './HealthBadge'
+import { Wordmark } from './Wordmark'
 import { SkipLink } from '@/components/SkipLink'
 
-/** Desktop sidebar link: the active page gets a tinted background, a bar and bold text
- * (not colour alone), plus aria-current="page" from NavLink. */
+/** Desktop sidebar link: the active page is a lime pill with medium-weight text (not colour
+ * alone), plus aria-current="page" from NavLink. */
 const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'relative flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm outline-none',
+    'flex min-h-11 items-center gap-3 rounded-full px-4 text-[0.9375rem] outline-none',
     'focus-visible:ring-3 focus-visible:ring-ring/50',
     isActive
-      ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-primary'
-      : 'font-normal text-sidebar-foreground hover:bg-muted',
+      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground'
+      : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent',
   )
 
 const bottomLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-xs outline-none',
+    'group/tab flex min-h-16 flex-col items-center justify-center gap-1 px-1 text-xs outline-none',
     'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
     isActive ? 'font-medium text-foreground' : 'font-normal text-muted-foreground',
+  )
+
+/** Behind the bottom-bar icon: a lime pill on the active page. */
+const bottomIconClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    'relative flex h-8 w-14 items-center justify-center rounded-full',
+    isActive && 'bg-primary text-primary-foreground',
   )
 
 /** Student-area frame: sidebar on md+ screens; top bar + bottom navigation on phones. */
@@ -37,11 +45,11 @@ export default function AppLayout() {
       <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-64 md:shrink-0 md:flex-col md:border-r md:border-sidebar-border md:bg-sidebar">
         <Link
           to="/"
-          className="mx-3 mt-5 mb-4 rounded-lg px-3 py-1 text-xl font-medium tracking-tight text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="mx-3 mt-6 mb-6 w-fit rounded-lg px-3 py-1 text-[1.375rem] text-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          UniFlow
+          <Wordmark />
         </Link>
-        <nav aria-label="Sidebar" className="flex flex-col gap-0.5 px-3">
+        <nav aria-label="Sidebar" className="flex flex-col gap-1 px-3">
           {studentNavItems.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end} className={sidebarLinkClass}>
               <item.icon aria-hidden className="size-[1.125rem] shrink-0" />
@@ -62,9 +70,9 @@ export default function AppLayout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-card px-4 md:hidden">
-          <Link to="/" className="text-lg font-medium tracking-tight text-foreground">
-            UniFlow
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur-sm md:hidden">
+          <Link to="/" className="text-lg text-foreground">
+            <Wordmark />
           </Link>
           <div className="flex items-center gap-1">
             {import.meta.env.DEV && <HealthBadge />}
@@ -82,15 +90,19 @@ export default function AppLayout() {
 
       <nav
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
       >
         {studentNavItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={bottomLinkClass}>
-            <span className="relative">
-              <item.icon aria-hidden className="size-5" />
-              {item.badge && <UnreadBadge className="absolute -top-1.5 left-3" />}
-            </span>
-            {item.shortLabel}
+            {({ isActive }) => (
+              <>
+                <span className={bottomIconClass({ isActive })}>
+                  <item.icon aria-hidden className="size-5" />
+                  {item.badge && <UnreadBadge className="absolute -top-1 right-1" />}
+                </span>
+                {item.shortLabel}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
@@ -125,7 +137,7 @@ function StaffDashboardLink() {
   return (
     <Link
       to="/staff"
-      className="mt-3 flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-sidebar-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="mt-3 flex min-h-11 items-center gap-3 rounded-full px-4 text-[0.9375rem] text-sidebar-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <LayoutDashboard aria-hidden className="size-[1.125rem] shrink-0" />
       Staff dashboard

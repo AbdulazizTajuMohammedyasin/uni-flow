@@ -45,13 +45,13 @@ export function AccountMenu({ variant }: { variant: 'full' | 'compact' }) {
       <DropdownMenuTrigger
         aria-label="Account menu"
         className={cn(
-          'flex items-center gap-3 rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-          variant === 'full' ? 'w-full p-2 hover:bg-muted' : 'size-11 justify-center',
+          'flex items-center gap-3 rounded-2xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+          variant === 'full' ? 'w-full p-2 hover:bg-sidebar-accent' : 'size-11 justify-center rounded-full',
         )}
       >
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-medium text-background"
         >
           {initials(user.full_name)}
         </span>

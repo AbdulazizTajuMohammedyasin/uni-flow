@@ -11,6 +11,28 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-2: app frame (2026-10-24)
+
+**Changes**
+- `components/Wordmark.tsx` (new): the name with a small lime mark (a rounded square with two lines); an `inverted` form for lime backgrounds. The mark is `aria-hidden`, so links keep the name "UniFlow".
+- `components/AppLayout.tsx`:
+  - sidebar on the page colour; nav items are 44 px pills; the active page is a lime pill with medium-weight text (plus `aria-current`), others are regular weight;
+  - phone top bar and bottom bar on the page colour (95 % with a light blur) instead of white;
+  - bottom bar: the active icon sits in a lime pill; the unread count moves to the pill's corner; items are 64 px tall.
+- `components/AccountMenu.tsx`: ink avatar (lime stays for live things); rounded trigger.
+- `components/PageHeader.tsx`: titles 26 px on phones, 40 px from `md` up, tighter tracking.
+- `components/StaffLayout.tsx`: same pills and wordmark.
+
+**Iteration 01** (`artifacts/ui/v2-2-iteration-01/`)
+- Checked by eye: `for-you--busy` (light, desktop; dark, phone), `account-menu--busy` (light, phone), `staff--staff` (dark, desktop).
+- P2: in the staff frame, "Staff" sat above the wordmark's baseline. Fixed (`items-center`).
+
+**Iteration 02** (`artifacts/ui/v2-2-iteration-02/`)
+- `staff--staff` and `timetable-today--busy` (light, phone) checked by eye: aligned; bottom bar and top bar as designed.
+- One screenshot (`reset-password`, light laptop) timed out on page load and passed when retaken alone; the page is not part of this milestone.
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 284 passed (run with 2 workers: a first run with 4 workers failed 228 tests on page-load timeouts while a stopped screenshot run was still holding the machine; the same tests passed alone and in the rerun); `npm run screens` 186.
+
 ## V2-1: tokens, typeface, primitives (2026-10-24)
 
 Round 2 ([visual-refresh-plan.md](visual-refresh-plan.md)).
