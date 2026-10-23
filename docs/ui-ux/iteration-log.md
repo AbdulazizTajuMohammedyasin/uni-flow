@@ -11,6 +11,21 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-6: Groups, Search, Notifications, Profile, Onboarding (2026-10-24)
+
+**Changes**
+- `pages/Sources/Sources.tsx`: status badges follow the accent rule: **Connected** is lime (live), **Waiting to join** is outlined, **Disconnected** stays red; each keeps its icon and word. The add form and group list are borderless white panels; the paste panel is a tonal block; the textarea matches the inputs.
+- `pages/Notifications/Notifications.tsx`: borderless panels, roomier rows; the unread dot gets an ink ring in the light theme (the word "New" and the heavier title still carry the meaning).
+- `pages/Profile/Profile.tsx`: borderless section panels; section links are pills on computers too, with a focus ring.
+- `components/ThemeToggle.tsx`: a pill switcher matching the tabs (selected: white with a hairline in light, inverted in dark).
+- Search and Onboarding needed no further changes after V2-1 (tokens, pill controls) and V2-4 (item rows).
+
+**Iteration 01** (`artifacts/ui/v2-6-iteration-01/`, 84 screenshots)
+- Checked by eye: `groups--busy` (light, desktop), `notifications--busy` (dark, desktop), `profile--busy` (light, desktop). No P0–P2 found.
+- P3, left as is: the full-width lime "Save changes" and "Save interests" buttons on Profile are as loud as a page's main action (a round-1 note); each form has one main action, so they keep the default style.
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 284 passed.
+
 ## V2-5: timetable (2026-10-24)
 
 **Changes**

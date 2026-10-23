@@ -14,7 +14,7 @@ const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
 export function ThemeToggle({ className }: { className?: string }) {
   const [theme, chooseTheme] = useTheme()
   return (
-    <div role="radiogroup" aria-label="Theme" className={cn('inline-flex gap-1 rounded-lg bg-muted p-1', className)}>
+    <div role="radiogroup" aria-label="Theme" className={cn('inline-flex gap-1 rounded-full bg-muted p-1', className)}>
       {OPTIONS.map(({ value, label, Icon }) => (
         <button
           key={value}
@@ -23,9 +23,11 @@ export function ThemeToggle({ className }: { className?: string }) {
           aria-checked={theme === value}
           onClick={() => chooseTheme(value)}
           className={cn(
-            'inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors outline-none md:min-h-8',
+            'inline-flex min-h-11 items-center gap-1.5 rounded-full border border-transparent px-3.5 text-sm font-medium transition-colors outline-none md:min-h-8',
             'focus-visible:ring-3 focus-visible:ring-ring/50',
-            theme === value ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+            theme === value
+              ? 'border-border bg-card text-foreground dark:border-transparent dark:bg-foreground dark:text-background'
+              : 'text-muted-foreground hover:text-foreground',
           )}
         >
           <Icon aria-hidden className="size-4" />

@@ -38,7 +38,7 @@ const KIND_ICONS: Record<NotificationKind, LucideIcon> = {
 
 type Tab = 'all' | 'needs-you'
 // The panel itself takes keyboard focus (after the tabs), so it needs a visible ring.
-const PANEL = 'rounded-xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-4 focus-visible:ring-offset-background'
+const PANEL = 'rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-4 focus-visible:ring-offset-background'
 
 /** /notifications — my alerts, newest first and split by day. "Needs you" keeps only the
  * ones that ask something of me. Tapping one marks it read and opens it. */
@@ -106,7 +106,7 @@ function DayGroups({ notifications }: { notifications: AppNotification[] }) {
       {groupByDay(notifications).map((group) => (
         <section key={group.label} aria-label={group.label} className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">{group.label}</h2>
-          <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
             {group.notifications.map((notification) => (
               <NotificationRow key={notification.id} notification={notification} />
             ))}
@@ -135,7 +135,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
         type="button"
         onClick={open}
         className={cn(
-          'flex w-full gap-3 px-4 py-3.5 text-left outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
+          'flex w-full gap-3.5 px-5 py-4 text-left outline-none hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
           unread && 'bg-accent/50',
         )}
       >
@@ -152,7 +152,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
           <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             {unread && (
               <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                <span aria-hidden className="size-1.5 rounded-full bg-primary" />
+                <span aria-hidden className="size-1.5 rounded-full bg-primary ring-1 ring-foreground dark:ring-0" />
                 New ·
               </span>
             )}

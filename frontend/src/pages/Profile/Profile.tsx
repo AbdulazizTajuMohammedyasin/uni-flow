@@ -29,7 +29,7 @@ const PRIVACY = { id: 'privacy', title: 'Privacy' }
 function Section({ id, title, description, children }: SectionInfo & { description?: string; children: ReactNode }) {
   return (
     // scroll-mt keeps the title clear of the phone top bar when jumped to from the section links.
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 rounded-xl bg-card p-5 ring-1 ring-border sm:p-6">
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 rounded-2xl bg-card p-5 sm:p-6 dark:ring-1 dark:ring-border">
       <h2 id={`${id}-title`} className="text-lg font-medium">
         {title}
       </h2>
@@ -48,7 +48,7 @@ function SectionNav({ sections }: { sections: SectionInfo[] }) {
           <li key={section.id}>
             <a
               href={`#${section.id}`}
-              className="inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium text-muted-foreground ring-1 ring-border hover:bg-muted hover:text-foreground lg:flex lg:rounded-md lg:px-3 lg:ring-0"
+              className="inline-flex h-9 items-center rounded-full px-3.5 text-sm font-medium text-muted-foreground ring-1 ring-border outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 lg:flex lg:h-10 lg:px-4 lg:ring-0"
             >
               {section.title}
             </a>

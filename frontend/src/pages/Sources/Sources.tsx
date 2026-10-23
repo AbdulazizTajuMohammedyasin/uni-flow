@@ -74,7 +74,7 @@ export function SourcesPage() {
           description="Add a group above with its invite link, or paste its messages by hand."
         />
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
+        <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
           {sources.data.map((source) => (
             <GroupCard key={source.id} source={source} />
           ))}
@@ -112,7 +112,7 @@ function AddGroupForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+    <form onSubmit={onSubmit} className="space-y-3 rounded-2xl bg-card p-4 md:p-6 dark:ring-1 dark:ring-border">
       <h2 className="font-medium">Add a group</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -178,7 +178,7 @@ function StatusBadge({ source }: { source: Source }) {
   if (source.platform === 'manual' || source.platform === 'staff') return null
   if (source.status === 'pending') {
     return (
-      <Badge className="bg-attention text-attention-foreground">
+      <Badge variant="outline">
         <Clock aria-hidden />
         Waiting to join
       </Badge>
@@ -193,7 +193,7 @@ function StatusBadge({ source }: { source: Source }) {
     )
   }
   return (
-    <Badge className="bg-success/10 text-success">
+    <Badge>
       <CircleCheck aria-hidden />
       Connected
     </Badge>
@@ -265,7 +265,7 @@ function GroupCard({ source }: { source: Source }) {
         </DropdownMenu>
       </div>
       {open !== 'none' && (
-        <div className="space-y-2 rounded-lg bg-muted/50 p-3 ring-1 ring-border">
+        <div className="space-y-2 rounded-xl bg-muted/60 p-3">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-medium">{open === 'paste' ? 'Paste messages' : 'Upload a WhatsApp export'}</h3>
             <Button size="icon-sm" variant="ghost" aria-label="Close" onClick={() => setOpen('none')}>
@@ -300,7 +300,7 @@ function PasteForm({ source }: { source: Source }) {
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder="Select messages in WhatsApp, copy them, and paste them here."
-        className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm"
+        className="w-full rounded-md border border-input bg-card px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm"
       />
       <Button type="submit" size="sm" disabled={paste.isPending || !text.trim()}>
         {paste.isPending ? 'Adding…' : 'Add messages'}
