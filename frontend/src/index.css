@@ -176,6 +176,18 @@
   }
 }
 
+/* The dark "needs you" block (visual-refresh-plan.md, section 3): inverted on the light page; in the
+   dark theme a raised surface with a hairline and a lime edge, so it still stands out. */
+@utility island {
+  background-color: var(--island);
+  color: var(--island-foreground);
+  .dark & {
+    box-shadow:
+      inset 3px 0 0 var(--primary),
+      0 0 0 1px var(--border);
+  }
+}
+
 /* Less motion when the device asks for it: menus, fades and pulses finish at once. */
 @media (prefers-reduced-motion: reduce) {
   *,

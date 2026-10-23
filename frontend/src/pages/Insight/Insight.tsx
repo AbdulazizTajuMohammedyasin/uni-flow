@@ -63,7 +63,7 @@ export function InsightPage() {
         {item.data.evidence.length === 0 ? (
           <p className="text-sm text-muted-foreground">Posted directly in UniFlow by staff.</p>
         ) : (
-          <ul className="divide-y divide-border rounded-xl bg-card ring-1 ring-border">
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
             {item.data.evidence.map((evidence) => (
               <EvidenceRow key={`${evidence.group.id}-${evidence.sent_at}`} evidence={evidence} />
             ))}
@@ -91,11 +91,11 @@ function Header({ item }: { item: FeedDetail }) {
         {item.official && <Badge>Official</Badge>}
         {item.not_confirmed && <Badge variant="outline">Not confirmed</Badge>}
       </div>
-      <h1 className="text-[1.375rem] leading-tight font-medium tracking-tight text-balance md:text-[1.75rem]">
+      <h1 className="text-[1.625rem] leading-tight font-medium tracking-[-0.025em] text-balance md:text-[2.5rem] md:leading-[1.05] md:tracking-[-0.03em]">
         {item.title}
       </h1>
       <p className="max-w-[65ch] text-base md:text-lg">{item.summary}</p>
-      <p className="max-w-[65ch] border-l-2 border-primary pl-3 text-sm text-foreground">
+      <p className="w-fit max-w-[65ch] rounded-xl bg-muted px-3.5 py-2.5 text-sm text-foreground">
         Why you see this: {item.reason}
       </p>
     </header>
@@ -114,15 +114,15 @@ function Details({ item }: { item: FeedDetail }) {
   return (
     <div className="space-y-4">
       {item.action_required && (
-        <p role="note" className="flex gap-2.5 rounded-xl bg-attention p-4 text-sm text-foreground ring-1 ring-attention-border">
-          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-attention-foreground" />
+        <p role="note" className="flex gap-2.5 island rounded-2xl p-4 text-[0.9375rem] md:p-5">
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
           <span>
             <span className="font-medium">What to do:</span> {item.action_text || 'Action needed.'}
           </span>
         </p>
       )}
       {rows.length > 0 && (
-        <dl className="grid gap-x-6 gap-y-3 rounded-xl bg-card p-4 ring-1 ring-border sm:grid-cols-2">
+        <dl className="grid gap-x-6 gap-y-3 rounded-2xl bg-card p-4 sm:grid-cols-2 md:p-5 dark:ring-1 dark:ring-border">
           {rows.map(({ label, value, Icon }) => (
             <div key={label} className="flex gap-3">
               <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -143,9 +143,12 @@ function Details({ item }: { item: FeedDetail }) {
         </Button>
       )}
       {change && change.my_status === 'pending' && (
-        <p className="rounded-xl bg-attention p-4 text-sm text-foreground ring-1 ring-attention-border">
+        <p className="island rounded-2xl p-4 text-[0.9375rem] md:p-5">
           This changes one of your classes.{' '}
-          <Link to="/timetable" className="font-medium text-attention-foreground underline underline-offset-2">
+          <Link
+            to="/timetable"
+            className="rounded-sm font-medium text-primary underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-primary"
+          >
             Confirm or reject it on your timetable
           </Link>
           .

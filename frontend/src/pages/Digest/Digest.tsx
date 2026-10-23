@@ -46,7 +46,7 @@ export function DigestPage() {
             <h2 className="text-lg font-medium">
               {group.label} <span className="font-normal text-muted-foreground tabular-nums">({group.items.length})</span>
             </h2>
-            <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card ring-1 ring-border">
+            <ul className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
               {group.items.map((item) => (
                 <DigestRow key={item.id} item={item} />
               ))}

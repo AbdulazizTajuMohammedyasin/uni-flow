@@ -2,6 +2,7 @@ import { CalendarClock } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 import { useHome } from '@/hooks/useFeed'
 import { changeLabel, nowInMalaysia } from '@/lib/timetable'
@@ -38,9 +39,9 @@ export function TodayBox({ className }: { className?: string }) {
   const when = moments(classes, nowInMalaysia())
 
   return (
-    <section aria-label="Today" className={cn('rounded-xl bg-card p-4 ring-1 ring-border md:p-5', className)}>
+    <section aria-label="Today" className={cn('rounded-2xl bg-card p-4 md:p-6 dark:ring-1 dark:ring-border', className)}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-medium">
+        <h2 className="flex items-center gap-2 text-lg leading-tight font-medium tracking-[-0.02em] md:text-[1.375rem]">
           <CalendarClock aria-hidden className="size-[1.125rem] text-foreground" />
           Today
         </h2>
@@ -52,7 +53,7 @@ export function TodayBox({ className }: { className?: string }) {
       {classes.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">No classes today.</p>
       ) : (
-        <ol className="mt-4">
+        <ol className="mt-3 md:mt-4">
           {classes.map((slot, index) => {
             const cancelled = slot.change?.kind === 'class_cancelled' && slot.change.status === 'confirmed'
             const moment = when[index]
@@ -64,7 +65,7 @@ export function TodayBox({ className }: { className?: string }) {
                   <span
                     className={cn(
                       'z-10 size-3 rounded-full border-2',
-                      moment === 'now' ? 'border-primary bg-primary' : 'border-input bg-card',
+                      moment === 'now' ? 'border-foreground bg-primary dark:border-primary' : 'border-input bg-card',
                       moment === 'past' && 'border-border',
                     )}
                   />
@@ -95,13 +96,14 @@ export function TodayBox({ className }: { className?: string }) {
       )}
 
       {waiting.length > 0 && (
-        <p className="mt-4 rounded-lg bg-attention p-3 text-sm text-foreground ring-1 ring-attention-border">
-          {waiting.length === 1 ? '1 class change is' : `${waiting.length} class changes are`} waiting for
-          you.{' '}
-          <Link to="/timetable" className="font-medium text-attention-foreground underline underline-offset-2">
-            Confirm or reject
-          </Link>
-        </p>
+        <div className="island mt-4 space-y-2.5 rounded-xl p-3.5 text-sm md:mt-5 md:space-y-3 md:p-4">
+          <p>
+            {waiting.length === 1 ? '1 class change is' : `${waiting.length} class changes are`} waiting for you.
+          </p>
+          <Button asChild size="sm">
+            <Link to="/timetable">Confirm or reject</Link>
+          </Button>
+        </div>
       )}
     </section>
   )

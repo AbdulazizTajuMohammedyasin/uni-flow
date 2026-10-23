@@ -10,6 +10,7 @@ import { TodayBox } from '@/components/TodayBox'
 import { useFeed } from '@/hooks/useFeed'
 import { TIERS } from '@/lib/feed'
 import { todayInMalaysia } from '@/lib/timetable'
+import { cn } from '@/lib/utils'
 import type { FeedItem, Tier } from '@/types/feed'
 
 const TIER_ICONS: Record<Tier, LucideIcon> = {
@@ -21,7 +22,7 @@ const TIER_ICONS: Record<Tier, LucideIcon> = {
 
 /**
  * / — "For you": what matters to me, most urgent first.
- * - "Needs you" groups the two urgent levels (named in it, action required) in amber.
+ * - "Needs you" groups the two urgent levels (named in it, action required) in the dark block.
  * - Important updates follow as a normal list; digest items ("good to know") come last, shorter.
  * - On wide screens the Today rail sits on the right and stays in view.
  * Every level keeps its own heading and region, and empty levels are hidden.
@@ -70,9 +71,9 @@ function Feed({ items }: { items: FeedItem[] }) {
   return (
     <>
       {urgent > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium">
-            Needs you <span className="font-normal text-muted-foreground tabular-nums">({urgent})</span>
+        <div className="space-y-1 overflow-hidden island rounded-[1.25rem] pt-4 pb-1 md:pt-5">
+          <h2 className="px-5 text-xl leading-tight font-medium tracking-[-0.02em] md:text-[1.375rem]">
+            Needs you <span className="font-normal text-island-muted tabular-nums">({urgent})</span>
           </h2>
           <TierSection tier="direct" items={of('direct')} />
           <TierSection tier="action" items={of('action')} />
@@ -94,14 +95,20 @@ function TierSection({ tier, items }: { tier: Tier; items: FeedItem[] }) {
   const Heading = urgent ? 'h3' : 'h2'
 
   return (
-    <section aria-label={title} className="space-y-2">
-      <div className="flex flex-wrap items-end justify-between gap-x-3">
+    <section aria-label={title} className={urgent ? 'pt-3 [&+&]:mt-1 [&+&]:border-t [&+&]:border-island-muted/25 [&+&]:pt-4' : 'space-y-3'}>
+      <div className={cn('flex flex-wrap items-end justify-between gap-x-3', urgent && 'px-5')}>
         <div>
-          <Heading className={urgent ? 'flex items-center gap-2 text-sm font-medium' : 'flex items-center gap-2 text-lg font-medium'}>
-            <Icon aria-hidden className={urgent ? 'size-4 text-attention-foreground' : 'size-[1.125rem] text-muted-foreground'} />
+          <Heading
+            className={
+              urgent
+                ? 'flex items-center gap-2 text-sm font-medium text-primary'
+                : 'flex items-center gap-2 text-[1.375rem] leading-tight font-medium tracking-[-0.02em]'
+            }
+          >
+            <Icon aria-hidden className={urgent ? 'size-4' : 'size-5 text-muted-foreground'} />
             {title}
           </Heading>
-          <p className="text-xs text-muted-foreground">{hint}</p>
+          <p className={cn('text-[0.8125rem]', urgent ? 'text-island-muted' : 'text-muted-foreground')}>{hint}</p>
         </div>
         {tier === 'digest' && (
           <Link to="/digest" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
@@ -109,9 +116,9 @@ function TierSection({ tier, items }: { tier: Tier; items: FeedItem[] }) {
           </Link>
         )}
       </div>
-      <ItemList tone={urgent ? 'attention' : 'default'}>
+      <ItemList tone={urgent ? 'island' : 'default'}>
         {items.map((item) => (
-          <ItemRow key={item.id} item={item} compact={tier === 'digest'} />
+          <ItemRow key={item.id} item={item} compact={tier === 'digest'} tone={urgent ? 'island' : 'default'} />
         ))}
       </ItemList>
     </section>

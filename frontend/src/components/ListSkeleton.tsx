@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
  * jumping. Screen readers hear "Loading…" once. */
 export function ListSkeleton({ rows = 3 }: { rows?: number }) {
   return (
-    <div role="status" aria-busy="true" className="divide-y divide-border rounded-xl bg-card ring-1 ring-border">
+    <div role="status" aria-busy="true" className="divide-y divide-border overflow-hidden rounded-2xl bg-card dark:ring-1 dark:ring-border">
       <span className="sr-only">Loading…</span>
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} aria-hidden className="space-y-2 px-4 py-4">

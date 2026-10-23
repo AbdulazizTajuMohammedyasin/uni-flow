@@ -11,6 +11,29 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-4: For you, item page, digest (2026-10-24)
+
+**Changes**
+- `src/index.css`: an `island` utility for the dark "needs you" block (island colours; in the dark theme a hairline and a 3 px lime edge), so every use looks the same.
+- `components/ItemRow.tsx`: a `tone` prop (`default` | `island`). Island rows use light text and island-muted secondary text; white lists lose their outline in the light theme (kept as a hairline in dark). Unread dots on white get an ink ring (lime alone is 1.9:1 on white); rows are slightly roomier.
+- `pages/ForYou/ForYou.tsx`: "Needs you" is the island; its level headings ("Direct attention", "Action required") are lime on the island and keep their `h3` and region names; other level headings are larger.
+- `components/TodayBox.tsx`: white panel; the class happening now is a lime dot with an ink ring; waiting changes sit in a small island with a lime "Confirm or reject" button (still a link to `/timetable`, same name).
+- `pages/Insight/Insight.tsx`: title like other pages; "Why you see this" on a tonal block (same sentence, one text node); "What to do" and the pending class change in the island; the evidence list and details lose their outline in light.
+- `pages/Digest/Digest.tsx`, `components/ListSkeleton.tsx`: borderless white panels.
+
+**Iteration 01** (`artifacts/ui/v2-4-iteration-01/`, For you, item pages, digest, search)
+- Checked by eye: `for-you--busy` (light, desktop; dark, phone), `insight--busy` (light, desktop), `insight-change--busy` (dark, phone).
+- A unit test failed: "Why you see this:" had been wrapped in its own span, splitting the sentence. Reverted to one sentence.
+- P2: the evidence list kept a grey outline in light; in dark, the item page's island had no lime edge. Fixed with the shared `island` utility and borderless panels.
+
+**Iteration 02** (`artifacts/ui/v2-4-iteration-02/`)
+- `for-you--busy` (dark, desktop), `insight-change--busy` (light, phone), `for-you--loading` (light, desktop) checked by eye: consistent.
+- The accessibility check "first Needs you item fully visible at 390×844" failed (96.7 % visible): the larger Today box and headings pushed it down. Fixed by tightening phone-only spacing (Today box padding and heading size, the waiting block, the island's top padding); computers keep the larger sizes.
+
+**Iteration 03** (`artifacts/ui/v2-4-iteration-03/`): `for-you--busy` (light, phone) checked by eye.
+
+**Checks:** `npm test` 127 passed; `typecheck` and `lint` clean; `npm run e2e` 283 of 284 before the spacing fix, then the app-frame and For you checks (39) passed after it.
+
 ## V2-3: public pages (2026-10-24)
 
 **Changes**
