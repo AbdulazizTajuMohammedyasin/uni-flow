@@ -91,3 +91,15 @@ Looked at and **rejected**:
   - It recommended a landing-page pattern with GSAP motion. **Rejected:** UniFlow is an app, not a marketing page, and GSAP is a new dependency.
   - UX rules **adopted**: don't use colour alone for status; WCAG 2.2 target size (24 px minimum on the web, 44 px for touch); stable loading placeholders with `aria-busy`; predictable Back behaviour; fixed nav must not cover content.
   - Its shadcn stack guidance says to use the shadcn `Sidebar` component. **Deferred:** it brings provider state and more code. The current layout is fine structurally; it only needs restyling.
+
+## Round 2 references (2026-10-23)
+
+Supplied by the product owner for the visual refresh ([visual-refresh-plan.md](visual-refresh-plan.md)), each with an extracted style summary (palette, type scale, radii, components). The summaries were provided as files and are not committed; no reference images are stored.
+
+| Reference | URL | Observed (from the supplied summary) | Used for |
+|---|---|---|---|
+| Perk | https://www.perk.com/ | Light theme on warm parchment (`#f5f5eb`) and white; a single lime accent (`#beff50`) as the only filled action colour; one sans family at weights 400/500 with −0.03em tracking at heading sizes; 28 px cards and pill buttons; no shadows; an occasional dark "island" block | Light theme, accent, button shape, the "Needs you" island |
+| Supabase | https://supabase.com/ | Dark canvas (`#121212`), monochrome UI, green reserved for actions and emphasis; hairline borders (`#2e2e2e`) instead of shadows; regular-weight headings; pill buttons, 16 px cards, 8 px inputs | Dark theme surfaces and borders, heading weight |
+| Modal | https://modal.com/ | Near-black canvas with one rationed lime accent ("one per viewport"); tight negative tracking on UI text; accent-filled chips only for active status | Accent rationing rule, status badges |
+
+**Interpretation, not observation:** all three use one vivid green-yellow against a neutral, flat, typographic base. UniFlow adopts that structure and gives the accent a single meaning ("live / act here"). The references' marketing-page proportions (very large section gaps, display sizes above 56 px, all-caps eyebrows) do not fit a dense student app and are not adopted.
