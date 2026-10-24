@@ -11,6 +11,24 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V2-7: regression pass (2026-10-24)
+
+**Full run** (`artifacts/ui/v2-final/`): 186 screenshots, light and dark × phone, laptop, desktop × 31 states.
+
+**Found and fixed**
+- P1: keyboard focus on lime controls. The base focus ring is `ring/50`: in the dark theme that is half-strength lime around a lime button, which is nearly invisible (in light, a faint grey). The automated keyboard walk only checks that a ring exists. Lime buttons (`Button` default variant) and the active sidebar pill now get a solid ring in the text colour with a 2 px gap (ink in light, near-white in dark). Checked by eye on the login button in both themes (`v2-final/focus-*.png`, captured after the 150 ms transition).
+
+**Acceptance criteria** ([visual-refresh-plan.md](visual-refresh-plan.md), section 9)
+- No raw palette classes outside `components/ui/`: met (grep returns nothing).
+- No round-1 colours (blue, amber) in either theme: met (grep for the round-1 hex values returns nothing).
+- Contrast pairs in `a11y.spec.ts` pass in both themes: met.
+- `npm test`, `typecheck`, `lint`, `npm run e2e`: met (127; clean; clean; 284).
+- No changes under `backend/`, `src/api/`, `src/context/`, `src/hooks/`, `src/lib/`, `src/types/`, `router.tsx` or `connectors/` since round 2 began (`git diff 8cf2ee9 HEAD` on those paths is empty): met.
+
+**Other checks:** `npm run build` succeeds; `npm audit --audit-level=high --omit=dev` reports 0 vulnerabilities (after the separate `follow-redirects` and `zod` patch updates).
+
+**Not covered by automation:** screen-reader listening (only the accessibility tree is checked), and whether a focus ring is *visible enough*, as opposed to present (checked by eye for lime controls only).
+
 ## V2-6: Groups, Search, Notifications, Profile, Onboarding (2026-10-24)
 
 **Changes**

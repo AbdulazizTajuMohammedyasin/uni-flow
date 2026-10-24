@@ -1,4 +1,4 @@
-# Visual refresh plan (round 2: approved 2026-10-24)
+# Visual refresh plan (round 2: approved and completed 2026-10-24)
 
 Date: 2026-10-23. Round 1 ([redesign-plan.md](redesign-plan.md), UI-0 to UI-7) fixed the information architecture, responsiveness and accessibility. It is complete and stays the structural baseline. This round changes the **visual identity** only: colour, type, shape, surfaces and a few signature compositions.
 

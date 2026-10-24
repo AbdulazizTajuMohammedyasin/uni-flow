@@ -19,7 +19,7 @@ const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
     'flex min-h-11 items-center gap-3 rounded-full px-4 text-[0.9375rem] outline-none',
     'focus-visible:ring-3 focus-visible:ring-ring/50',
     isActive
-      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground'
+      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar'
       : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent',
   )
 
