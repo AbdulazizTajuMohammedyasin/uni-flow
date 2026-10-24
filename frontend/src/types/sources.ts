@@ -12,6 +12,18 @@ export type Source = {
   course: number | null
   section: number | null
   message_count: number
+  /** I add UniFlow's number to this group myself (no invite link). */
+  added_by_number: boolean
+  /** UniFlow's WhatsApp number, while such a group waits for it (blank otherwise). */
+  uniflow_number: string
+}
+
+/** A group UniFlow joined without an invite link that nobody has claimed: maybe mine, if I typed
+ * a different name (GET sources/{id}/unclaimed/). */
+export type UnclaimedGroup = {
+  id: number
+  title: string
+  joined_at: string
 }
 
 /** The answer to pasting or uploading messages. */

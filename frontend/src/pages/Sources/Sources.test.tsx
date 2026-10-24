@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as sourcesApi from '@/api/sources'
@@ -13,6 +14,8 @@ vi.mock('@/api/sources', () => ({
   getMySources: vi.fn(),
   createSource: vi.fn(),
   connectSource: vi.fn(),
+  getUnclaimedGroups: vi.fn(),
+  claimGroup: vi.fn(),
   pasteMessages: vi.fn(),
   uploadExport: vi.fn(),
 }))
@@ -29,6 +32,8 @@ const group: Source = {
   course: null,
   section: null,
   message_count: 12,
+  added_by_number: false,
+  uniflow_number: '',
 }
 
 /** Radix menus open from the keyboard (jsdom has no pointer events). */
@@ -40,13 +45,16 @@ async function chooseFromMenu(item: string) {
 function renderPage() {
   render(
     <QueryClientProvider client={createQueryClient()}>
-      <SourcesPage />
+      <MemoryRouter>
+        <SourcesPage />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
 beforeEach(() => {
   vi.mocked(sourcesApi.getMySources).mockResolvedValue([group])
+  vi.mocked(sourcesApi.getUnclaimedGroups).mockResolvedValue([])
 })
 
 describe('Groups page', () => {
@@ -67,6 +75,7 @@ describe('Groups page', () => {
     renderPage()
 
     fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: ' SCI notices ' } })
+    fireEvent.click(screen.getByRole('radio', { name: "I'll paste messages" }))
     fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
 
     await waitFor(() => expect(sourcesApi.createSource).toHaveBeenCalledWith('SCI notices'))
@@ -86,7 +95,7 @@ describe('Groups page', () => {
     renderPage()
 
     fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'CDE2313 Section A' } })
-    fireEvent.change(screen.getByLabelText('WhatsApp invite link (optional)'), {
+    fireEvent.change(screen.getByLabelText('WhatsApp invite link'), {
       target: { value: ' https://chat.whatsapp.com/AbCdEf123456 ' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
@@ -105,6 +114,76 @@ describe('Groups page', () => {
     renderPage()
     expect(await screen.findByText('WhatsApp group · 0 messages')).toBeTruthy()
     expect(screen.getByText('Waiting to join')).toBeTruthy()
+  })
+
+  it("adds a group without a link, for me to add UniFlow's number to", async () => {
+    vi.mocked(sourcesApi.connectSource).mockResolvedValue({
+      ...group,
+      id: 10,
+      title: 'HCI C2',
+      platform: 'whatsapp_group',
+      platform_label: 'WhatsApp group',
+      status: 'pending',
+      message_count: 0,
+      added_by_number: true,
+      uniflow_number: '+60123456789',
+    })
+    renderPage()
+
+    fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'HCI C2' } })
+    fireEvent.click(screen.getByRole('radio', { name: "I'll add UniFlow's number" }))
+    expect(screen.queryByLabelText('WhatsApp invite link')).toBeNull()
+    expect(screen.getByLabelText('Group name').getAttribute('aria-describedby')).toBe('group-name-hint')
+    expect(screen.getByText(/exactly as it shows in WhatsApp/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
+
+    await waitFor(() => expect(sourcesApi.connectSource).toHaveBeenCalledWith('', 'HCI C2'))
+    expect(await screen.findByText(`Added "HCI C2". Now add UniFlow's number to the group in WhatsApp: see the steps below.`)).toBeTruthy()
+  })
+
+  it('needs the invite link when that is the chosen way', async () => {
+    renderPage()
+    fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'HCI C2' } })
+    expect((screen.getByRole('button', { name: 'Add group' }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Paste the invite link, or choose another way.')).toBeTruthy()
+  })
+
+  const waiting: Source = {
+    ...group,
+    platform: 'whatsapp_group',
+    platform_label: 'WhatsApp group',
+    status: 'pending',
+    message_count: 0,
+    added_by_number: true,
+    uniflow_number: '+60123456789',
+  }
+
+  it("shows UniFlow's number and the steps for a group I'm adding by number", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    vi.mocked(sourcesApi.getMySources).mockResolvedValue([waiting])
+    renderPage()
+
+    expect(await screen.findByText('+60123456789')).toBeTruthy()
+    expect(screen.getByText(/recognises the group by its name, "CDE2313 Sec A"/)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'what UniFlow reads' }).getAttribute('href')).toBe('/privacy')
+    fireEvent.click(screen.getByRole('button', { name: 'Copy number' }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('+60123456789'))
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeTruthy()
+  })
+
+  it('lets me pick my group if UniFlow joined it under another name', async () => {
+    vi.mocked(sourcesApi.getMySources).mockResolvedValue([waiting])
+    vi.mocked(sourcesApi.getUnclaimedGroups).mockResolvedValue([
+      { id: 30, title: 'CDE2313 Section A (official)', joined_at: '2026-10-19T01:10:00Z' },
+    ])
+    vi.mocked(sourcesApi.claimGroup).mockResolvedValue({ ...waiting, id: 30, status: 'active' })
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'This is my group: CDE2313 Section A (official)' }))
+
+    await waitFor(() => expect(sourcesApi.claimGroup).toHaveBeenCalledWith(7, 30))
+    await waitFor(() => expect(sourcesApi.getMySources).toHaveBeenCalledTimes(2)) // my groups reloaded
   })
 
   it('says when a group is disconnected', async () => {
@@ -136,7 +215,7 @@ describe('Groups page', () => {
     renderPage()
 
     fireEvent.change(await screen.findByLabelText('Group name'), { target: { value: 'SCI channel' } })
-    fireEvent.change(screen.getByLabelText('WhatsApp invite link (optional)'), { target: { value: 'https://t.me/+abc' } })
+    fireEvent.change(screen.getByLabelText('WhatsApp invite link'), { target: { value: 'https://t.me/+abc' } })
     fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
 
     expect(await screen.findByText(/add the UniFlow bot/, { selector: '[role="alert"]' })).toBeTruthy()

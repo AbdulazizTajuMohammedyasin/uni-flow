@@ -47,6 +47,10 @@ class Source(TimeStampedModel):
     external_id = models.CharField(max_length=100, null=True, blank=True)  # noqa: DJ001
     title = models.CharField(max_length=200)
     invite_url = models.URLField(max_length=500, blank=True)
+    # A student adds UniFlow's number to this group themselves (no invite link). It is linked to
+    # the student when UniFlow joins a group of the same name, or when the student picks it from
+    # the groups UniFlow joined since (services.unclaimed_groups).
+    added_by_number = models.BooleanField(default=False)
 
     # What the group is for. Given by the student who added it: only a suggestion until
     # messages, members or an admin confirm it.

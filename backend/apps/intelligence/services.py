@@ -82,13 +82,83 @@ def whatsapp_invite(link: str) -> str:
     return f"https://chat.whatsapp.com/{found.group(1)}"
 
 
+# How long a group UniFlow joined without an invite link can be picked by the student who added
+# it, when its name didn't match (unclaimed_groups).
+CLAIM_WINDOW = timedelta(hours=24)
+
+
 @transaction.atomic
-def connect_group(user, *, invite_url: str, title: str, **scope) -> tuple[Source, bool]:
-    """Add a WhatsApp group by its invite link. Returns (group, created).
+def add_by_number(user, *, title: str, **scope) -> Source:
+    """A WhatsApp group without an invite link: the student adds UniFlow's number to it (any
+    member can, if the group allows it). The group is linked to the student when UniFlow's
+    number joins a group of the same name (connector.mark_joined), or when the student picks
+    it from the groups UniFlow joined since (claim_group)."""
+    source = Source.objects.create(
+        platform=Source.Platform.WHATSAPP_GROUP,
+        title=title.strip(),
+        status=Source.Status.PENDING,  # until UniFlow's number is in it
+        added_by_number=True,
+        connected_by=user,
+        **scope,
+    )
+    SourceMember.objects.create(source=source, user=user)
+    return source
+
+
+def merge_waiting_into(target: Source, waiting: Source) -> None:
+    """Move a waiting group's students (and what it is for, if unknown) to the real group."""
+    for member in waiting.members.all():
+        SourceMember.objects.get_or_create(source=target, user=member.user)
+    if not target.scope_confirmed:
+        for field in ("school", "programme", "intake", "course", "section"):
+            if getattr(target, f"{field}_id") is None:
+                setattr(target, f"{field}_id", getattr(waiting, f"{field}_id"))
+    target.connected_by = target.connected_by or waiting.connected_by
+    target.save()
+    waiting.delete()
+
+
+def _waiting_for(user, source: Source) -> Source:
+    """My group that waits for me to add UniFlow's number, or a clear error."""
+    require_member(user, source)
+    if not (source.added_by_number and source.status == Source.Status.PENDING):
+        raise ValidationError({"detail": "This group isn't waiting for UniFlow's number."})
+    return source
+
+
+def unclaimed_groups(user, source: Source):
+    """Groups UniFlow was added to directly since I added this one, that nobody has claimed:
+    the one I meant, if its WhatsApp name differs from what I typed. Only for the last day."""
+    waiting = _waiting_for(user, source)
+    return Source.objects.filter(
+        platform=Source.Platform.WHATSAPP_GROUP,
+        status=Source.Status.ACTIVE,
+        invite_url="",
+        members__isnull=True,
+        joined_at__gte=max(waiting.created_at, timezone.now() - CLAIM_WINDOW),
+    ).order_by("-joined_at")
+
+
+@transaction.atomic
+def claim_group(user, source: Source, group_id: int) -> Source:
+    """I say which joined group is the one I added: my waiting entry is merged into it."""
+    group = unclaimed_groups(user, source).filter(pk=group_id).first()
+    if group is None:
+        raise ValidationError({"group": "Choose one of the groups UniFlow joined."})
+    merge_waiting_into(group, source)
+    return group
+
+
+@transaction.atomic
+def connect_group(user, *, invite_url: str = "", title: str, **scope) -> tuple[Source, bool]:
+    """Add a WhatsApp group by its invite link, or, without one, for the student to add
+    UniFlow's number to (add_by_number). Returns (group, created).
 
     A group UniFlow already knows by this link isn't joined twice: the student is added to
     its members. (Two different links to the same group are merged when UniFlow's number
     joins, see connector.mark_joined.)"""
+    if not invite_url.strip():
+        return add_by_number(user, title=title, **scope), True
     link = whatsapp_invite(invite_url)
     existing = Source.objects.filter(
         platform=Source.Platform.WHATSAPP_GROUP, invite_url=link

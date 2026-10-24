@@ -337,10 +337,10 @@ const notifications: AppNotification[] = [
 ]
 
 const sources: Source[] = [
-  { id: 1, title: 'CCS2213 Machine Learning – C2', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'active', school: 1, programme: null, intake: null, course: null, section: 1, message_count: 214 },
-  { id: 2, title: 'CCS2223 HCI – Section C2', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'active', school: 1, programme: null, intake: null, course: null, section: 4, message_count: 87 },
-  { id: 4, title: 'BCS March 2025 intake', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'pending', school: 1, programme: 10, intake: 100, course: null, section: null, message_count: 0 },
-  { id: 3, title: 'SCI Student Affairs', platform: 'telegram_channel', platform_label: 'Telegram channel', status: 'disconnected', school: 1, programme: null, intake: null, course: null, section: null, message_count: 42 },
+  { id: 1, title: 'CCS2213 Machine Learning – C2', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'active', school: 1, programme: null, intake: null, course: null, section: 1, message_count: 214, added_by_number: false, uniflow_number: '' },
+  { id: 2, title: 'CCS2223 HCI – Section C2', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'active', school: 1, programme: null, intake: null, course: null, section: 4, message_count: 87, added_by_number: false, uniflow_number: '' },
+  { id: 4, title: 'BCS March 2025 intake', platform: 'whatsapp_group', platform_label: 'WhatsApp group', status: 'pending', school: 1, programme: 10, intake: 100, course: null, section: null, message_count: 0, added_by_number: true, uniflow_number: '+60 12-345 6789' },
+  { id: 3, title: 'SCI Student Affairs', platform: 'telegram_channel', platform_label: 'Telegram channel', status: 'disconnected', school: 1, programme: null, intake: null, course: null, section: null, message_count: 42, added_by_number: false, uniflow_number: '' },
 ]
 
 // --- The handler ---------------------------------------------------------------------------
@@ -412,6 +412,8 @@ export async function mockApi(page: Page, scenario: Scenario): Promise<void> {
     if (path === '/notifications/unread-count/') return json({ count: busy ? 2 : 0 })
 
     if (path === '/sources/') return failing ? fail() : json(busy ? sources : [])
+    // A group UniFlow joined whose WhatsApp name differs from what the student typed.
+    if (path === '/sources/4/unclaimed/') return json([{ id: 9, title: 'BCS Mar 2025 – Official', joined_at: '2026-10-19T01:10:00Z' }])
 
     if (path === '/timetable/my-sections/') return json(busy ? sections : [])
     if (path === '/timetable/sections/') {

@@ -210,6 +210,10 @@ SITE_NAME = "UniFlow"
 EMAIL_BACKEND = env_str("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "UniFlow <no-reply@uniflow.local>")
 ANYMAIL = {"BREVO_API_KEY": env_str("BREVO_API_KEY", "")}
+
+# UniFlow's own WhatsApp number (e.g. +60123456789), shown to students who add it to a group
+# themselves. The same number the connector is logged in with.
+UNIFLOW_WHATSAPP_NUMBER = env_str("UNIFLOW_WHATSAPP_NUMBER", "")
 BREVO_EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
 DJOSER = {

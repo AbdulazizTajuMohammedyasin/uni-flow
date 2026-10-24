@@ -13,7 +13,7 @@ Go/no-go list for the first pilot with real AIU students. Every item must be che
   - silent joins, with the team informing groups;
   - message text **and timetable files** sent to Gemini;
   - hosting providers named.
-- [ ] **Group consent:** every pilot group's admin agrees before UniFlow's number or bot is added, and members are told, with a link to `/privacy`. Joins are silent by default (`SEND_JOIN_NOTICE=false`), so telling members is a manual step.
+- [ ] **Group consent:** every pilot group's admin agrees before UniFlow's number or bot is added, and members are told, with a link to `/privacy`. Joins are silent by default (`SEND_JOIN_NOTICE=false`), so telling members is a manual step. Students can now add UniFlow's number to a group themselves (M9.9); the steps they see ask them to tell the group, but consider turning the join notice on for the pilot.
 - [x] Sender exclusion works end to end: the Messages admin action skips and erases an excluded sender ([09](09-security.md)).
 
 **Processors:**

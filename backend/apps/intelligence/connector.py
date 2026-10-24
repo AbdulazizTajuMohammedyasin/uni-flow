@@ -6,6 +6,10 @@ separate program. It never touches the database; it calls /api/v1/internal/ to:
 - say it joined a group (mark_joined),
 - hand over each new group message (store_message) and its files (attach_file).
 
+A student can also add UniFlow's number to a group themselves (services.add_by_number). That
+group is linked to the student when UniFlow joins a group of the same name (mark_joined), or
+when the student picks it from the groups UniFlow joined since (services.claim_group).
+
 Every request is signed (ConnectorSignature): two headers,
     X-UniFlow-Timestamp: the Unix time in seconds, e.g. 1790000000
     X-UniFlow-Signature: hex HMAC-SHA256 of "<timestamp>.<METHOD>.<path>.<body>" with
@@ -24,8 +28,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import BasePermission
 
 from . import files, timetable_reading
-from .models import Message, MessageFile, Source, SourceMember
-from .services import is_excluded, queue_triage
+from .models import Message, MessageFile, Source
+from .services import is_excluded, merge_waiting_into, queue_triage
 
 MAX_AGE_SECONDS = 5 * 60
 
@@ -65,23 +69,38 @@ def pending_sources():
     ).exclude(invite_url="")
 
 
+def _same_name(a: str, b: str) -> bool:
+    """ "CCS2213  HCI" and "ccs2213 hci" are the same group name."""
+    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
+
+
+def _waiting_by_name(title: str) -> Source | None:
+    """The one group a student is adding by number under this name (none if 0 or several)."""
+    waiting = Source.objects.filter(
+        platform=Source.Platform.WHATSAPP_GROUP,
+        status=Source.Status.PENDING,
+        added_by_number=True,
+    )
+    matches = [source for source in waiting if title and _same_name(source.title, title)]
+    return matches[0] if len(matches) == 1 else None
+
+
 @transaction.atomic
 def mark_joined(*, external_id: str, title: str, source_id=None, notice_sent=False) -> Source:
     """The connector is now in a WhatsApp group. `source_id` is the pending group it
-    joined from a student's link; without it, someone added UniFlow's number directly."""
+    joined from a student's link; without it, someone added UniFlow's number directly, and
+    a group a student is adding by number under the same name is used."""
     pending = (
         Source.objects.filter(pk=source_id, platform=Source.Platform.WHATSAPP_GROUP).first()
         if source_id
-        else None
+        else _waiting_by_name(title)
     )
     existing = Source.objects.filter(
         platform=Source.Platform.WHATSAPP_GROUP, external_id=external_id
     ).first()
     if existing and pending and existing != pending:
-        # Another student's link led to a group UniFlow is already in: keep one group.
-        for member in pending.members.all():
-            SourceMember.objects.get_or_create(source=existing, user=member.user)
-        pending.delete()
+        # Another student's link (or a group of the same name) is one UniFlow is already in.
+        merge_waiting_into(existing, pending)
     source = existing or pending or Source(platform=Source.Platform.WHATSAPP_GROUP)
     source.external_id = external_id
     source.title = (title or source.title or "WhatsApp group")[:200]

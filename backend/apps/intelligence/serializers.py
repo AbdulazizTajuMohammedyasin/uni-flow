@@ -1,5 +1,6 @@
 """What the sources API accepts and returns."""
 
+from django.conf import settings
 from rest_framework import serializers
 
 from apps.academics.models import Course, Intake, Programme, School
@@ -14,6 +15,9 @@ class SourceSerializer(serializers.ModelSerializer):
 
     platform_label = serializers.CharField(source="get_platform_display", read_only=True)
     message_count = serializers.IntegerField(read_only=True)
+    uniflow_number = serializers.SerializerMethodField(
+        help_text="UniFlow's WhatsApp number for a group waiting to be added by number, else blank."
+    )
 
     class Meta:
         model = Source
@@ -29,7 +33,27 @@ class SourceSerializer(serializers.ModelSerializer):
             "course",
             "section",
             "message_count",
+            "added_by_number",
+            "uniflow_number",
         ]
+
+    def get_uniflow_number(self, source) -> str:
+        waiting = source.added_by_number and source.status == Source.Status.PENDING
+        return settings.UNIFLOW_WHATSAPP_NUMBER if waiting else ""
+
+
+class UnclaimedGroupSerializer(serializers.ModelSerializer):
+    """A group UniFlow joined without an invite link that nobody has claimed yet."""
+
+    class Meta:
+        model = Source
+        fields = ["id", "title", "joined_at"]
+
+
+class ClaimGroupSerializer(serializers.Serializer):
+    """POST sources/{id}/claim/ — which joined group is mine."""
+
+    group = serializers.IntegerField()
 
 
 class CreateSourceSerializer(serializers.Serializer):
@@ -54,9 +78,10 @@ class CreateSourceSerializer(serializers.Serializer):
 
 
 class ConnectSourceSerializer(CreateSourceSerializer):
-    """POST sources/connect/ — a WhatsApp group by its invite link, and what it is for."""
+    """POST sources/connect/ — a WhatsApp group by its invite link, or without one for the student
+    to add UniFlow's number to (the reply then has added_by_number), and what it is for."""
 
-    invite_url = serializers.CharField(max_length=500)
+    invite_url = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
 
 
 class PasteSerializer(serializers.Serializer):

@@ -43,6 +43,7 @@ Production uses `config.settings.prod`, which reads all secrets from the environ
 | `INNGEST_SIGNING_KEY`, `INNGEST_EVENT_KEY` | **Required.** Verify inbound calls and authorize outbound events |
 | `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Supabase Storage (S3 compatibility) |
 | `CONNECTOR_SECRET` | HMAC secret shared with the WhatsApp connector |
+| `UNIFLOW_WHATSAPP_NUMBER` | UniFlow's WhatsApp number (e.g. `+60123456789`), shown to students who add it to a group without an invite link |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | Optional Telegram bot |
 
 The full list with local defaults is in [02, Configuration](02-system-architecture.md).

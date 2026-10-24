@@ -24,6 +24,7 @@ from rest_framework.views import APIView
 from . import connector, feed, files, services, telegram, timetable_reading
 from .models import Delivery, Message, Source, TimetableImport
 from .serializers import (
+    ClaimGroupSerializer,
     ConfirmImportSerializer,
     ConnectorFileSerializer,
     ConnectorMessageSerializer,
@@ -42,6 +43,7 @@ from .serializers import (
     SourceSerializer,
     StartImportSerializer,
     TimetableImportSerializer,
+    UnclaimedGroupSerializer,
     UpdateImportSerializer,
 )
 
@@ -83,7 +85,8 @@ class SourceListView(generics.ListCreateAPIView):
 )
 class ConnectSourceView(APIView):
     """POST sources/connect/ — add a WhatsApp group by its invite link. 201: UniFlow's number
-    will join it ("pending"). 200: UniFlow already knows it; you're added to it."""
+    will join it ("pending"). 200: UniFlow already knows it; you're added to it. Without a link,
+    201 with added_by_number: the student adds UniFlow's number to the group."""
 
     def post(self, request):
         serializer = ConnectSourceSerializer(data=request.data)
@@ -94,6 +97,31 @@ class ConnectSourceView(APIView):
             SourceSerializer(source).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
+
+
+@extend_schema(tags=["sources"], responses={200: UnclaimedGroupSerializer(many=True)})
+class UnclaimedGroupsView(APIView):
+    """GET sources/{id}/unclaimed/ — for my group waiting for UniFlow's number: the groups UniFlow
+    joined since, that nobody has claimed (the one I meant, if I typed a different name)."""
+
+    def get(self, request, source_id):
+        source = generics.get_object_or_404(Source, pk=source_id)
+        groups = services.unclaimed_groups(request.user, source)
+        return Response(UnclaimedGroupSerializer(groups, many=True).data)
+
+
+@extend_schema(tags=["sources"], request=ClaimGroupSerializer, responses={200: SourceSerializer})
+class ClaimGroupView(APIView):
+    """POST sources/{id}/claim/ — "this joined group is the one I added": my waiting entry is
+    merged into it, and the merged group is returned."""
+
+    def post(self, request, source_id):
+        source = generics.get_object_or_404(Source, pk=source_id)
+        serializer = ClaimGroupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        group = services.claim_group(request.user, source, serializer.validated_data["group"])
+        group.message_count = group.messages.count()
+        return Response(SourceSerializer(group).data)
 
 
 @extend_schema(tags=["sources"], request=PasteSerializer, responses={201: ImportResultSerializer})

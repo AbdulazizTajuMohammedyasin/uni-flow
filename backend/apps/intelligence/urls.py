@@ -2,11 +2,20 @@
 
 from django.urls import path
 
-from .views import ConnectSourceView, ExportView, PasteView, SourceListView
+from .views import (
+    ClaimGroupView,
+    ConnectSourceView,
+    ExportView,
+    PasteView,
+    SourceListView,
+    UnclaimedGroupsView,
+)
 
 urlpatterns = [
     path("", SourceListView.as_view(), name="sources"),
     path("connect/", ConnectSourceView.as_view(), name="source-connect"),
     path("<int:source_id>/paste/", PasteView.as_view(), name="source-paste"),
     path("<int:source_id>/export/", ExportView.as_view(), name="source-export"),
+    path("<int:source_id>/unclaimed/", UnclaimedGroupsView.as_view(), name="source-unclaimed"),
+    path("<int:source_id>/claim/", ClaimGroupView.as_view(), name="source-claim"),
 ]

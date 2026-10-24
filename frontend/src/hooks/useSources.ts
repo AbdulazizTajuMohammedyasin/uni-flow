@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { connectSource, createSource, getMySources, pasteMessages, uploadExport } from '@/api/sources'
+import {
+  claimGroup,
+  connectSource,
+  createSource,
+  getMySources,
+  getUnclaimedGroups,
+  pasteMessages,
+  uploadExport,
+} from '@/api/sources'
 
 const mySourcesKey = ['sources', 'mine'] as const
 
@@ -22,6 +30,16 @@ export const useConnectSource = () =>
   useSourcesChange(({ inviteUrl, title }: { inviteUrl: string; title: string }) =>
     connectSource(inviteUrl, title),
   )
+/** Groups UniFlow joined since I added this one by number; checked every 30 seconds while it waits. */
+export function useUnclaimedGroups(sourceId: number) {
+  return useQuery({
+    queryKey: ['sources', sourceId, 'unclaimed'],
+    queryFn: () => getUnclaimedGroups(sourceId),
+    refetchInterval: 30_000,
+  })
+}
+export const useClaimGroup = () =>
+  useSourcesChange(({ id, groupId }: { id: number; groupId: number }) => claimGroup(id, groupId))
 export const usePasteMessages = () =>
   useSourcesChange(({ id, text }: { id: number; text: string }) => pasteMessages(id, text))
 export const useUploadExport = () =>

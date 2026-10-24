@@ -1,4 +1,4 @@
-import type { ImportResult, Source } from '@/types/sources'
+import type { ImportResult, Source, UnclaimedGroup } from '@/types/sources'
 
 import { api } from './client'
 import { toApiError } from './errors'
@@ -22,10 +22,29 @@ export async function createSource(title: string): Promise<Source> {
 }
 
 /** A WhatsApp group by its invite link: UniFlow's number joins it ("pending" until then).
- * If UniFlow already knows the group, I'm added to it instead. */
+ * If UniFlow already knows the group, I'm added to it instead. Without a link (""), I add
+ * UniFlow's number to the group myself; the reply has added_by_number and the number. */
 export async function connectSource(inviteUrl: string, title: string): Promise<Source> {
   try {
     return (await api.post<Source>('/sources/connect/', { invite_url: inviteUrl, title })).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** For my group waiting for UniFlow's number: groups UniFlow joined since that nobody claimed. */
+export async function getUnclaimedGroups(sourceId: number): Promise<UnclaimedGroup[]> {
+  try {
+    return (await api.get<UnclaimedGroup[]>(`/sources/${sourceId}/unclaimed/`)).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** "This joined group is the one I added": my waiting entry becomes that group. */
+export async function claimGroup(sourceId: number, groupId: number): Promise<Source> {
+  try {
+    return (await api.post<Source>(`/sources/${sourceId}/claim/`, { group: groupId })).data
   } catch (error) {
     throw toApiError(error)
   }
