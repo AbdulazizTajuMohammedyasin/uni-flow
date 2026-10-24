@@ -125,6 +125,9 @@ class StartImportSerializer(serializers.Serializer):
 
     file = serializers.FileField(required=False)
     link = serializers.URLField(required=False, max_length=1000)
+    semester = serializers.ChoiceField(
+        choices=["current", "next"], default="current", help_text="Which semester it is for."
+    )
 
     def validate(self, attrs):
         if bool(attrs.get("file")) == bool(attrs.get("link")):

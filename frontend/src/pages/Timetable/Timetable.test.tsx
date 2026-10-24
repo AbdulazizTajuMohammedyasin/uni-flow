@@ -15,6 +15,8 @@ vi.mock('@/api/timetable', () => ({
   joinSection: vi.fn(),
   leaveSection: vi.fn(),
   addSectionByHand: vi.fn(),
+  getSemesters: vi.fn(),
+  moveSections: vi.fn(),
   getToday: vi.fn(),
   getWeek: vi.fn(),
   startImport: vi.fn(),
@@ -32,6 +34,7 @@ const section: Section = {
   course: { id: 1, code: 'CDE2313', name: 'Data Structures' },
   code: 'A',
   term: 2,
+  semester: { id: 2, name: '2025/2026 Semester 2', starts_on: '2026-03-23', ends_on: '2026-07-17', estimated: false },
   lecturer_name: 'Dr Lee',
   source: 'admin',
   meetings: [
@@ -95,8 +98,10 @@ function week(monday: string): TimetableDays {
     date.setUTCDate(date.getUTCDate() + index)
     return { date: date.toISOString().slice(0, 10), weekday: index, classes: index === 0 ? [slot] : [] }
   })
-  return { term: { id: 2, name: '2025/2026 Semester 2' }, days }
+  return { term: { id: 2, name: '2025/2026 Semester 2', starts_on: '2026-03-23', ends_on: '2026-07-17' }, days }
 }
+
+const nextSemester = { id: 3, name: '2025/2026 Semester 3', starts_on: '2026-08-03', ends_on: '2026-10-02', estimated: true }
 
 function renderTimetable(path = '/timetable') {
   const router = createMemoryRouter([{ path: '/timetable', element: <TimetablePage /> }], {
@@ -113,7 +118,7 @@ function renderTimetable(path = '/timetable') {
 beforeEach(() => {
   vi.mocked(timetableApi.getMySections).mockResolvedValue([section])
   vi.mocked(timetableApi.getToday).mockResolvedValue({
-    term: { id: 2, name: '2025/2026 Semester 2' },
+    term: { id: 2, name: '2025/2026 Semester 2', starts_on: '2026-03-23', ends_on: '2026-07-17' },
     days: [{ date: '2026-03-30', weekday: 0, classes: [slot] }],
   })
   vi.mocked(timetableApi.getWeek).mockImplementation(async (date) => week(date ?? '2026-03-30'))
@@ -125,6 +130,7 @@ beforeEach(() => {
   })
   vi.mocked(timetableApi.getChanges).mockResolvedValue([])
   vi.mocked(timetableApi.getImports).mockResolvedValue([])
+  vi.mocked(timetableApi.getSemesters).mockResolvedValue({ current: section.semester, next: nextSemester })
 })
 
 describe('Timetable page', () => {
@@ -153,8 +159,16 @@ describe('Timetable page', () => {
     renderTimetable('/timetable?view=week')
 
     expect(await screen.findByText('No classes this week')).toBeTruthy()
-    expect(screen.getByText(/Your classes are from 2025\/2026 Semester 2/)).toBeTruthy()
+    expect(screen.getByText(/No classes from 2025\/2026 Semester 2 this week/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Previous week' })).toBeTruthy()
+  })
+
+  it('says when the semester of an empty week starts', async () => {
+    const empty = week('2026-03-16')
+    vi.mocked(timetableApi.getWeek).mockResolvedValue({ ...empty, days: empty.days.map((day) => ({ ...day, classes: [] })) })
+    renderTimetable('/timetable?view=week')
+
+    expect(await screen.findByText(/2025\/2026 Semester 2 starts on Mon 23 Mar; your classes show from then/)).toBeTruthy()
   })
 
   it('offers to choose sections when the student has none, and adds one', async () => {
@@ -174,7 +188,7 @@ describe('Timetable page', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Choose sections' }))
     fireEvent.change(screen.getByLabelText('Search sections'), { target: { value: 'cde' } })
 
-    await waitFor(() => expect(timetableApi.getSections).toHaveBeenLastCalledWith('cde'))
+    await waitFor(() => expect(timetableApi.getSections).toHaveBeenLastCalledWith('cde', 'current'))
     expect(await screen.findByRole('button', { name: 'Add CDE2313 Section A' })).toHaveProperty(
       'disabled',
       true, // already in "My sections"
@@ -212,6 +226,7 @@ describe('Timetable page', () => {
       course_code: 'CDE3101',
       course_name: 'Operating Systems',
       section: 'A',
+      semester: 'current',
       meetings: [
         {
           weekday: 2,
@@ -223,6 +238,29 @@ describe('Timetable page', () => {
         },
       ],
     })
+  })
+
+  it('adds classes to the next semester when chosen, without typing any dates', async () => {
+    renderTimetable()
+
+    fireEvent.click(await screen.findByRole('radio', { name: /2025\/2026 Semester 3/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Choose sections' }))
+    fireEvent.change(await screen.findByLabelText('Search sections'), { target: { value: 'cde' } })
+
+    await waitFor(() => expect(timetableApi.getSections).toHaveBeenLastCalledWith('cde', 'next'))
+  })
+
+  it('groups my sections by semester and moves classes out of one that ended', async () => {
+    const ended = { id: 1, name: '2025/2026 Semester 1', starts_on: '2025-10-27', ends_on: '2026-02-27', estimated: false }
+    vi.mocked(timetableApi.getMySections).mockResolvedValue([{ ...section, id: 4, semester: ended }, section])
+    vi.mocked(timetableApi.moveSections).mockResolvedValue({ moved: 1 })
+    renderTimetable()
+
+    expect(await screen.findByRole('region', { name: '2025/2026 Semester 1' })).toBeTruthy()
+    expect(screen.getByRole('region', { name: '2025/2026 Semester 2' })).toBeTruthy()
+    fireEvent.click(await screen.findByRole('button', { name: 'Move to 2025/2026 Semester 2' }))
+
+    await waitFor(() => expect(timetableApi.moveSections).toHaveBeenCalledWith(1))
   })
 
   it('checks that a class ends after it starts', async () => {
@@ -255,7 +293,7 @@ describe('Timetable page', () => {
     vi.mocked(timetableApi.answerChange).mockResolvedValue({ ...moved, my_status: 'confirmed' })
     renderTimetable()
     vi.mocked(timetableApi.getToday).mockResolvedValue({
-      term: { id: 2, name: '2025/2026 Semester 2' },
+      term: { id: 2, name: '2025/2026 Semester 2', starts_on: '2026-03-23', ends_on: '2026-07-17' },
       days: [
         {
           date: '2026-03-30',
@@ -291,7 +329,7 @@ describe('Timetable page', () => {
 
   it('marks a class with a change waiting, and a cancelled class', async () => {
     vi.mocked(timetableApi.getToday).mockResolvedValue({
-      term: { id: 2, name: '2025/2026 Semester 2' },
+      term: { id: 2, name: '2025/2026 Semester 2', starts_on: '2026-03-23', ends_on: '2026-07-17' },
       days: [
         {
           date: '2026-03-30',

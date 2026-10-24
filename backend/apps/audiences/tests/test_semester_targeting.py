@@ -21,7 +21,7 @@ TODAY = date(2026, 10, 15)
 @pytest.fixture
 def students(monkeypatch):
     monkeypatch.setattr(semesters, "today", lambda: TODAY)
-    call_command("seed_academics", stdout=None)  # official terms up to Aug 2026
+    call_command("seed_academics", stdout=None)  # official terms up to Aug 2026, then estimated
     school = School.objects.create(code="SCI-T", name="Computing")
     programme = Programme.objects.create(school=school, code="BCS-T", name="CS", level="bachelor")
     foundation = Programme.objects.create(
@@ -45,8 +45,9 @@ def students(monkeypatch):
         "sem5": student("sem5", date(2025, 3, 1)),  # Mar 25 ... Aug 26
         "sem6": student("sem6", date(2024, 10, 1)),  # all six terms
         "late": student("late", date(2026, 10, 1), override=4),  # says semester 4
-        # Foundation calendar: Oct 25 (13 Oct), Feb 26, Jun 26 -> semester 3
-        "fnd3": student("fnd3", date(2025, 10, 1), programme=foundation),
+        # Foundation calendar: Oct 25 (13 Oct), Feb 26, Jun 26, and Oct 26 (12 Oct, worked out
+        # from last year's calendar) -> semester 4
+        "fnd4": student("fnd4", date(2025, 10, 1), programme=foundation),
         "new": create_user("new@student.aiu.edu.my", "Str0ng-pass-99", full_name="New"),
     }
 
@@ -54,12 +55,12 @@ def students(monkeypatch):
 @pytest.mark.parametrize(
     ("low", "high", "expected"),
     [
-        (None, None, {"sem1", "sem2", "sem3", "sem5", "sem6", "late", "fnd3", "new"}),
+        (None, None, {"sem1", "sem2", "sem3", "sem5", "sem6", "late", "fnd4", "new"}),
         (1, 1, {"sem1"}),
-        (4, 6, {"sem5", "sem6", "late"}),  # "Year 2"
-        (2, None, {"sem2", "sem3", "sem5", "sem6", "late", "fnd3"}),
-        (None, 3, {"sem1", "sem2", "sem3", "fnd3"}),
-        (3, 3, {"sem3", "fnd3"}),
+        (4, 6, {"sem5", "sem6", "late", "fnd4"}),  # "Year 2"
+        (2, None, {"sem2", "sem3", "sem5", "sem6", "late", "fnd4"}),
+        (None, 3, {"sem1", "sem2", "sem3"}),
+        (3, 3, {"sem3"}),
         (7, None, set()),  # nobody can be in semester 7 yet
     ],
 )

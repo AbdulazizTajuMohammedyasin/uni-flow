@@ -201,7 +201,9 @@ class TimetableImportListView(APIView):
             stored = files.save_upload(request.user, file)
         else:
             stored = files.fetch_drive_link(request.user, serializer.validated_data["link"])
-        timetable_import = timetable_reading.start_import(request.user, stored)
+        timetable_import = timetable_reading.start_import(
+            request.user, stored, serializer.validated_data["semester"]
+        )
         return Response(import_data(timetable_import), status=status.HTTP_201_CREATED)
 
 

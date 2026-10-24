@@ -23,33 +23,56 @@ def require_student(user) -> None:
         raise PermissionDenied("Only students have their own sections.")
 
 
+def _calendar_of(user) -> str:
+    profile = getattr(user, "student_profile", None)
+    return semesters.calendar_for(profile.programme if profile else None)
+
+
 def current_term_for(user) -> Term | None:
     """The current term of the student's calendar (Foundation or Undergraduate)."""
-    profile = getattr(user, "student_profile", None)
-    calendar = semesters.calendar_for(profile.programme if profile else None)
-    return Term.current(calendar, semesters.today())
+    return Term.current(_calendar_of(user), semesters.today())
 
 
-def _require_current_term(user) -> Term:
-    term = current_term_for(user)
+SEMESTERS = ("current", "next")
+
+
+def semesters_for(user) -> tuple[Term | None, Term | None]:
+    """The two terms a student can add classes to: this semester and the next one (its dates
+    known or worked out from last year, see Term.next_after)."""
+    current = current_term_for(user)
+    return current, Term.next_after(current) if current else None
+
+
+def term_for(user, semester: str = "current") -> Term:
+    """The term the student chose ("current" or "next"), or a clear error."""
+    current, following = semesters_for(user)
+    term = following if semester == "next" else current
     if term is None:
         raise ValidationError("No terms have been added yet. Please try again later.")
     return term
 
 
 def join_section(user, section: CourseSection) -> SectionEnrollment:
-    """Add the student to a section of their current term (joining twice changes nothing)."""
+    """Add the student to a section of this or next semester (joining twice changes nothing)."""
     require_student(user)
-    term = _require_current_term(user)
-    if section.term_id != term.id or not section.is_active:
-        raise ValidationError({"section": "Only active sections of the current term can be added."})
+    allowed = {term.id for term in semesters_for(user) if term}
+    if section.term_id not in allowed or not section.is_active:
+        raise ValidationError(
+            {"section": "Only active sections of this or next semester can be added."}
+        )
     enrollment, _ = SectionEnrollment.objects.get_or_create(user=user, section=section)
     return enrollment
 
 
 @transaction.atomic
 def add_section_by_hand(
-    user, *, course_code: str, course_name: str, section_code: str, meetings: list[dict]
+    user,
+    *,
+    course_code: str,
+    course_name: str,
+    section_code: str,
+    meetings: list[dict],
+    semester: str = "current",
 ) -> tuple[CourseSection, bool]:
     """Find or create a course and its section in the current term, then join it.
 
@@ -57,7 +80,7 @@ def add_section_by_hand(
     existing section keeps its classes (another student or the AI already added them).
     """
     require_student(user)
-    term = _require_current_term(user)
+    term = term_for(user, semester)
     code = course_code.strip().upper().replace(" ", "")
 
     course = Course.objects.filter(code=code).first()
@@ -113,25 +136,104 @@ def _class_slots(user, term: Term) -> dict[int, list[dict]]:
 
 
 def classes_for_days(user, days: list[date]) -> dict:
-    """The student's classes on each of `days`: the weekly classes of the current term
-    (none outside it) plus the class changes they confirmed (see changes.py)."""
+    """The student's classes on each of `days`: the weekly classes of the term each day falls
+    in (none between terms), so next semester's classes appear once it starts, plus the
+    class changes they confirmed (see changes.py). `term` is the term of these days, or the
+    current one if they are all between terms."""
     require_student(user)
-    term = current_term_for(user)
-    slots = _class_slots(user, term) if term else {}
-    by_day = {
-        day: [dict(slot) for slot in slots[day.weekday()]]
-        if term and term.starts_on <= day <= term.ends_on
-        else []
-        for day in days
-    }
+    current = current_term_for(user)  # also works out a missing next term
+    terms = list(
+        Term.objects.filter(
+            calendar=_calendar_of(user), starts_on__lte=max(days), ends_on__gte=min(days)
+        ).order_by("starts_on")
+    )
+    slots: dict[int, dict[int, list[dict]]] = {}
+    by_day = {}
+    for day in days:
+        term = next((t for t in terms if t.starts_on <= day <= t.ends_on), None)
+        if term is None:
+            by_day[day] = []
+            continue
+        if term.id not in slots:
+            slots[term.id] = _class_slots(user, term)
+        by_day[day] = [dict(slot) for slot in slots[term.id][day.weekday()]]
     apply_changes(user, by_day)
+    term = terms[0] if terms else current
     return {
-        "term": {"id": term.id, "name": term.name} if term else None,
+        "term": (
+            {"id": term.id, "name": term.name, "starts_on": term.starts_on, "ends_on": term.ends_on}
+            if term
+            else None
+        ),
         "days": [
             {"date": day, "weekday": day.weekday(), "classes": classes}
             for day, classes in by_day.items()
         ],
     }
+
+
+def recent_terms_for(user) -> list[Term]:
+    """Terms whose classes "My sections" shows: one that ended in the last 60 days (classes
+    saved there can be moved on), this semester and the next."""
+    current, following = semesters_for(user)
+    ended = (
+        Term.objects.filter(
+            calendar=_calendar_of(user),
+            ends_on__lt=semesters.today(),
+            ends_on__gte=semesters.today() - timedelta(days=60),
+        )
+        .exclude(pk__in=[t.pk for t in (current, following) if t])
+        .order_by("-ends_on")
+        .first()
+    )
+    return [term for term in (ended, current, following) if term]
+
+
+@transaction.atomic
+def move_sections(user, from_term: Term) -> int:
+    """Move my classes from a term that has ended to the current one (e.g. a timetable added
+    before the new semester was known). The same course and section in the new term is used,
+    or made from the old one with its weekly classes. Returns how many were moved."""
+    require_student(user)
+    target = term_for(user, "current")
+    if from_term.ends_on >= semesters.today() or from_term == target:
+        raise ValidationError(
+            {"from_term": "Only classes of a semester that has ended can be moved."}
+        )
+    moved = 0
+    for enrollment in SectionEnrollment.objects.filter(
+        user=user, section__term=from_term
+    ).select_related("section"):
+        old = enrollment.section
+        new, created = CourseSection.objects.get_or_create(
+            course_id=old.course_id,
+            term=target,
+            code=old.code,
+            defaults={
+                "lecturer_name": old.lecturer_name,
+                "source": old.source,
+                "created_by": user,
+                "updated_by": user,
+            },
+        )
+        if created:
+            ClassMeeting.objects.bulk_create(
+                ClassMeeting(
+                    section=new,
+                    weekday=meeting.weekday,
+                    start_time=meeting.start_time,
+                    end_time=meeting.end_time,
+                    meeting_type=meeting.meeting_type,
+                    building=meeting.building,
+                    room=meeting.room,
+                    updated_by=user,
+                )
+                for meeting in old.meetings.all()
+            )
+        SectionEnrollment.objects.get_or_create(user=user, section=new)
+        enrollment.delete()
+        moved += 1
+    return moved
 
 
 def week_of(day: date) -> list[date]:

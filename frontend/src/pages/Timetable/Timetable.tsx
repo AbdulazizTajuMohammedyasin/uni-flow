@@ -14,10 +14,18 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { WeekGrid } from '@/components/WeekGrid'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import { useClassChanges, useLeaveSection, useMySections, useToday, useWeek } from '@/hooks/useTimetable'
+import {
+  useClassChanges,
+  useLeaveSection,
+  useMoveSections,
+  useMySections,
+  useSemesters,
+  useToday,
+  useWeek,
+} from '@/hooks/useTimetable'
 import { changeLabel, formatDay, meetingText, nowInMalaysia, shiftDate, todayIsoInMalaysia } from '@/lib/timetable'
 import { cn } from '@/lib/utils'
-import type { ClassSlot, TimetableDays } from '@/types/timetable'
+import type { ClassSlot, Section, Semester, SemesterChoice, TimetableDays } from '@/types/timetable'
 
 type Panel = 'none' | 'import' | 'pick' | 'add'
 
@@ -38,6 +46,7 @@ export function TimetablePage() {
   const wide = useMediaQuery('(min-width: 1024px)')
   const mySections = useMySections()
   const [panel, setPanel] = useState<Panel>('none')
+  const [semester, setSemester] = useState<SemesterChoice>('current')
   const hasSections = (mySections.data?.length ?? 0) > 0
 
   const show = (next: 'today' | 'week') => setParams(next === 'week' ? { view: 'week' } : {})
@@ -103,6 +112,7 @@ export function TimetablePage() {
 
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Add classes</h3>
+          <SemesterChooser value={semester} onChange={setSemester} />
           <div className="flex flex-wrap gap-2">
             {PANELS.map(({ value, label, Icon }) => (
               <Button
@@ -121,13 +131,68 @@ export function TimetablePage() {
 
         {panel !== 'none' && (
           <AddPanel panel={panel} onClose={() => setPanel('none')}>
-            {panel === 'pick' && <SectionPicker mySectionIds={mySections.data?.map((section) => section.id) ?? []} />}
-            {panel === 'add' && <AddClassForm />}
-            {panel === 'import' && <TimetableImportBox />}
+            {panel === 'pick' && (
+              <SectionPicker semester={semester} mySectionIds={mySections.data?.map((section) => section.id) ?? []} />
+            )}
+            {panel === 'add' && <AddClassForm semester={semester} />}
+            {panel === 'import' && <TimetableImportBox key={semester} semester={semester} />}
           </AddPanel>
         )}
       </section>
     </div>
+  )
+}
+
+/** "Tue 26 Oct" from "2026-10-26". */
+function shortDate(iso: string): string {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+}
+
+/** "now" for a semester that has started, else when it starts. */
+function whenText(semester: Semester): string {
+  return semester.starts_on <= todayIsoInMalaysia() ? 'now' : `starts ${shortDate(semester.starts_on)}`
+}
+
+/** Which semester new classes go to: this one or the next (no dates to type: UniFlow knows them). */
+function SemesterChooser({ value, onChange }: { value: SemesterChoice; onChange: (value: SemesterChoice) => void }) {
+  const semesters = useSemesters()
+  if (!semesters.data?.current) return null
+  const options = (
+    [
+      ['current', semesters.data.current],
+      ['next', semesters.data.next],
+    ] as const
+  ).filter((option): option is readonly [SemesterChoice, Semester] => option[1] !== null)
+  return (
+    <fieldset>
+      <legend className="sr-only">Which semester are these classes for?</legend>
+      <p aria-hidden className="mb-2 text-sm">
+        Which semester are these classes for?
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map(([choice, semester]) => (
+          <label key={choice} className="cursor-pointer">
+            <input
+              type="radio"
+              name="semester"
+              value={choice}
+              checked={value === choice}
+              onChange={() => onChange(choice)}
+              className="peer sr-only"
+            />
+            <span className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-3.5 text-sm peer-checked:border-primary peer-checked:bg-primary peer-checked:font-medium peer-checked:text-primary-foreground peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50 md:min-h-9">
+              {semester.name}
+              <span className="font-normal opacity-80">· {whenText(semester)}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   )
 }
 
@@ -201,9 +266,13 @@ function WeekView({ date, onDate, grid }: { date?: string; onDate: (date: string
         <EmptyState
           title="No classes this week"
           description={
-            week.data.term
-              ? `Your classes are from ${week.data.term.name}. Use the arrows to see another week, or if a new semester has started, add your new classes below.`
-              : 'Use the arrows to see another week, or add your classes below.'
+            !week.data.term
+              ? 'Use the arrows to see another week, or add your classes below.'
+              : week.data.term.starts_on > sunday
+                ? `${week.data.term.name} starts on ${shortDate(week.data.term.starts_on)}; your classes show from then. Use the arrows to see that week.`
+                : week.data.term.ends_on < monday
+                  ? `${week.data.term.name} ended on ${shortDate(week.data.term.ends_on)}. If your classes are for the new semester, move them under My sections.`
+                  : `No classes from ${week.data.term.name} this week. Use the arrows to see another week.`
           }
         />
       ) : grid ? (
@@ -289,13 +358,50 @@ function ClassRow({ slot, moment, past }: { slot: ClassSlot; moment?: 'Now' | 'N
   )
 }
 
+/** My sections grouped by semester (this one, the next, and one that just ended). */
 function MySectionList() {
   const mySections = useMySections()
-  const leave = useLeaveSection()
   if (!mySections.data?.length) return null
+  const groups = new Map<number, { semester: Semester; sections: Section[] }>()
+  for (const section of mySections.data) {
+    const group = groups.get(section.semester.id) ?? { semester: section.semester, sections: [] }
+    group.sections.push(section)
+    groups.set(section.semester.id, group)
+  }
   return (
-    <ul className="divide-y divide-border border-y border-border">
-      {mySections.data.map((section) => (
+    <div className="space-y-5">
+      {[...groups.values()].map(({ semester, sections }) => (
+        <SemesterSections key={semester.id} semester={semester} sections={sections} />
+      ))}
+    </div>
+  )
+}
+
+/** One semester's sections; for a semester that has ended, a way to move them to the current one. */
+function SemesterSections({ semester, sections }: { semester: Semester; sections: Section[] }) {
+  const leave = useLeaveSection()
+  const move = useMoveSections()
+  const semesters = useSemesters()
+  const ended = semester.ends_on < todayIsoInMalaysia()
+  const current = semesters.data?.current
+  return (
+    <section aria-label={semester.name} className="space-y-2">
+      <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-medium">
+        {semester.name}
+        <span className="font-normal text-muted-foreground">
+          {ended ? `ended ${shortDate(semester.ends_on)}` : whenText(semester)}
+        </span>
+      </h3>
+      {ended && current && current.id !== semester.id && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-muted/60 p-3 text-sm">
+          <p className="flex-1">Are these classes for {current.name}? Move them, and they show from {shortDate(current.starts_on)}.</p>
+          <Button size="sm" disabled={move.isPending} onClick={() => move.mutate(semester.id)}>
+            Move to {current.name}
+          </Button>
+        </div>
+      )}
+      <ul className="divide-y divide-border border-y border-border">
+      {sections.map((section) => (
         <li key={section.id} className="flex items-center justify-between gap-3 py-3">
           <div className="min-w-0">
             <p className="font-medium">
@@ -316,6 +422,7 @@ function MySectionList() {
           </Button>
         </li>
       ))}
-    </ul>
+      </ul>
+    </section>
   )
 }

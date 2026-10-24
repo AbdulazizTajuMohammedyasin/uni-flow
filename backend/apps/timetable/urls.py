@@ -5,16 +5,20 @@ from django.urls import path
 from .views import (
     ClassChangeDecisionView,
     ClassChangeListView,
+    MoveSectionsView,
     MySectionDeleteView,
     MySectionsView,
     SectionListView,
+    SemestersView,
     TodayView,
     WeekView,
 )
 
 urlpatterns = [
     path("sections/", SectionListView.as_view(), name="timetable-sections"),
+    path("semesters/", SemestersView.as_view(), name="timetable-semesters"),
     path("my-sections/", MySectionsView.as_view(), name="timetable-my-sections"),
+    path("my-sections/move/", MoveSectionsView.as_view(), name="timetable-my-sections-move"),
     path(
         "my-sections/<int:section_id>/",
         MySectionDeleteView.as_view(),

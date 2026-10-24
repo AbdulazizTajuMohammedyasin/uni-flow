@@ -71,7 +71,7 @@ describe('Add my timetable', () => {
     const file = uploadFile()
 
     expect(await screen.findByText('Is this your timetable?')).toBeTruthy()
-    expect(timetableApi.startImport).toHaveBeenCalledWith({ file })
+    expect(timetableApi.startImport).toHaveBeenCalledWith({ file }, 'current')
     expect(screen.getByText('CDE2313 · Section A')).toBeTruthy()
     expect(screen.getByText('Mon 10:00–12:00 · B2')).toBeTruthy()
     expect((screen.getByLabelText('Tab') as HTMLSelectElement).value).toBe('BCS Oct 2025')

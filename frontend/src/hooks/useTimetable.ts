@@ -11,13 +11,15 @@ import {
   getImports,
   getMySections,
   getSections,
+  getSemesters,
   getToday,
   getWeek,
   joinSection,
   leaveSection,
+  moveSections,
   startImport,
 } from '@/api/timetable'
-import type { AddSectionData, ImportRow } from '@/types/timetable'
+import type { AddSectionData, ImportRow, SemesterChoice } from '@/types/timetable'
 
 // Every timetable query starts with 'timetable', so one invalidation refreshes them all.
 export const timetableKeys = {
@@ -25,7 +27,8 @@ export const timetableKeys = {
   today: ['timetable', 'today'] as const,
   week: (date: string | undefined) => ['timetable', 'week', date ?? 'this'] as const,
   mySections: ['timetable', 'my-sections'] as const,
-  sections: (search: string) => ['timetable', 'sections', search] as const,
+  sections: (search: string, semester: SemesterChoice) => ['timetable', 'sections', semester, search] as const,
+  semesters: ['timetable', 'semesters'] as const,
   timetableImport: (id: number) => ['timetable', 'import', id] as const,
   imports: ['timetable', 'imports'] as const,
   changes: ['timetable', 'changes'] as const,
@@ -43,8 +46,15 @@ export function useMySections() {
   return useQuery({ queryKey: timetableKeys.mySections, queryFn: getMySections })
 }
 
-export function useSectionSearch(search: string) {
-  return useQuery({ queryKey: timetableKeys.sections(search), queryFn: () => getSections(search) })
+export function useSectionSearch(search: string, semester: SemesterChoice = 'current') {
+  return useQuery({
+    queryKey: timetableKeys.sections(search, semester),
+    queryFn: () => getSections(search, semester),
+  })
+}
+
+export function useSemesters() {
+  return useQuery({ queryKey: timetableKeys.semesters, queryFn: getSemesters })
 }
 
 /** Join, leave and add-by-hand all change "my timetable": refresh everything after. */
@@ -58,6 +68,7 @@ function useTimetableChange<Input, Result>(change: (input: Input) => Promise<Res
 
 export const useJoinSection = () => useTimetableChange((id: number) => joinSection(id))
 export const useLeaveSection = () => useTimetableChange((id: number) => leaveSection(id))
+export const useMoveSections = () => useTimetableChange((fromTerm: number) => moveSections(fromTerm))
 export const useAddSection = () =>
   useTimetableChange((data: AddSectionData) => addSectionByHand(data))
 
@@ -76,7 +87,10 @@ export function useTimetableImports() {
 }
 
 export const useStartImport = () =>
-  useTimetableChange((input: { file: File } | { link: string }) => startImport(input))
+  useTimetableChange(
+    ({ input, semester }: { input: { file: File } | { link: string }; semester: SemesterChoice }) =>
+      startImport(input, semester),
+  )
 export const useChooseImportTab = () =>
   useTimetableChange(({ id, tab }: { id: number; tab: string }) => chooseImportTab(id, tab))
 export const useConfirmImport = () =>

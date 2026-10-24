@@ -22,7 +22,9 @@ from .serializers import (
     AddSectionSerializer,
     ClassChangeSerializer,
     JoinSectionSerializer,
+    MoveSectionsSerializer,
     SectionSerializer,
+    SemestersSerializer,
     TimetableDaysSerializer,
 )
 
@@ -48,22 +50,29 @@ def sections_with_details():
         parameters=[
             OpenApiParameter("course", OpenApiTypes.INT, description="Only this course (id)."),
             OpenApiParameter("school", OpenApiTypes.INT, description="Only this school (id)."),
+            OpenApiParameter(
+                "semester",
+                OpenApiTypes.STR,
+                enum=["current", "next"],
+                description="Default: current.",
+            ),
         ]
     ),
     post=extend_schema(request=AddSectionSerializer, responses={201: SectionSerializer}),
 )
 @extend_schema(tags=["timetable"])
 class SectionListView(generics.ListCreateAPIView):
-    """GET: sections of the current term (`?search=` on course code or name).
-    POST: add a class that is not in UniFlow yet, and join it."""
+    """GET: sections of this semester, or of the next with `?semester=next` (`?search=` on
+    course code or name). POST: add a class that is not in UniFlow yet, and join it."""
 
     serializer_class = SectionSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ["course__code", "course__name"]
 
     def get_queryset(self):
-        term = services.current_term_for(self.request.user)
-        sections = sections_with_details().filter(term=term, is_active=True)
+        current, following = services.semesters_for(self.request.user)
+        term = following if self.request.query_params.get("semester") == "next" else current
+        sections = sections_with_details().filter(term=term, is_active=True)  # none: no terms
         if (course := id_param(self.request, "course")) is not None:
             sections = sections.filter(course_id=course)
         if (school := id_param(self.request, "school")) is not None:
@@ -80,6 +89,7 @@ class SectionListView(generics.ListCreateAPIView):
             course_name=data["course_name"],
             section_code=data["section"],
             meetings=data["meetings"],
+            semester=data["semester"],
         )
         body = SectionSerializer(sections_with_details().get(pk=section.pk)).data
         return Response(body, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
@@ -90,18 +100,20 @@ class SectionListView(generics.ListCreateAPIView):
 )
 @extend_schema(tags=["timetable"])
 class MySectionsView(generics.ListCreateAPIView):
-    """GET: my sections this term. POST {"section": id}: join a section."""
+    """GET: my sections of this and next semester (and of one that ended in the last 60 days,
+    whose classes can be moved on), each with its `semester`. POST {"section": id}: join one."""
 
     serializer_class = SectionSerializer
     pagination_class = None
 
     def get_queryset(self):
         services.require_student(self.request.user)
-        term = services.current_term_for(self.request.user)
+        terms = services.recent_terms_for(self.request.user)
         return (
             sections_with_details()
-            .filter(term=term, enrollments__user=self.request.user)
-            .order_by("course__code", "code")
+            .select_related("term")
+            .filter(term__in=terms, enrollments__user=self.request.user)
+            .order_by("term__starts_on", "course__code", "code")
         )
 
     def create(self, request, *args, **kwargs):
@@ -111,6 +123,28 @@ class MySectionsView(generics.ListCreateAPIView):
         services.join_section(request.user, section)
         body = SectionSerializer(sections_with_details().get(pk=section.pk)).data
         return Response(body, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["timetable"], responses=SemestersSerializer)
+class SemestersView(APIView):
+    """GET timetable/semesters/ — this semester and the next, to choose where classes go."""
+
+    def get(self, request):
+        services.require_student(request.user)
+        current, following = services.semesters_for(request.user)
+        return Response(SemestersSerializer({"current": current, "next": following}).data)
+
+
+@extend_schema(tags=["timetable"], request=MoveSectionsSerializer, responses={200: None})
+class MoveSectionsView(APIView):
+    """POST timetable/my-sections/move/ — move my classes from a term that has ended to the
+    current one. Answers {"moved": n}."""
+
+    def post(self, request):
+        serializer = MoveSectionsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        moved = services.move_sections(request.user, serializer.validated_data["from_term"])
+        return Response({"moved": moved})
 
 
 @extend_schema(tags=["timetable"], responses={204: None})

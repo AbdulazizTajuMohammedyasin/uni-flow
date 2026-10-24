@@ -27,7 +27,7 @@ from apps.timetable.importing import (
     rows_to_json,
 )
 from apps.timetable.models import SectionEnrollment
-from apps.timetable.services import current_term_for
+from apps.timetable.services import current_term_for, term_for
 
 from .models import MessageFile, TimetableImport
 from .providers import Attachment, ask
@@ -196,10 +196,10 @@ def best_tab(tab_names: list[str], profile) -> str:
 # --- One student's import -----------------------------------------------------------------
 
 
-def start_import(user, message_file: MessageFile) -> TimetableImport:
+def start_import(user, message_file: MessageFile, semester: str = "current") -> TimetableImport:
     """Create the student's import and ask Inngest to read the file."""
     timetable_import = TimetableImport.objects.create(
-        user=user, message_file=message_file, term=current_term_for(user)
+        user=user, message_file=message_file, term=term_for(user, semester)
     )
     from .functions import TIMETABLE_IMPORT_STARTED, send  # functions imports this module
 

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { ApiError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { useAddSection } from '@/hooks/useTimetable'
+import type { SemesterChoice } from '@/types/timetable'
 
 import { FormField } from './FormField'
 import { SelectField } from './SelectField'
@@ -42,7 +43,7 @@ const EMPTY_MEETING = {
 }
 
 /** Add a class that is not in UniFlow yet: course, section and its weekly classes. */
-export function AddClassForm() {
+export function AddClassForm({ semester = 'current' }: { semester?: SemesterChoice }) {
   const add = useAddSection()
   const [message, setMessage] = useState('')
   const {
@@ -63,6 +64,7 @@ export function AddClassForm() {
     try {
       const section = await add.mutateAsync({
         ...data,
+        semester,
         meetings: data.meetings.map((meeting) => ({
           ...meeting,
           weekday: Number(meeting.weekday),

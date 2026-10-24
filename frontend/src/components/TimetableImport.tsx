@@ -12,7 +12,7 @@ import {
   useTimetableImport,
   useTimetableImports,
 } from '@/hooks/useTimetable'
-import type { ImportRow, TimetableImport } from '@/types/timetable'
+import type { SemesterChoice, ImportRow, TimetableImport } from '@/types/timetable'
 
 import { SelectField } from './SelectField'
 
@@ -37,12 +37,12 @@ function meetingsText(row: ImportRow): string {
 }
 
 /** "Add my timetable": upload a file or give a link → the AI reads it → check → confirm. */
-export function TimetableImportBox() {
+export function TimetableImportBox({ semester = 'current' }: { semester?: SemesterChoice }) {
   const [importId, setImportId] = useState<number | null>(null)
   const current = useTimetableImport(importId)
   const reset = () => setImportId(null)
 
-  if (importId === null) return <StartForm onStarted={setImportId} />
+  if (importId === null) return <StartForm semester={semester} onStarted={setImportId} />
   if (current.isPending) return <p role="status">Loading…</p>
   if (current.isError) return <p role="alert">{errorText(current.error)}</p>
 
@@ -70,7 +70,7 @@ export function TimetableImportBox() {
     case 'confirmed':
       return <Confirmed timetableImport={timetableImport} onDone={reset} />
     default:
-      return <StartForm onStarted={setImportId} />
+      return <StartForm semester={semester} onStarted={setImportId} />
   }
 }
 
@@ -92,14 +92,14 @@ export function GroupTimetableOffer() {
   )
 }
 
-function StartForm({ onStarted }: { onStarted: (id: number) => void }) {
+function StartForm({ semester, onStarted }: { semester: SemesterChoice; onStarted: (id: number) => void }) {
   const [file, setFile] = useState<File | null>(null)
   const [link, setLink] = useState('')
   const start = useStartImport()
 
   function submit(event: FormEvent, input: { file: File } | { link: string }) {
     event.preventDefault()
-    start.mutate(input, { onSuccess: (created) => onStarted(created.id) })
+    start.mutate({ input, semester }, { onSuccess: (created) => onStarted(created.id) })
   }
 
   return (

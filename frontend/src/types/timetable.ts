@@ -12,12 +12,28 @@ export type Meeting = {
   room: string
 }
 
-/** A section with its course and weekly classes. */
+/** A term as students see it. `estimated`: dates worked out from last year's calendar. */
+export type Semester = {
+  id: number
+  name: string
+  starts_on: string // "2026-10-26"
+  ends_on: string
+  estimated: boolean
+}
+
+/** Which semester classes are added to. */
+export type SemesterChoice = 'current' | 'next'
+
+/** GET timetable/semesters/ — this semester and the next. */
+export type Semesters = { current: Semester | null; next: Semester | null }
+
+/** A section with its course, semester and weekly classes. */
 export type Section = {
   id: number
   course: { id: number; code: string; name: string }
   code: string
   term: number
+  semester: Semester
   lecturer_name: string
   source: 'ai_import' | 'student' | 'admin' | 'file_import'
   meetings: Meeting[]
@@ -45,7 +61,7 @@ export type ClassSlot = {
 
 /** GET timetable/today/ (one day) and timetable/week/ (Monday to Sunday). */
 export type TimetableDays = {
-  term: { id: number; name: string } | null
+  term: { id: number; name: string; starts_on: string; ends_on: string } | null
   days: { date: string; weekday: number; classes: ClassSlot[] }[]
 }
 
@@ -64,6 +80,7 @@ export type AddSectionData = {
   course_name: string
   section: string
   meetings: NewMeeting[]
+  semester?: SemesterChoice
 }
 
 /** A page of a list (Django REST framework's page format). */

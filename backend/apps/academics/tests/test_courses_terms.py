@@ -69,7 +69,7 @@ def test_term_must_end_after_it_starts_and_be_unique_per_session():
         (date(2025, 11, 1), 1),  # during Semester 1
         (date(2026, 2, 27), 1),  # its last day
         (date(2026, 3, 1), 2),  # break: the next term is already loaded
-        (date(2026, 8, 1), 2),  # break, nothing loaded after it: the term that just ended
+        (date(2026, 8, 1), 1),  # break, nothing loaded after it: next one worked out (2026/27 S1)
         (date(2025, 1, 1), 1),  # before any term: the first one
     ],
 )
@@ -79,6 +79,42 @@ def test_current_term_follows_the_dates(today, expected):
 
     assert Term.current("undergraduate", today).number == expected
     assert Term.current("foundation", today) is None  # no Foundation terms loaded
+
+
+def test_a_missing_next_semester_is_worked_out_from_last_year():
+    make_term(1, date(2025, 10, 27), date(2026, 2, 27), session="2025/2026")
+    make_term(2, date(2026, 3, 23), date(2026, 7, 17), session="2025/2026")
+    third = make_term(3, date(2026, 8, 3), date(2026, 10, 2), session="2025/2026")
+
+    current = Term.current("undergraduate", date(2026, 10, 24))  # the break after Semester 3
+
+    assert (current.name, current.academic_session, current.number) == (
+        "2026/2027 Semester 1",
+        "2026/2027",
+        1,
+    )
+    # Last year's Semester 1 plus 52 weeks: the same weekdays (Monday to Friday).
+    assert (current.starts_on, current.ends_on) == (date(2026, 10, 26), date(2027, 2, 26))
+    assert current.estimated is True
+    assert Term.next_after(third) == current  # worked out once, then reused
+    assert Term.objects.filter(academic_session="2026/2027").count() == 1
+
+
+def test_the_next_semester_in_the_same_session_and_the_foundation_name():
+    make_term(1, date(2024, 10, 14), date(2025, 1, 24), "2024/25", "foundation")
+    make_term(2, date(2025, 2, 10), date(2025, 5, 23), "2024/25", "foundation")
+    first = make_term(1, date(2025, 10, 13), date(2026, 1, 23), "2025/26", "foundation")
+
+    following = Term.next_after(first)
+
+    assert (following.name, following.number) == ("Foundation 2025/26 Semester 2", 2)
+    assert following.starts_on == date(2026, 2, 9)
+
+
+def test_without_last_years_semester_nothing_is_guessed():
+    only = make_term(1, date(2025, 10, 27), date(2026, 2, 27))
+    assert Term.next_after(only) is None
+    assert Term.current("undergraduate", date(2026, 3, 10)) == only  # the one that ended
 
 
 # --- Read API ---------------------------------------------------------------------------

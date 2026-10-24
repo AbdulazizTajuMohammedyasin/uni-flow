@@ -4,6 +4,8 @@ import type {
   ImportRow,
   Page,
   Section,
+  SemesterChoice,
+  Semesters,
   TimetableDays,
   TimetableImport,
 } from '@/types/timetable'
@@ -11,16 +13,35 @@ import type {
 import { api } from './client'
 import { toApiError } from './errors'
 
-/** Sections of the current term, optionally searched by course code or name. */
-export async function getSections(search: string): Promise<Page<Section>> {
+/** Sections of this or next semester, optionally searched by course code or name. */
+export async function getSections(search: string, semester: SemesterChoice = 'current'): Promise<Page<Section>> {
   try {
-    const params = search ? { search } : undefined
+    const params = { ...(search ? { search } : {}), ...(semester === 'next' ? { semester } : {}) }
     return (await api.get<Page<Section>>('/timetable/sections/', { params })).data
   } catch (error) {
     throw toApiError(error)
   }
 }
 
+/** This semester and the next (its dates known or worked out from last year). */
+export async function getSemesters(): Promise<Semesters> {
+  try {
+    return (await api.get<Semesters>('/timetable/semesters/')).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** Move my classes from a semester that has ended to the current one. */
+export async function moveSections(fromTerm: number): Promise<{ moved: number }> {
+  try {
+    return (await api.post<{ moved: number }>('/timetable/my-sections/move/', { from_term: fromTerm })).data
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
+/** My sections of this and next semester (and of one that just ended), each with its semester. */
 export async function getMySections(): Promise<Section[]> {
   try {
     return (await api.get<Section[]>('/timetable/my-sections/')).data
@@ -72,15 +93,20 @@ export async function getWeek(date?: string): Promise<TimetableDays> {
   }
 }
 
-/** "Add my timetable": a file (image, PDF, Excel) or a Google Drive link; reading starts. */
-export async function startImport(input: { file: File } | { link: string }): Promise<TimetableImport> {
+/** "Add my timetable": a file (image, PDF, Excel) or a Google Drive link, for this or next
+ * semester; reading starts. */
+export async function startImport(
+  input: { file: File } | { link: string },
+  semester: SemesterChoice = 'current',
+): Promise<TimetableImport> {
   try {
     if ('file' in input) {
       const form = new FormData()
       form.append('file', input.file)
+      form.append('semester', semester)
       return (await api.post<TimetableImport>('/timetable/imports/', form)).data
     }
-    return (await api.post<TimetableImport>('/timetable/imports/', { link: input.link })).data
+    return (await api.post<TimetableImport>('/timetable/imports/', { link: input.link, semester })).data
   } catch (error) {
     throw toApiError(error)
   }

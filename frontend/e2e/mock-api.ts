@@ -104,6 +104,9 @@ const staff: User = {
 
 // --- Timetable -----------------------------------------------------------------------------
 
+const SEMESTER = { id: 1, name: '2026/27 Semester 1', starts_on: '2026-10-12', ends_on: '2027-02-26', estimated: false }
+const NEXT_SEMESTER = { id: 2, name: '2026/27 Semester 2', starts_on: '2027-03-22', ends_on: '2027-07-16', estimated: true }
+
 const sections: Section[] = [
   section(1, 'CCS2213', 'Machine Learning', 'C2', 'Dr Farah Aziz', [[0, '08:30', '10:30', 'B09_210'], [2, '14:30', '16:30', 'B09_210']]),
   section(2, 'CCC2113', 'Data Structures and Algorithm Analysis', '1', 'Dr Omar Said', [[0, '11:00', '13:00', 'Lecture Theatre 4'], [3, '08:30', '10:30', 'B09_310']]),
@@ -125,6 +128,7 @@ function section(
     course: { id: id * 10, code, name },
     code: sectionCode,
     term: 1,
+    semester: SEMESTER,
     lecturer_name: lecturer,
     source: 'student',
     meetings: meetings.map(([weekday, start, end, room]) => ({
@@ -168,7 +172,7 @@ function slotsFor(weekday: number): ClassSlot[] {
 
 function week(withClasses: boolean): TimetableDays {
   return {
-    term: { id: 1, name: '2026/27 Semester 1' },
+    term: { id: 1, name: '2026/27 Semester 1', starts_on: '2026-10-12', ends_on: '2027-02-26' },
     days: WEEK.map((date, weekday) => ({ date, weekday, classes: withClasses ? slotsFor(weekday) : [] })),
   }
 }
@@ -416,6 +420,7 @@ export async function mockApi(page: Page, scenario: Scenario): Promise<void> {
     if (path === '/sources/4/unclaimed/') return json([{ id: 9, title: 'BCS Mar 2025 – Official', joined_at: '2026-10-19T01:10:00Z' }])
 
     if (path === '/timetable/my-sections/') return json(busy ? sections : [])
+    if (path === '/timetable/semesters/') return json({ current: SEMESTER, next: NEXT_SEMESTER })
     if (path === '/timetable/sections/') {
       const q = (url.searchParams.get('search') ?? url.searchParams.get('q') ?? '').toLowerCase()
       return json(page_(sections.filter((s) => `${s.course.code} ${s.course.name}`.toLowerCase().includes(q))))

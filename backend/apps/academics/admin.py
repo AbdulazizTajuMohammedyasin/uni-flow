@@ -48,9 +48,10 @@ class TermAdmin(admin.ModelAdmin):
         "number",
         "starts_on",
         "ends_on",
+        "estimated",
         "is_current_now",
     )
-    list_filter = ("calendar", "academic_session")
+    list_filter = ("calendar", "academic_session", "estimated")
 
     @admin.display(boolean=True, description="Current now")
     def is_current_now(self, term):

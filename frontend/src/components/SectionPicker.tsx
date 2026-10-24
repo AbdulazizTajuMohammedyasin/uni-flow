@@ -5,18 +5,22 @@ import { Input } from '@/components/ui/input'
 import { useJoinSection, useSectionSearch } from '@/hooks/useTimetable'
 import { meetingText } from '@/lib/timetable'
 
+import type { SemesterChoice } from '@/types/timetable'
+
 import { ErrorState } from './ErrorState'
 
 type Props = {
   /** Sections the student already has (shown as "Added"). */
   mySectionIds: number[]
+  /** Whose sections: this semester's or the next one's. */
+  semester?: SemesterChoice
 }
 
-/** Search this term's sections by course code or name, and add them to "My sections". */
-export function SectionPicker({ mySectionIds }: Props) {
+/** Search this or next semester's sections by course code or name, and add them to "My sections". */
+export function SectionPicker({ mySectionIds, semester = 'current' }: Props) {
   const [text, setText] = useState('')
   const [search, setSearch] = useState('')
-  const sections = useSectionSearch(search)
+  const sections = useSectionSearch(search, semester)
   const join = useJoinSection()
 
   // Wait until the student stops typing before searching.

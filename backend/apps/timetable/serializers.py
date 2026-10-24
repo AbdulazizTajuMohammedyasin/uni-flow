@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 
-from apps.academics.models import Course
+from apps.academics.models import Course, Term
 
 from .models import ClassChange, ClassMeeting, CourseSection
 
@@ -34,15 +34,39 @@ class CourseBriefSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "name"]
 
 
+class SemesterSerializer(serializers.Serializer):
+    """A term as students see it (estimated: dates worked out from last year's calendar)."""
+
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    starts_on = serializers.DateField()
+    ends_on = serializers.DateField()
+    estimated = serializers.BooleanField()
+
+
 class SectionSerializer(serializers.ModelSerializer):
-    """A section with its course and weekly classes."""
+    """A section with its course, term and weekly classes."""
 
     course = CourseBriefSerializer(read_only=True)
     meetings = MeetingSerializer(many=True, read_only=True)
+    semester = SemesterSerializer(source="term", read_only=True)
 
     class Meta:
         model = CourseSection
-        fields = ["id", "course", "code", "term", "lecturer_name", "source", "meetings"]
+        fields = ["id", "course", "code", "term", "semester", "lecturer_name", "source", "meetings"]
+
+
+class SemestersSerializer(serializers.Serializer):
+    """GET timetable/semesters/ — the two terms classes can be added to."""
+
+    current = SemesterSerializer(allow_null=True)
+    next = SemesterSerializer(allow_null=True)
+
+
+class MoveSectionsSerializer(serializers.Serializer):
+    """POST timetable/my-sections/move/ — move my classes out of a term that has ended."""
+
+    from_term = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all())
 
 
 class JoinSectionSerializer(serializers.Serializer):
@@ -58,6 +82,7 @@ class AddSectionSerializer(serializers.Serializer):
     course_name = serializers.CharField(max_length=200)
     section = serializers.CharField(max_length=20)
     meetings = MeetingSerializer(many=True, allow_empty=False)
+    semester = serializers.ChoiceField(choices=["current", "next"], default="current")
 
 
 class ChangeFlagSerializer(serializers.Serializer):
@@ -93,6 +118,8 @@ class DaySerializer(serializers.Serializer):
 class TermBriefSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
+    starts_on = serializers.DateField()
+    ends_on = serializers.DateField()
 
 
 class TimetableDaysSerializer(serializers.Serializer):
