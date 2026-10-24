@@ -64,7 +64,7 @@ Go/no-go list for the first pilot with real AIU students. Every item must be che
 
 - [ ] **Intake and programmes chosen**, for example one intake of one school. Their programmes, intake and courses exist (`seed_academics`; 376 courses loaded).
 - [ ] **Group list** for the cohort: course and section groups, with their admins' consent (section 1).
-- [ ] **Account activation path:** email sending isn't configured until M10, so activation links come from Render's logs. Decide between sending links manually during the pilot, and setting up SMTP (M10) first.
+- [ ] **Account activation emails** arrive through Brevo (M9.8): test with one real student address, check that it is not filtered as spam by the university's mail system, and keep the daily volume under the free tier's 300.
 - [ ] Onboarding walk-through tested with one student: register → activate → profile → timetable upload → confirm classes → For you.
 - [ ] Feedback channel announced (form or chat), and a date set for the end-of-pilot review.
 

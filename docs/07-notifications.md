@@ -40,7 +40,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 | Feature | Needs |
 |---|---|
 | Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run as Inngest jobs with retries |
-| Email digest | The SMTP settings (M10 release) and a per-user choice |
+| Email digest | A per-user choice (email sending itself works through Brevo since M9.8) |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
 | Retention | A monthly job that prunes read notifications older than 180 days |

@@ -4,10 +4,12 @@ Hardened for being online (M9.5): `manage.py check --deploy` is clean with these
 (CI checks it). The host (Render) sits in front of Django and handles HTTPS (docs/10).
 """
 
+from django.core.exceptions import ImproperlyConfigured
+
 from config.env import env_bool, env_list, env_str
 
 from .base import *  # noqa: F401,F403
-from .base import DATABASES, INNGEST_DEV, MIDDLEWARE, STORAGES
+from .base import BREVO_EMAIL_BACKEND, DATABASES, EMAIL_BACKEND, INNGEST_DEV, MIDDLEWARE, STORAGES
 
 SECRET_KEY = env_str("DJANGO_SECRET_KEY")
 DEBUG = False
@@ -19,6 +21,11 @@ ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 if not INNGEST_DEV:
     env_str("INNGEST_SIGNING_KEY")
     env_str("INNGEST_EVENT_KEY")
+
+# Email: with Brevo chosen, its API key is required (an empty value too), so a missing key stops
+# the start instead of failing on the first registration.
+if EMAIL_BACKEND == BREVO_EMAIL_BACKEND and not env_str("BREVO_API_KEY", "").strip():
+    raise ImproperlyConfigured("Missing required environment variable: BREVO_API_KEY")
 
 # Reuse database connections between requests.
 DATABASES["default"]["CONN_MAX_AGE"] = 60

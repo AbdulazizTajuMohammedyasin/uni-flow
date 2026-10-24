@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "40d306c5b188030d8e14ce844b51923c3255dce42227532a2342776d859d66dd"
+            "sha256": "a7c7fc33881ae195c5bca9beb47df3a6ddd7a0b286aaffe0b32e6bfaf743c8d6"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -34,11 +34,11 @@
         },
         "asgiref": {
             "hashes": [
-                "sha256:59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340",
-                "sha256:fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094"
+                "sha256:034cc8cbf72d00553b4be256703ac545120b4e50af13b49dec99da899aeeecb4",
+                "sha256:f9596a2434512686473d50f96ff6207fbba49ae1a785dfac614df4aeb085674d"
             ],
-            "markers": "python_version >= '3.10'",
-            "version": "==3.12.1"
+            "markers": "python_version >= '3.11'",
+            "version": "==3.13.0"
         },
         "attrs": {
             "hashes": [
@@ -66,11 +66,11 @@
         },
         "certifi": {
             "hashes": [
-                "sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae",
-                "sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
+                "sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd",
+                "sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2026.10.19"
+            "version": "==2026.10.23"
         },
         "cffi": {
             "hashes": [
@@ -445,6 +445,17 @@
             "index": "pypi",
             "markers": "python_version >= '3.10'",
             "version": "==5.2.18"
+        },
+        "django-anymail": {
+            "extras": [
+                "brevo"
+            ],
+            "hashes": [
+                "sha256:65b26b1c99e6a09051b71b012ac4dfdd75a33aeb057315944dd9fb872cae57cf",
+                "sha256:866ed547e9d3110210e6fad343a2311eead55dbd4d544195fb628d06ae25d737"
+            ],
+            "markers": "python_version >= '3.10'",
+            "version": "==15.2"
         },
         "django-cors-headers": {
             "hashes": [

@@ -204,9 +204,13 @@ ALLOWED_EMAIL_DOMAINS = env_list("ALLOWED_EMAIL_DOMAINS", ["student.aiu.edu.my"]
 DOMAIN = env_str("FRONTEND_DOMAIN", "localhost:5173")
 SITE_NAME = "UniFlow"
 
-# Development prints emails in the runserver terminal instead of sending them.
+# Development prints emails in the runserver terminal instead of sending them. Online, emails
+# go through Brevo's HTTPS API (EMAIL_BACKEND=anymail.backends.brevo.EmailBackend), because
+# Render's free plan blocks SMTP; DEFAULT_FROM_EMAIL must be a sender verified in Brevo.
 EMAIL_BACKEND = env_str("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "UniFlow <no-reply@uniflow.local>")
+ANYMAIL = {"BREVO_API_KEY": env_str("BREVO_API_KEY", "")}
+BREVO_EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
 DJOSER = {
     "LOGIN_FIELD": "email",
