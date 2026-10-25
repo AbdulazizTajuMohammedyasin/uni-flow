@@ -8,7 +8,7 @@ export type Screen = {
   /** Text that proves the page has finished loading (Playwright waits for it). */
   ready: string | RegExp
   /** Something to do before the screenshot, e.g. open the account menu. */
-  action?: 'open-account-menu' | 'open-needs-you' | 'paste-into-group'
+  action?: 'open-account-menu' | 'open-needs-you' | 'paste-into-group' | 'remove-a-group'
 }
 
 export const screens: Screen[] = [
@@ -29,6 +29,7 @@ export const screens: Screen[] = [
   { name: 'timetable-week--busy', path: '/timetable?view=week', scenario: 'busy', ready: '19 Oct – 25 Oct' },
   { name: 'groups--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs' },
   { name: 'groups-paste--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs', action: 'paste-into-group' },
+  { name: 'groups-remove--busy', path: '/sources', scenario: 'busy', ready: 'SCI Student Affairs', action: 'remove-a-group' },
   { name: 'search--busy', path: '/search?q=internship', scenario: 'busy', ready: /internship at a Kuala Lumpur/ },
   { name: 'notifications--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read' },
   { name: 'notifications-needs-you--busy', path: '/notifications', scenario: 'busy', ready: 'Mark all as read', action: 'open-needs-you' },

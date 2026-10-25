@@ -5,7 +5,7 @@ export type Source = {
   title: string
   platform: 'whatsapp_group' | 'telegram_group' | 'telegram_channel' | 'staff' | 'manual'
   platform_label: string
-  status: 'pending' | 'active' | 'disconnected'
+  status: 'pending' | 'active' | 'disconnected' | 'unused'
   school: number | null
   programme: number | null
   intake: number | null

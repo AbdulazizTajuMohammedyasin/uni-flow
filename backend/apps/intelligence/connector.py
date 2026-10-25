@@ -29,7 +29,7 @@ from rest_framework.permissions import BasePermission
 
 from . import files, timetable_reading
 from .models import Message, MessageFile, Source
-from .services import is_excluded, merge_waiting_into, queue_triage
+from .services import is_excluded, merge_waiting_into, queue_triage, same_name
 
 MAX_AGE_SECONDS = 5 * 60
 
@@ -69,11 +69,6 @@ def pending_sources():
     ).exclude(invite_url="")
 
 
-def _same_name(a: str, b: str) -> bool:
-    """ "CCS2213  HCI" and "ccs2213 hci" are the same group name."""
-    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
-
-
 def _waiting_by_name(title: str) -> Source | None:
     """The one group a student is adding by number under this name (none if 0 or several)."""
     waiting = Source.objects.filter(
@@ -81,7 +76,7 @@ def _waiting_by_name(title: str) -> Source | None:
         status=Source.Status.PENDING,
         added_by_number=True,
     )
-    matches = [source for source in waiting if title and _same_name(source.title, title)]
+    matches = [source for source in waiting if title and same_name(source.title, title)]
     return matches[0] if len(matches) == 1 else None
 
 

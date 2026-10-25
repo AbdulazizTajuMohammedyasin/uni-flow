@@ -99,6 +99,18 @@ class ConnectSourceView(APIView):
         )
 
 
+@extend_schema(tags=["sources"], responses={204: None})
+class LeaveSourceView(APIView):
+    """DELETE sources/{id}/membership/ — take a group off my list. It stays for the other
+    students who added it; when nobody has it any more, UniFlow stops reading it. 404 if it
+    isn't in my list."""
+
+    def delete(self, request, source_id):
+        source = generics.get_object_or_404(Source, pk=source_id, members__user=request.user)
+        services.leave_group(request.user, source)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @extend_schema(tags=["sources"], responses={200: UnclaimedGroupSerializer(many=True)})
 class UnclaimedGroupsView(APIView):
     """GET sources/{id}/unclaimed/ — for my group waiting for UniFlow's number: the groups UniFlow

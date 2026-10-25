@@ -32,6 +32,16 @@ export async function connectSource(inviteUrl: string, title: string): Promise<S
   }
 }
 
+/** Take a group off my list. Other students who added it keep it; when nobody has it any more,
+ * UniFlow stops reading it. */
+export async function leaveSource(sourceId: number): Promise<void> {
+  try {
+    await api.delete(`/sources/${sourceId}/membership/`)
+  } catch (error) {
+    throw toApiError(error)
+  }
+}
+
 /** For my group waiting for UniFlow's number: groups UniFlow joined since that nobody claimed. */
 export async function getUnclaimedGroups(sourceId: number): Promise<UnclaimedGroup[]> {
   try {

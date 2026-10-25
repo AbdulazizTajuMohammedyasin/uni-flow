@@ -6,6 +6,7 @@ import {
   createSource,
   getMySources,
   getUnclaimedGroups,
+  leaveSource,
   pasteMessages,
   uploadExport,
 } from '@/api/sources'
@@ -38,6 +39,7 @@ export function useUnclaimedGroups(sourceId: number) {
     refetchInterval: 30_000,
   })
 }
+export const useLeaveSource = () => useSourcesChange((id: number) => leaveSource(id))
 export const useClaimGroup = () =>
   useSourcesChange(({ id, groupId }: { id: number; groupId: number }) => claimGroup(id, groupId))
 export const usePasteMessages = () =>

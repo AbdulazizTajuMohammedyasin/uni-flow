@@ -9,6 +9,7 @@ import {
   FileUp,
   MessageCircle,
   Send,
+  Trash2,
   Unplug,
   X,
   type LucideIcon,
@@ -33,6 +34,7 @@ import {
   useClaimGroup,
   useConnectSource,
   useCreateSource,
+  useLeaveSource,
   useMySources,
   usePasteMessages,
   useUnclaimedGroups,
@@ -218,6 +220,12 @@ function AddGroupForm() {
   )
 }
 
+const PANEL_TITLES: Record<Exclude<Panel, 'none'>, string> = {
+  paste: 'Paste messages',
+  upload: 'Upload a WhatsApp export',
+  remove: 'Remove from my groups?',
+}
+
 const PLATFORM_ICONS: Record<Source['platform'], LucideIcon> = {
   whatsapp_group: MessageCircle,
   telegram_group: Send,
@@ -254,7 +262,7 @@ function StatusBadge({ source }: { source: Source }) {
   )
 }
 
-type Panel = 'none' | 'paste' | 'upload'
+type Panel = 'none' | 'paste' | 'upload' | 'remove'
 
 function GroupCard({ source }: { source: Source }) {
   const [open, setOpen] = useState<Panel>('none')
@@ -293,43 +301,56 @@ function GroupCard({ source }: { source: Source }) {
             )}
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" variant="outline" aria-label={`Add messages to ${source.title}`}>
-              Add messages
-              <ChevronDown aria-hidden />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-auto min-w-56"
-            onCloseAutoFocus={(event) => {
-              if (chosen.current === 'none') return
-              event.preventDefault()
-              document.getElementById(`${chosen.current}-${source.id}`)?.focus()
-              chosen.current = 'none'
-            }}
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" aria-label={`Add messages to ${source.title}`}>
+                Add messages
+                <ChevronDown aria-hidden />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-auto min-w-56"
+              onCloseAutoFocus={(event) => {
+                if (chosen.current === 'none') return
+                event.preventDefault()
+                document.getElementById(`${chosen.current}-${source.id}`)?.focus()
+                chosen.current = 'none'
+              }}
+            >
+              <DropdownMenuItem onSelect={() => choose('paste')}>
+                <ClipboardPaste aria-hidden />
+                Paste messages
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => choose('upload')}>
+                <FileUp aria-hidden />
+                Upload WhatsApp export
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`Remove ${source.title} from my groups`}
+            aria-expanded={open === 'remove'}
+            onClick={() => setOpen(open === 'remove' ? 'none' : 'remove')}
           >
-            <DropdownMenuItem onSelect={() => choose('paste')}>
-              <ClipboardPaste aria-hidden />
-              Paste messages
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => choose('upload')}>
-              <FileUp aria-hidden />
-              Upload WhatsApp export
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <Trash2 aria-hidden />
+          </Button>
+        </div>
       </div>
       {open !== 'none' && (
         <div className="space-y-2 rounded-xl bg-muted/60 p-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-medium">{open === 'paste' ? 'Paste messages' : 'Upload a WhatsApp export'}</h3>
+            <h3 className="text-sm font-medium">{PANEL_TITLES[open]}</h3>
             <Button size="icon-sm" variant="ghost" aria-label="Close" onClick={() => setOpen('none')}>
               <X aria-hidden />
             </Button>
           </div>
-          {open === 'paste' ? <PasteForm source={source} /> : <UploadForm source={source} />}
+          {open === 'paste' && <PasteForm source={source} />}
+          {open === 'upload' && <UploadForm source={source} />}
+          {open === 'remove' && <LeaveConfirm source={source} onCancel={() => setOpen('none')} />}
         </div>
       )}
     </li>
@@ -419,6 +440,33 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <Button type="button" size="sm" variant="outline" onClick={copy}>
       <span aria-live="polite">{copied ? 'Copied' : label}</span>
     </Button>
+  )
+}
+
+/** Taking a group off my list, once I confirm. The group itself stays for the others who added it. */
+function LeaveConfirm({ source, onCancel }: { source: Source; onCancel: () => void }) {
+  const leave = useLeaveSource()
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-muted-foreground">
+        You'll stop getting announcements just because you're in this group. Other students who added it keep it, and
+        announcements for your courses still reach you. You can add it back anytime.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="destructive" disabled={leave.isPending} onClick={() => leave.mutate(source.id)}>
+          {leave.isPending ? 'Removing…' : 'Remove'}
+        </Button>
+        <Button size="sm" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+      {leave.error && (
+        <p role="alert" className="text-sm text-destructive">
+          {errorText(leave.error)}
+        </p>
+      )}
+    </div>
   )
 }
 

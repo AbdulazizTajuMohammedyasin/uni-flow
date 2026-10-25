@@ -40,6 +40,9 @@ class Source(TimeStampedModel):
         PENDING = "pending", "Waiting to join"
         ACTIVE = "active", "Active"
         DISCONNECTED = "disconnected", "Disconnected"
+        # Every student removed it from their groups, so UniFlow stops reading it. It is read
+        # again when a student adds it back (services.leave_group).
+        UNUSED = "unused", "Nobody uses it"
 
     platform = models.CharField(max_length=20, choices=Platform)
     # The platform's own chat id. NULL (not "") when there is none, e.g. a manual source or

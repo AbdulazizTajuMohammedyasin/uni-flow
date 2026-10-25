@@ -82,17 +82,39 @@ def whatsapp_invite(link: str) -> str:
     return f"https://chat.whatsapp.com/{found.group(1)}"
 
 
+def same_name(a: str, b: str) -> bool:
+    """ "CCS2213  HCI" and "ccs2213 hci" are the same group name."""
+    return " ".join(a.split()).casefold() == " ".join(b.split()).casefold()
+
+
+def _read_again(user, source: Source) -> Source:
+    """A group nobody used any more, added back by a student: UniFlow reads it again."""
+    source.status = Source.Status.ACTIVE
+    source.save(update_fields=["status", "updated_at"])
+    SourceMember.objects.get_or_create(source=source, user=user)
+    return source
+
+
 # How long a group UniFlow joined without an invite link can be picked by the student who added
 # it, when its name didn't match (unclaimed_groups).
 CLAIM_WINDOW = timedelta(hours=24)
 
 
 @transaction.atomic
-def add_by_number(user, *, title: str, **scope) -> Source:
+def add_by_number(user, *, title: str, **scope) -> tuple[Source, bool]:
     """A WhatsApp group without an invite link: the student adds UniFlow's number to it (any
     member can, if the group allows it). The group is linked to the student when UniFlow's
     number joins a group of the same name (connector.mark_joined), or when the student picks
-    it from the groups UniFlow joined since (claim_group)."""
+    it from the groups UniFlow joined since (claim_group). Returns (group, created).
+
+    UniFlow's number stays in a group nobody uses any more, so it won't join it again: a group
+    of that name is read again straight away."""
+    unused = Source.objects.filter(
+        platform=Source.Platform.WHATSAPP_GROUP, status=Source.Status.UNUSED
+    )
+    matches = [source for source in unused if same_name(source.title, title)]
+    if len(matches) == 1:
+        return _read_again(user, matches[0]), False
     source = Source.objects.create(
         platform=Source.Platform.WHATSAPP_GROUP,
         title=title.strip(),
@@ -102,7 +124,7 @@ def add_by_number(user, *, title: str, **scope) -> Source:
         **scope,
     )
     SourceMember.objects.create(source=source, user=user)
-    return source
+    return source, True
 
 
 def merge_waiting_into(target: Source, waiting: Source) -> None:
@@ -158,7 +180,7 @@ def connect_group(user, *, invite_url: str = "", title: str, **scope) -> tuple[S
     its members. (Two different links to the same group are merged when UniFlow's number
     joins, see connector.mark_joined.)"""
     if not invite_url.strip():
-        return add_by_number(user, title=title, **scope), True
+        return add_by_number(user, title=title, **scope)
     link = whatsapp_invite(invite_url)
     existing = Source.objects.filter(
         platform=Source.Platform.WHATSAPP_GROUP, invite_url=link
@@ -167,6 +189,8 @@ def connect_group(user, *, invite_url: str = "", title: str, **scope) -> tuple[S
         raise ValidationError(
             {"invite_url": "This group was disconnected from UniFlow. Ask an admin about it."}
         )
+    if existing and existing.status == Source.Status.UNUSED:
+        return _read_again(user, existing), False
     if existing:
         SourceMember.objects.get_or_create(source=existing, user=user)
         return existing, False
@@ -180,6 +204,25 @@ def connect_group(user, *, invite_url: str = "", title: str, **scope) -> tuple[S
     )
     SourceMember.objects.create(source=source, user=user)
     return source, True
+
+
+@transaction.atomic
+def leave_group(user, source: Source) -> None:
+    """Take a group off my list; the other students who added it keep it. When the last one
+    leaves a WhatsApp group, UniFlow stops reading it (a group nobody asked for isn't read),
+    and one it hasn't joined yet is dropped. Official groups, run by admins, are still read."""
+    SourceMember.objects.filter(source=source, user=user).delete()
+    if (
+        source.platform != Source.Platform.WHATSAPP_GROUP
+        or source.trust == Source.Trust.OFFICIAL
+        or source.members.exists()
+    ):
+        return
+    if source.status == Source.Status.PENDING:
+        source.delete()
+    elif source.status == Source.Status.ACTIVE:
+        source.status = Source.Status.UNUSED
+        source.save(update_fields=["status", "updated_at"])
 
 
 def require_member(user, source: Source) -> None:

@@ -16,6 +16,7 @@ vi.mock('@/api/sources', () => ({
   connectSource: vi.fn(),
   getUnclaimedGroups: vi.fn(),
   claimGroup: vi.fn(),
+  leaveSource: vi.fn(),
   pasteMessages: vi.fn(),
   uploadExport: vi.fn(),
 }))
@@ -219,6 +220,31 @@ describe('Groups page', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add group' }))
 
     expect(await screen.findByText(/add the UniFlow bot/, { selector: '[role="alert"]' })).toBeTruthy()
+  })
+
+  it('removes a group from my list after I confirm', async () => {
+    vi.mocked(sourcesApi.leaveSource).mockResolvedValue()
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove CDE2313 Sec A from my groups' }))
+    expect(screen.getByText(/Other students who added it keep it/)).toBeTruthy()
+    expect(sourcesApi.leaveSource).not.toHaveBeenCalled()
+
+    vi.mocked(sourcesApi.getMySources).mockResolvedValue([])
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+
+    await waitFor(() => expect(sourcesApi.leaveSource).toHaveBeenCalledWith(7))
+    expect(await screen.findByText('No groups yet')).toBeTruthy()
+  })
+
+  it('keeps the group when I cancel removing it', async () => {
+    renderPage()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove CDE2313 Sec A from my groups' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByText(/Other students who added it keep it/)).toBeNull()
+    expect(sourcesApi.leaveSource).not.toHaveBeenCalled()
   })
 
   it('pastes messages and says how many were new', async () => {

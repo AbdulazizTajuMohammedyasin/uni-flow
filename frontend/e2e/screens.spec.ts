@@ -40,6 +40,10 @@ for (const theme of themes) {
             await page.getByRole('menuitem', { name: 'Paste messages' }).click()
             await expect(page.getByLabel('Messages', { exact: true })).toBeFocused()
           }
+          if (screen.action === 'remove-a-group') {
+            await page.getByRole('button', { name: /^Remove CCS2213.* from my groups$/ }).click()
+            await expect(page.getByRole('button', { name: 'Remove', exact: true })).toBeVisible()
+          }
           await page.screenshot({
             path: path.join(root, theme, device, `${screen.name}.png`),
             fullPage: screen.action !== 'open-account-menu', // an open menu is drawn over the first screen
