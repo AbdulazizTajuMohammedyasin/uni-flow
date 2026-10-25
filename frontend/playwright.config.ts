@@ -4,6 +4,7 @@ import { defineConfig } from '@playwright/test'
  * Browser checks and screenshots (docs/ui-ux/redesign-plan.md, section 10).
  * - `npm run e2e`: smoke tests (every page loads, no errors, no sideways scrolling)
  * - `npm run screens`: full-page screenshots into ../artifacts/ui/ (git-ignored)
+ * - `npm run screens:readme`: the README's screenshots into ../docs/screenshots/
  *
  * The backend is never called: e2e/mock-api.ts answers /api/v1/ with made-up data.
  * Uses the Chrome installed on this computer, so no browser download is needed.
@@ -24,6 +25,7 @@ export default defineConfig({
   projects: [
     { name: 'smoke', testMatch: ['smoke.spec.ts', 'a11y.spec.ts'] },
     { name: 'screens', testMatch: 'screens.spec.ts' },
+    { name: 'readme', testMatch: 'readme.spec.ts' },
   ],
   webServer: {
     // Its own port, so it never clashes with your normal `npm run dev` on 5173.

@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test --project=smoke",
     "screens": "playwright test --project=screens",
+    "screens:readme": "playwright test --project=readme",
     "preview": "vite preview"
   },
   "dependencies": {
