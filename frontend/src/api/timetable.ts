@@ -165,10 +165,12 @@ export async function getChanges(): Promise<ClassChange[]> {
   }
 }
 
-/** My answer to a change: it changes only my own timetable, and I can change my mind. */
-export async function answerChange(id: number, answer: 'confirm' | 'reject'): Promise<ClassChange> {
+/** My answer to a change: it changes only my own timetable, and I can change my mind.
+ * A moved class or room change can be confirmed for every week (`everyWeek`). */
+export async function answerChange(id: number, answer: 'confirm' | 'reject', everyWeek = false): Promise<ClassChange> {
   try {
-    return (await api.post<ClassChange>(`/timetable/changes/${id}/${answer}/`)).data
+    const body = answer === 'confirm' ? { every_week: everyWeek } : {}
+    return (await api.post<ClassChange>(`/timetable/changes/${id}/${answer}/`, body)).data
   } catch (error) {
     throw toApiError(error)
   }

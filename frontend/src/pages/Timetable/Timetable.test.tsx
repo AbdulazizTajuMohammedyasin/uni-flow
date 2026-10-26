@@ -82,6 +82,8 @@ const moved: ClassChange = {
   new_end: '16:00',
   new_room: '',
   my_status: 'pending',
+  can_repeat: true,
+  every_week: false,
   evidence: [
     {
       quote: 'CDE2313 Sec A: class moves to 2pm today',
@@ -310,12 +312,45 @@ describe('Timetable page', () => {
       ],
     })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Confirm change to CDE2313 Section A' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm change to CDE2313 Section A for this week only' }))
 
-    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm'))
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm', false))
     expect(await screen.findByText('14:00–16:00')).toBeTruthy()
     expect(screen.getByText('Moved')).toBeTruthy()
     await waitFor(() => expect(screen.queryByText('A class may have changed')).toBeNull())
+  })
+
+  it('asks whether a moved class is for this week only or every week', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValue([moved])
+    vi.mocked(timetableApi.answerChange).mockResolvedValue({ ...moved, my_status: 'confirmed', every_week: true })
+    renderTimetable()
+
+    expect(await screen.findByText('Is this for this week only, or every week from now on?')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm change to CDE2313 Section A for every week' }))
+
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm', true))
+  })
+
+  it('confirms a cancelled class for its own day only, without asking', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValue([{ ...moved, kind: 'class_cancelled', can_repeat: false }])
+    renderTimetable()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirm change to CDE2313 Section A' }))
+
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm', undefined))
+    expect(screen.queryByText(/every week from now on/)).toBeNull()
+  })
+
+  it('lists changes made every week, which can go back to one week or be undone', async () => {
+    vi.mocked(timetableApi.getChanges).mockResolvedValue([{ ...moved, my_status: 'confirmed', every_week: true }])
+    renderTimetable()
+
+    expect(await screen.findByRole('heading', { name: 'Changed every week' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /^Keep the change to CDE2313 Section A for .* only$/ }))
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'confirm', false))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Undo the change to CDE2313 Section A' }))
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'reject', undefined))
   })
 
   it('can reject a change', async () => {
@@ -324,7 +359,7 @@ describe('Timetable page', () => {
     renderTimetable()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Reject change to CDE2313 Section A' }))
-    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'reject'))
+    await waitFor(() => expect(timetableApi.answerChange).toHaveBeenCalledWith(7, 'reject', undefined))
   })
 
   it('marks a class with a change waiting, and a cancelled class', async () => {

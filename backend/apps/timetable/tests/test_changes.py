@@ -225,3 +225,86 @@ def test_only_students_have_changes(sections, ali):
     api.force_authenticate(staff)
     assert api.get(CHANGES).status_code == 403
     assert APIClient().get(CHANGES).status_code == 401
+
+
+NEXT_WEEK = "/api/v1/timetable/week/?date=2026-10-12"  # Mon 12 – Sun 18 Oct 2026
+
+
+def next_tuesday(api) -> list[dict]:
+    return api.get(NEXT_WEEK).json()["days"][1]["classes"]
+
+
+def confirm(api, every_week=None):
+    change_id = api.get(CHANGES).json()[0]["id"]
+    body = {} if every_week is None else {"every_week": every_week}
+    return api.post(f"{CHANGES}{change_id}/confirm/", body, format="json")
+
+
+@pytest.mark.parametrize("kind", ["class_cancelled", "class_moved", "room_changed"])
+def test_a_change_is_only_for_its_own_week_by_default(sections, ali, kind):
+    found(sections, kind=kind, new_start="14:00", new_room="B5")
+    assert confirm(ali).json()["every_week"] is False
+
+    [lesson] = next_tuesday(ali)
+    assert (lesson["start_time"], lesson["room"], lesson["change"]) == ("10:00", "B2", None)
+
+
+def test_a_moved_class_can_be_confirmed_for_every_week(sections, ali):
+    found(sections, new_start="14:00", new_room="B5")
+    assert ali.get(CHANGES).json()[0]["can_repeat"] is True
+
+    answer = confirm(ali, every_week=True).json()
+
+    assert (answer["my_status"], answer["every_week"]) == ("confirmed", True)
+    for lessons in (tuesday(ali), next_tuesday(ali)):
+        [lesson] = lessons
+        assert (lesson["start_time"], lesson["end_time"], lesson["room"]) == (
+            "14:00",
+            "16:00",
+            "B5",
+        )
+    # The week before it was found is unchanged.
+    before = ali.get("/api/v1/timetable/week/?date=2026-09-28").json()["days"][1]["classes"]
+    assert before[0]["start_time"] == "10:00"
+
+
+def test_a_class_moved_to_another_day_every_week(sections, ali):
+    found(sections, new_date=THURSDAY, new_start="09:00", new_end="11:00")
+    confirm(ali, every_week=True)
+
+    week = ali.get(NEXT_WEEK).json()["days"]
+    assert week[1]["classes"] == []
+    assert [(c["course_code"], c["start_time"]) for c in week[3]["classes"]] == [
+        ("CDE2313", "09:00")
+    ]
+
+
+def test_a_cancellation_is_never_for_every_week(sections, ali):
+    found(sections, kind="class_cancelled")
+    assert ali.get(CHANGES).json()[0]["can_repeat"] is False
+
+    assert confirm(ali, every_week=True).json()["every_week"] is False
+    assert next_tuesday(ali)[0]["change"] is None
+
+
+def test_every_week_is_only_for_me_and_can_be_undone(sections, ali, sara, monkeypatch):
+    found(sections, new_start="14:00")
+    confirm(ali, every_week=True)
+    assert next_tuesday(sara)[0]["start_time"] == "10:00"  # Sara didn't confirm
+
+    # Weeks later the change is still listed, so Ali can take it back.
+    monkeypatch.setattr(semesters, "today", lambda: date(2026, 10, 20))
+    [change] = ali.get(CHANGES).json()
+    ali.post(f"{CHANGES}{change['id']}/reject/")
+    assert next_tuesday(ali)[0]["start_time"] == "10:00"
+
+
+def test_a_later_change_wins_over_an_every_week_one(sections, ali):
+    found(sections, new_start="14:00")
+    confirm(ali, every_week=True)
+    found(sections, kind="class_cancelled", date="2026-10-13")
+    change_id = next(c["id"] for c in ali.get(CHANGES).json() if c["kind"] == "class_cancelled")
+    ali.post(f"{CHANGES}{change_id}/confirm/")
+
+    [lesson] = next_tuesday(ali)
+    assert (lesson["start_time"], lesson["change"]["kind"]) == ("14:00", "class_cancelled")

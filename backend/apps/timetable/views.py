@@ -21,6 +21,7 @@ from .models import ClassMeeting, CourseSection, SectionEnrollment
 from .serializers import (
     AddSectionSerializer,
     ClassChangeSerializer,
+    DecideChangeSerializer,
     JoinSectionSerializer,
     MoveSectionsSerializer,
     SectionSerializer,
@@ -207,18 +208,29 @@ class ClassChangeListView(generics.ListAPIView):
     def get_queryset(self):
         services.require_student(self.request.user)
         today = semesters.today()
-        return my_changes(self.request.user).filter(Q(date__gte=today) | Q(new_date__gte=today))
+        # A change confirmed for every week stays listed, so it can still be undone.
+        return my_changes(self.request.user).filter(
+            Q(date__gte=today) | Q(new_date__gte=today) | Q(my_every_week=True)
+        )
 
 
-@extend_schema(tags=["timetable"], request=None, responses=ClassChangeSerializer)
+@extend_schema(tags=["timetable"], request=DecideChangeSerializer, responses=ClassChangeSerializer)
 class ClassChangeDecisionView(APIView):
     """POST timetable/changes/{id}/confirm/ or .../reject/ — my answer, for my timetable
-    only. I can change my mind later."""
+    only. I can change my mind later. Confirming takes `{every_week}` (false by default): a
+    moved class or a room change then applies every week until the term ends."""
 
     confirm = True  # set in urls.py
 
     def post(self, request, change_id):
         services.require_student(request.user)
         change = generics.get_object_or_404(my_changes(request.user), pk=change_id)
-        changes.decide(request.user, change, confirmed=self.confirm)
+        serializer = DecideChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        changes.decide(
+            request.user,
+            change,
+            confirmed=self.confirm,
+            every_week=serializer.validated_data["every_week"],
+        )
         return Response(ClassChangeSerializer(my_changes(request.user).get(pk=change.pk)).data)

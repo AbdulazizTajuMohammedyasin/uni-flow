@@ -139,5 +139,9 @@ export type ClassChange = {
   new_end: string | null
   new_room: string
   my_status: 'pending' | 'confirmed' | 'rejected'
+  /** A moved class or room change: it can be confirmed for every week, not only that week. */
+  can_repeat: boolean
+  /** I confirmed it for every week, until the semester ends. */
+  every_week: boolean
   evidence: { quote: string; group: string; sender_name: string; sent_at: string }[]
 }

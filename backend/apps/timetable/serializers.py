@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.academics.models import Course, Term
 
+from . import changes
 from .models import ClassChange, ClassMeeting, CourseSection
 
 
@@ -138,6 +139,12 @@ class EvidenceSerializer(serializers.Serializer):
     sent_at = serializers.DateTimeField(source="message.sent_at")
 
 
+class DecideChangeSerializer(serializers.Serializer):
+    """POST timetable/changes/{id}/confirm/: for that week only, or for every week."""
+
+    every_week = serializers.BooleanField(default=False)
+
+
 class ClassChangeSerializer(serializers.ModelSerializer):
     """GET timetable/changes/ — a proposed change, the original class and my answer."""
 
@@ -159,7 +166,16 @@ class ClassChangeSerializer(serializers.ModelSerializer):
     new_start = serializers.TimeField(format="%H:%M", allow_null=True)
     new_end = serializers.TimeField(format="%H:%M", allow_null=True)
     my_status = serializers.ChoiceField(choices=["pending", "confirmed", "rejected"])
+    can_repeat = serializers.SerializerMethodField(
+        help_text="A moved class or room change: it can be confirmed for every week."
+    )
+    every_week = serializers.BooleanField(
+        source="my_every_week", help_text="I confirmed it for every week, not only that week."
+    )
     evidence = EvidenceSerializer(source="insight.evidence.all", many=True)
+
+    def get_can_repeat(self, change) -> bool:
+        return changes.can_repeat(change)
 
     class Meta:
         model = ClassChange
@@ -181,5 +197,7 @@ class ClassChangeSerializer(serializers.ModelSerializer):
             "new_end",
             "new_room",
             "my_status",
+            "can_repeat",
+            "every_week",
             "evidence",
         ]

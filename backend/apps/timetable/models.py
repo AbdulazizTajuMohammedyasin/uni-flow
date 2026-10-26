@@ -179,6 +179,9 @@ class ClassChangeConfirmation(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="class_change_answers"
     )
     status = models.CharField(max_length=20, choices=Status)
+    # Confirmed for every week from that date to the end of the term, not only that week
+    # (only a moved class or a room change; see changes.REPEATABLE).
+    every_week = models.BooleanField(default=False)
     decided_at = models.DateTimeField()
 
     class Meta:

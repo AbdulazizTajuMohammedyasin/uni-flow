@@ -101,8 +101,9 @@ export function useClassChanges() {
   return useQuery({ queryKey: timetableKeys.changes, queryFn: getChanges })
 }
 
-/** Confirm or reject a change; today and the week are refreshed to show it. */
+/** Confirm (for that week or every week) or reject a change; today and the week are refreshed. */
 export const useAnswerChange = () =>
-  useTimetableChange(({ id, answer }: { id: number; answer: 'confirm' | 'reject' }) =>
-    answerChange(id, answer),
+  useTimetableChange(
+    ({ id, answer, everyWeek }: { id: number; answer: 'confirm' | 'reject'; everyWeek?: boolean }) =>
+      answerChange(id, answer, everyWeek),
   )

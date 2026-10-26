@@ -196,6 +196,8 @@ const changes: ClassChange[] = [
     new_end: '12:00',
     new_room: 'B09_212',
     my_status: 'pending',
+    can_repeat: true,
+    every_week: false,
     evidence: [
       {
         quote: "Class today is moved to Wednesday 10am, same room. Please inform your friends.",
