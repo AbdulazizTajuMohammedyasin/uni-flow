@@ -68,6 +68,8 @@ The full list with local defaults is in [02, Configuration](02-system-architectu
    Remove-Item Env:DATABASE_URL
    ```
 6. **Sync Inngest.** Register `https://uniflow-api.onrender.com/api/inngest`. The dashboard should list 13 functions, including the daily jobs (03:00 and 19:00, Asia/Kuala_Lumpur) and the push jobs (every 5 and 15 minutes).
+
+   Inngest only learns about functions when the app is synced. **After any deploy that adds, removes or changes a background function, resync** (*Apps → uniflow → Resync*) and check the function count; until then, new functions never run.
 7. **Vercel.** Import the repository with root directory `frontend` (Vite preset). If the Render hostname differs from `uniflow-api.onrender.com`, update `frontend/vercel.json`.
 8. **WhatsApp connector.** Set `UNIFLOW_API_URL=https://uniflow-api.onrender.com/api/v1` and the shared `CONNECTOR_SECRET` in `connectors/whatsapp/.env`, then run `npm start`.
 9. **Telegram (optional).** Run `manage.py set_telegram_webhook https://uniflow-api.onrender.com`, with the same token and secret as production.
