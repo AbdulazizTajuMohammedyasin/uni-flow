@@ -18,6 +18,7 @@ from apps.intelligence.timetable_reading import (
     best_tab,
     confirm_import,
     discard_import,
+    pdf_grids,
     read_file,
     spreadsheet_tabs,
     start_import,
@@ -139,6 +140,71 @@ def test_an_image_or_pdf_is_sent_as_an_attachment():
     assert list(read_file(pdf)) == [""]
     [call] = fake_provider().calls
     assert call["attachments"][0].mime_type == "application/pdf"
+    assert call["prompt"] == "Read the attached timetable."  # not readable as a grid
+
+
+def grid_pdf(rows: list[list[str]], widths: list[int]) -> bytes:
+    """A one-page PDF with a ruled table, like a timetable exported to PDF: columns of
+    different widths, and a class shown once with empty cells for the slots it continues."""
+    left, top, height = 20, 700, 20
+    edges = [left]
+    for width in widths:
+        edges.append(edges[-1] + width)
+    lines = [top - height * r for r in range(len(rows) + 1)]
+    ops = [f"{left} {y} m {edges[-1]} {y} l S" for y in lines]
+    ops += [f"{x} {top} m {x} {lines[-1]} l S" for x in edges]
+    for r, row in enumerate(rows):
+        for c, text in enumerate(row):
+            if text:
+                ops.append(f"BT /F1 6 Tf {edges[c] + 2} {lines[r + 1] + 7} Td ({text}) Tj ET")
+    stream = "\n".join(ops).encode()
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 792] /Contents 4 0 R"
+        b" /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length %d >>\nstream\n%s\nendstream" % (len(stream), stream),
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    pdf, offsets = b"%PDF-1.4\n", []
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(pdf))
+        pdf += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+    xref = len(pdf)
+    pdf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    pdf += b"".join(b"%010d 00000 n \n" % offset for offset in offsets)
+    pdf += b"trailer\n<< /Size %d /Root 1 0 R >>\n" % (len(objects) + 1)
+    pdf += b"startxref\n%d\n%%%%EOF\n" % xref
+    return pdf
+
+
+AIU_GRID = [
+    ["Day", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM"],
+    ["MONDAY", "-", "-", "CDE2243 (B11_109)", "", "", "-"],
+]
+# 11:30 is drawn twice as wide as 10:30 and 11:00, which made the AI pick 10:30.
+AIU_WIDTHS = [60, 40, 40, 90, 50, 50, 50]
+
+
+def test_a_pdf_grid_is_given_as_numbered_cells():
+    assert pdf_grids(grid_pdf(AIU_GRID, AIU_WIDTHS)).splitlines() == [
+        "1: Day | 2: 10:30 AM | 3: 11:00 AM | 4: 11:30 AM | 5: 12:00 PM | 6: 12:30 PM | 7: 1:00 PM",
+        "1: MONDAY | 2: - | 3: - | 4: CDE2243 (B11_109) | 5: | 6: | 7: -",
+    ]
+
+
+def test_a_pdf_is_sent_with_its_grid():
+    pdf = stored(grid_pdf(AIU_GRID, AIU_WIDTHS), "pdf", "application/pdf", "pdf")
+    fake_provider().answers.append(BCS_CLASSES)
+
+    read_file(pdf)
+
+    [call] = fake_provider().calls
+    assert call["attachments"][0].mime_type == "application/pdf"
+    assert "Its grid, taken from the PDF:\n1: Day | 2: 10:30 AM" in call["prompt"]
+    assert "4: CDE2243 (B11_109) | 5: | 6: | 7: -" in call["prompt"]
+    pdf.refresh_from_db()
+    assert pdf.reading["prompt_version"] == "timetable-v2"
 
 
 # --- Choosing the student's tab -----------------------------------------------------------

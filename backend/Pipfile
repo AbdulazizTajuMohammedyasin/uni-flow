@@ -20,6 +20,7 @@ whitenoise = "<7,>=6.9"
 django-storages = {extras = ["s3"], version = "<2,>=1.14"}
 inngest = "<0.6,>=0.5"
 django-anymail = {extras = ["brevo"], version = "~=15.2"}
+pdfplumber = "<0.12,>=0.11.10"
 
 [dev-packages]
 pytest = ">=9.1,<10"
