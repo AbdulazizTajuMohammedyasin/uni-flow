@@ -34,46 +34,58 @@ def function(
     event: str | None = None,
     *,
     daily_at: str | None = None,
+    every_minutes: int | None = None,
     retries: int = 0,
     one_at_a_time_per: str | None = None,
+    one_at_a_time: bool = False,
 ):
     """Make a plain job an Inngest function, started by `event` (it is called as
-    `run(**event_data, attempt=0)`) or every day at `daily_at` (e.g. "19:00", in TIME_ZONE;
-    called as `run(attempt=0)`).
+    `run(**event_data, attempt=0)`), every day at `daily_at` (e.g. "19:00", in TIME_ZONE) or
+    every `every_minutes` minutes (both called as `run(attempt=0)`). A job with an event and
+    a schedule (a safety net for a missed event) takes no event data.
 
     retries: how many more tries after an error (Inngest waits longer each time; a job can
     also raise inngest.RetryAfterError to choose the wait itself).
     one_at_a_time_per: an event data field, e.g. "source_id": runs for the same value wait
     for each other (never two runs on one group at once); other values run side by side.
+    one_at_a_time: never two runs of this job at once.
 
     The decorated name stays the plain function, so code and tests can still call it.
     """
-    if (event is None) == (daily_at is None):
-        raise ValueError("Give a job either an event or a daily_at time.")
+    if daily_at and every_minutes:
+        raise ValueError("Give a job daily_at or every_minutes, not both.")
+    schedule = None
+    if daily_at:
+        hour, minute = (int(part) for part in daily_at.split(":"))
+        schedule = f"{minute} {hour} * * *"
+    elif every_minutes:
+        schedule = f"*/{every_minutes} * * * *"
+    if event is None and schedule is None:
+        raise ValueError("Give a job an event, a daily_at time or every_minutes.")
 
     def register(run: Callable[..., object]) -> Callable[..., object]:
         concurrency = None
         if one_at_a_time_per:
             concurrency = [inngest.Concurrency(limit=1, key=f"event.data.{one_at_a_time_per}")]
+        elif one_at_a_time:
+            concurrency = [inngest.Concurrency(limit=1)]
 
+        triggers: list[inngest.TriggerEvent | inngest.TriggerCron] = []
         if event:
-            trigger = inngest.TriggerEvent(event=event)
-
-            def handler(ctx: inngest.ContextSync) -> object:
-                return run(**ctx.event.data, attempt=ctx.attempt)
-
+            triggers.append(inngest.TriggerEvent(event=event))
             _jobs.setdefault(event, []).append(run)
-        else:
-            hour, minute = (int(part) for part in daily_at.split(":"))
-            trigger = inngest.TriggerCron(cron=f"TZ={settings.TIME_ZONE} {minute} {hour} * * *")
+        if schedule:
+            triggers.append(inngest.TriggerCron(cron=f"TZ={settings.TIME_ZONE} {schedule}"))
 
-            def handler(ctx: inngest.ContextSync) -> object:
+        def handler(ctx: inngest.ContextSync) -> object:
+            if schedule:
                 return run(attempt=ctx.attempt)
+            return run(**ctx.event.data, attempt=ctx.attempt)
 
         functions.append(
             client.create_function(
                 fn_id=run.__name__.replace("_", "-"),
-                trigger=trigger,
+                trigger=triggers[0] if len(triggers) == 1 else triggers,
                 retries=retries,
                 concurrency=concurrency,
             )(handler)

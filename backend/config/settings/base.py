@@ -216,6 +216,10 @@ ANYMAIL = {"BREVO_API_KEY": env_str("BREVO_API_KEY", "")}
 # UniFlow's own WhatsApp number (e.g. +60123456789), shown to students who add it to a group
 # themselves. The same number the connector is logged in with.
 UNIFLOW_WHATSAPP_NUMBER = env_str("UNIFLOW_WHATSAPP_NUMBER", "")
+
+# Push notifications to the mobile app go through Expo (apps/notifications/push.py). Empty:
+# nothing is pushed (development); the alerts are still in the bell.
+EXPO_ACCESS_TOKEN = env_str("EXPO_ACCESS_TOKEN", "")
 BREVO_EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
 DJOSER = {

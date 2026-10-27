@@ -68,6 +68,7 @@ Each library is added **in the task that first needs it**, never earlier.
 | File type checking | `filetype` (pure Python) | Approved (M4.4) | M4.4 |
 | Images | Pillow | Not needed: timetable images are stored with `FileField` and sent to the model as they are | Later, only for resizing |
 | Spreadsheets | `openpyxl` | Approved (M5.4): turns each tab of an `.xlsx` timetable into text for the model | M5.4 |
+| HTTP requests | `httpx` (already installed with `inngest`) | Approved (M9.15): sends push notifications to the Expo Push API | M9.15 |
 | PDF tables | `pdfplumber` (brings `pdfminer.six`, `pypdfium2` and Pillow) | Approved (M9.13): takes the grid out of a PDF timetable as text, so the model puts each class under the right time | M9.13 |
 | Static files in production | `whitenoise` | Deferred. Only if the deployment design needs it. | Release milestone |
 | AI provider SDK | `google-genai` (Google's official Gemini library) | Approved (M5.1): the developer chose Gemini | M5.1 |

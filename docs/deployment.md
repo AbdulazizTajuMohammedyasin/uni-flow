@@ -44,6 +44,7 @@ Production uses `config.settings.prod`, which reads all secrets from the environ
 | `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Supabase Storage (S3 compatibility) |
 | `CONNECTOR_SECRET` | HMAC secret shared with the WhatsApp connector |
 | `UNIFLOW_WHATSAPP_NUMBER` | UniFlow's WhatsApp number (e.g. `+60123456789`), shown to students who add it to a group without an invite link |
+| `EXPO_ACCESS_TOKEN` | Expo access token (expo.dev → Account settings → Access tokens), for push notifications to the mobile app. **Secret.** Empty: nothing is pushed |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` | Optional Telegram bot |
 
 The full list with local defaults is in [02, Configuration](02-system-architecture.md).
@@ -66,7 +67,7 @@ The full list with local defaults is in [02, Configuration](02-system-architectu
    pipenv run python manage.py seed_academics
    Remove-Item Env:DATABASE_URL
    ```
-6. **Sync Inngest.** Register `https://uniflow-api.onrender.com/api/inngest`. The dashboard should list 10 functions, including the two crons (03:00 and 19:00, Asia/Kuala_Lumpur).
+6. **Sync Inngest.** Register `https://uniflow-api.onrender.com/api/inngest`. The dashboard should list 13 functions, including the daily jobs (03:00 and 19:00, Asia/Kuala_Lumpur) and the push jobs (every 5 and 15 minutes).
 7. **Vercel.** Import the repository with root directory `frontend` (Vite preset). If the Render hostname differs from `uniflow-api.onrender.com`, update `frontend/vercel.json`.
 8. **WhatsApp connector.** Set `UNIFLOW_API_URL=https://uniflow-api.onrender.com/api/v1` and the shared `CONNECTOR_SECRET` in `connectors/whatsapp/.env`, then run `npm start`.
 9. **Telegram (optional).** Run `manage.py set_telegram_webhook https://uniflow-api.onrender.com`, with the same token and secret as production.

@@ -39,7 +39,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native app): the main way to reach students outside UniFlow | Phones and push settings are built (M9.14, below). Still to come: sending each new `Notification` to the recipient's phones through the Expo Push API (Inngest jobs with retries), and the website registering the phone inside the app |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | Phones, push settings and sending are built (M9.14 and M9.15, below). Still to come: the website registering the phone inside the app |
 | Email digest | A per-user choice (email sending itself works through Brevo since M9.8) |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
@@ -58,6 +58,35 @@ The first part of push notifications for the mobile app. Nothing is sent to phon
 - **Push settings** (`notifications/push-settings/`): three switches for the phone (class changes; when something needs you; the daily digest). All on until the student changes one. They don't affect the bell.
 - Registration is throttled at 30 calls an hour per user (scope `devices`), since the website registers on every page load in the app.
 - The Django admin lists phones and settings (read-only), without the push address.
+
+## Built (M9.15): sending pushes
+
+Every alert UniFlow already sends (a `Notification` row: targeted, published insights only, never twice) is also pushed to its recipient's phones. Nothing about who gets what is decided again, so a push never reaches someone the bell wouldn't. Code: `apps/notifications/push.py`, jobs in `apps/notifications/functions.py`.
+
+```
+notifications.send() → rows saved → "uniflow/notifications.created"
+   └─► push-notifications (one run at a time; also every 5 minutes, in case an event was missed)
+         1. claim new rows once (Notification.pushed_at; locked rows are skipped)
+         2. one PushTicket per row and phone → Expo Push API, 100 per request
+   └─► check-push-receipts (every 15 minutes): what Google or Apple said
+```
+
+| Rule | Why |
+|---|---|
+| A row is claimed once (`pushed_at`), and the migration marks every existing row as claimed | Nothing is pushed twice, and turning push on never sends a backlog |
+| Not pushed: rows older than 1 hour, recipients who are inactive or suspended, kinds switched off in push settings (`system` alerts always go) | A delayed job must not wake people with stale alerts; they're still in the bell |
+| Only phones registered before the alert; a phone that moves to another student counts as new | A newly installed or handed-on phone doesn't get older alerts |
+| Expo unreachable, HTTP 429 or 5xx: tickets stay pending and the job tries again after 1, 2, 4… minutes (5 tries); pending tickets older than 1 hour are given up | No lost pushes during a short outage, no stale ones after a long one |
+| Any other HTTP 4xx is a mistake in the request: logged, tickets marked as errors, no retry | Trying again wouldn't help |
+| `DeviceNotRegistered` (in Expo's answer or a later receipt) switches the phone off | The app was removed or notifications were turned off |
+| `InvalidCredentials` / `MismatchSenderId` in a receipt are logged as errors | The Firebase or Apple set-up in Expo is wrong |
+| A phone not used for 14 days (the login's lifetime) is switched off daily at 03:00 (`deactivate-stale-devices`) | The session there has ended; this stops alerts to a phone whose student never logged out |
+| Tickets are deleted after 7 days | They're only needed for receipts and troubleshooting |
+| Logs hold ticket ids, device ids, counts and error codes only | Never a push address, the access token or the alert's text |
+
+The message: the alert's `title` and `body`; `data` = `{v: 1, notification_id, target_type, target_id}` (the app works out the page itself, so there's never a link); Android `channelId` and `priority` by kind (`class-changes` and `needs-you`: high; `digest` and `general`: normal); and the iPhone `badge` = the recipient's unread count, the same number as the bell.
+
+Without `EXPO_ACCESS_TOKEN` the push job does nothing (development); rows wait unclaimed and are pushed, if still under an hour old, once the token is set.
 
 ## Built (M8.2)
 

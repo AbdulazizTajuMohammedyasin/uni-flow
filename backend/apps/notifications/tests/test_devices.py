@@ -61,7 +61,7 @@ def test_a_phone_moves_to_the_student_who_logs_in_on_it():
     sara_user, sara = login("sara@student.aiu.edu.my")
     register(ali)
 
-    assert register(sara).status_code == 200
+    assert register(sara).status_code == 201  # a new phone for her: no older alerts
 
     assert list(Device.objects.values_list("user", flat=True)) == [sara_user.id]
 

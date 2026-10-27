@@ -29,7 +29,7 @@ Go/no-go list for the first pilot with real AIU students. Every item must be che
 ## 2. Infrastructure ([deployment.md](deployment.md))
 
 - [ ] Production deployed, and the smoke test in [deployment.md](deployment.md) passes end to end.
-- [ ] Inngest shows 10 synced functions. Both crons ran at least once: `clear-old-messages` (03:00) and `send-daily-digest` (19:00).
+- [ ] Inngest shows 13 synced functions. The crons ran at least once: `clear-old-messages` and `deactivate-stale-devices` (03:00), `send-daily-digest` (19:00), `push-notifications` (every 5 minutes) and `check-push-receipts` (every 15 minutes).
 - [ ] HSTS raised from 1 hour to 1 year (`DJANGO_HSTS_SECONDS=31536000`) after HTTPS has been confirmed for a week.
 - [ ] Backups:
   - Supabase's automatic backups confirmed;

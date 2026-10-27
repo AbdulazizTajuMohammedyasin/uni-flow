@@ -39,6 +39,8 @@ class Notification(TimeStampedModel):
     # NULL (not "") when there is none, so such rows don't clash in the unique rule below.
     dedupe_key = models.CharField(max_length=100, null=True, blank=True)  # noqa: DJ001
     read_at = models.DateTimeField(null=True, blank=True)
+    # Claimed by the push job (pushed to the phones, or skipped): never claimed twice.
+    pushed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at", "-id"]
@@ -104,3 +106,33 @@ class PushSettings(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Push settings of {self.user}"
+
+
+class PushTicket(TimeStampedModel):
+    """One alert pushed to one phone, and what Expo answered (kept 7 days)."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Waiting to be sent"
+        OK = "ok", "Accepted by Expo"
+        ERROR = "error", "Refused"
+
+    notification = models.ForeignKey(
+        Notification, on_delete=models.CASCADE, related_name="push_tickets"
+    )
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="push_tickets")
+    status = models.CharField(max_length=10, choices=Status, default=Status.PENDING)
+    expo_id = models.CharField(max_length=100, blank=True)  # Expo's ticket id, for the receipt
+    error = models.CharField(max_length=50, blank=True)  # e.g. "DeviceNotRegistered"
+    # What Google or Apple finally said, from Expo's receipt: "ok" or an error code.
+    receipt = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["notification", "device"], name="notifications_one_ticket_per_phone"
+            )
+        ]
+        indexes = [models.Index(fields=["status", "created_at"])]
+
+    def __str__(self) -> str:
+        return f"Push of notification {self.notification_id} to device {self.device_id}"

@@ -326,6 +326,7 @@ There is no job table: jobs are kept by **Inngest** ([02](02-system-architecture
 | target_type, target_id | varchar, bigint, null (for example `("insight", 42)`, which each client turns into its own route) |
 | dedupe_key | varchar(100), null |
 | read_at | datetime, null |
+| pushed_at | datetime, null: claimed by the push job (pushed or skipped), never twice (M9.15) |
 
 Constraints: `unique(recipient, dedupe_key)`, and an index on `(recipient, read_at, created_at)`.
 
@@ -344,6 +345,8 @@ Constraints: `unique(recipient, dedupe_key)`, and an index on `(recipient, read_
 Index on `(user, is_active)`.
 
 `PushSettings` (M9.14): one row per student (user is the primary key), only once they change something: `class_changes`, `needs_you`, `daily_digest` (bool, default true). They control the phone only; the bell always shows everything, and `system` alerts always go out.
+
+`PushTicket` (M9.15): one alert pushed to one phone. notification FK, device FK, status (`pending`, `ok`, `error`), expo_id (Expo's ticket id), error (e.g. `DeviceNotRegistered`), receipt (`ok` or an error code from Expo's receipt). `unique(notification, device)`; deleted after 7 days.
 
 ## Tables deliberately not created
 
