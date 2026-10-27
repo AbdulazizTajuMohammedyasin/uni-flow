@@ -1,10 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import * as academicsApi from '@/api/academics'
 import * as authApi from '@/api/auth'
+import * as notificationsApi from '@/api/notifications'
 import { AuthProvider } from '@/context/AuthContext'
 import { createQueryClient } from '@/lib/queryClient'
 import {
@@ -26,6 +27,12 @@ vi.mock('@/api/auth', () => ({
   changePassword: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+}))
+vi.mock('@/api/notifications', () => ({
+  registerDevice: vi.fn(),
+  unregisterDevice: vi.fn(),
+  getPushSettings: vi.fn(),
+  updatePushSettings: vi.fn(),
 }))
 vi.mock('@/api/academics', () => ({
   getSchools: vi.fn(),
@@ -171,5 +178,39 @@ describe('Profile page', () => {
 
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeTruthy()
     expect(authApi.logout).toHaveBeenCalledOnce()
+  })
+})
+
+describe('Phone notifications', () => {
+  const allOn = { class_changes: true, needs_you: true, daily_digest: true }
+
+  beforeEach(() => {
+    vi.mocked(notificationsApi.getPushSettings).mockResolvedValue(allOn)
+    vi.mocked(notificationsApi.registerDevice).mockResolvedValue()
+  })
+
+  afterEach(() => {
+    delete window.UniFlowApp
+  })
+
+  it('are shown only inside the phone app', async () => {
+    renderProfile()
+
+    expect(await screen.findByText('ali@student.aiu.edu.my')).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Phone notifications' })).toBeNull()
+    expect(notificationsApi.getPushSettings).not.toHaveBeenCalled()
+  })
+
+  it('switch an alert off for this phone', async () => {
+    window.UniFlowApp = { bridgeVersion: 1, platform: 'android', appVersion: '1.0.0', pushToken: null }
+    vi.mocked(notificationsApi.updatePushSettings).mockResolvedValue({ ...allOn, daily_digest: false })
+    renderProfile()
+
+    const digest = await screen.findByRole('switch', { name: /Daily digest/ })
+    expect(screen.getByRole('switch', { name: /Class changes/ }).getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(digest)
+
+    await waitFor(() => expect(notificationsApi.updatePushSettings).toHaveBeenCalledWith({ daily_digest: false }))
+    await waitFor(() => expect(digest.getAttribute('aria-checked')).toBe('false'))
   })
 })

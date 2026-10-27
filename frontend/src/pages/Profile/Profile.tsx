@@ -4,10 +4,12 @@ import type { ReactNode } from 'react'
 import { ChangePasswordForm } from '@/components/ChangePasswordForm'
 import { PageHeader } from '@/components/PageHeader'
 import { PreferencesForm } from '@/components/PreferencesForm'
+import { PushSettingsForm } from '@/components/PushSettingsForm'
 import { StudentDetailsForm } from '@/components/StudentDetailsForm'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
+import { inApp } from '@/lib/app'
 
 const ROLE_LABELS: Record<string, string> = {
   student: 'Student',
@@ -22,6 +24,7 @@ type SectionInfo = { id: string; title: string }
 const ACCOUNT = { id: 'account', title: 'Account' }
 const STUDIES = { id: 'studies', title: 'Your studies' }
 const INTERESTS = { id: 'interests', title: 'Your interests' }
+const PHONE = { id: 'phone-notifications', title: 'Phone notifications' }
 const APPEARANCE = { id: 'appearance', title: 'Appearance' }
 const PASSWORD = { id: 'password', title: 'Password' }
 const PRIVACY = { id: 'privacy', title: 'Privacy' }
@@ -65,13 +68,21 @@ export function ProfilePage() {
   const navigate = useNavigate()
   if (!user) return null
   const student = user.role === 'student'
+  const phone = student && inApp() // only inside the UniFlow phone app
 
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
   }
 
-  const sections = [ACCOUNT, ...(student ? [STUDIES, INTERESTS] : []), APPEARANCE, PASSWORD, PRIVACY]
+  const sections = [
+    ACCOUNT,
+    ...(student ? [STUDIES, INTERESTS] : []),
+    ...(phone ? [PHONE] : []),
+    APPEARANCE,
+    PASSWORD,
+    PRIVACY,
+  ]
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -101,6 +112,12 @@ export function ProfilePage() {
                 <PreferencesForm submitLabel="Save interests" />
               </Section>
             </>
+          )}
+
+          {phone && (
+            <Section {...PHONE} description="Which alerts reach this phone. Your notifications page always shows everything.">
+              <PushSettingsForm />
+            </Section>
           )}
 
           <Section {...APPEARANCE} description={'"System" follows your phone or computer setting.'}>

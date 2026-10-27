@@ -39,7 +39,7 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native app): the main way to reach students outside UniFlow | Phones, push settings and sending are built (M9.14 and M9.15, below). Still to come: the website registering the phone inside the app |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | Built (M9.14 to M9.16, below). Pushes start once `EXPO_ACCESS_TOKEN` is set on Render |
 | Email digest | A per-user choice (email sending itself works through Brevo since M9.8) |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
@@ -87,6 +87,22 @@ notifications.send() → rows saved → "uniflow/notifications.created"
 The message: the alert's `title` and `body`; `data` = `{v: 1, notification_id, target_type, target_id}` (the app works out the page itself, so there's never a link); Android `channelId` and `priority` by kind (`class-changes` and `needs-you`: high; `digest` and `general`: normal); and the iPhone `badge` = the recipient's unread count, the same number as the bell.
 
 Without `EXPO_ACCESS_TOKEN` the push job does nothing (development); rows wait unclaimed and are pushed, if still under an hour old, once the token is set.
+
+## Built (M9.16): the website inside the phone app
+
+The UniFlow app shows this website in a WebView and announces itself with `window.UniFlowApp` (platform, app version, the phone's push address). The website holds the login, so it registers the phone; the app never sees a login token. Code: `frontend/src/lib/app.ts` and `usePhoneRegistration` in `AuthContext.tsx`. In an ordinary browser none of this runs.
+
+| When | What the website does |
+|---|---|
+| A student is logged in (login, or a session restored on load) and the app has a push address | `POST notifications/devices/`, at most once per address per page load, then tells the app `push-registration: registered` (or `failed`) |
+| The app announces an address later (`uniflow:push-token` event, e.g. after notifications are allowed, or on a page restored by Back) | Registers it the same way; `null` means notifications are off, so nothing happens |
+| Logout | `POST notifications/devices/unregister/` **before** logging out (errors are ignored and never block logging out), then tells the app `push-registration: unregistered` |
+| Someone logs in or out | Tells the app `session: {signedIn}` |
+| The unread count changes | Tells the app `unread: {count}`, so the app icon matches the bell (the badge keeps its `"{count} unread"` label too) |
+
+Messages to the app are JSON with `"v": 1`, sent with `window.ReactNativeWebView.postMessage`; they never carry login tokens or personal data. Staff never register a phone.
+
+**Profile → Phone notifications** (students, inside the app only): three switches bound to `notifications/push-settings/` (Class changes; When something needs you; Daily digest). Each saves at once.
 
 ## Built (M8.2)
 

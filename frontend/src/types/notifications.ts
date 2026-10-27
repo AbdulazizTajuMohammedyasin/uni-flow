@@ -20,3 +20,10 @@ export type AppNotification = {
   read: boolean
   created_at: string
 }
+
+/** Which alerts reach my phone (the UniFlow app). The bell always shows everything. */
+export type PushSettings = {
+  class_changes: boolean
+  needs_you: boolean
+  daily_digest: boolean
+}

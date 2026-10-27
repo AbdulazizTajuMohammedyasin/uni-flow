@@ -416,6 +416,11 @@ export async function mockApi(page: Page, scenario: Scenario): Promise<void> {
 
     if (path === '/notifications/') return failing ? fail() : json(page_(busy ? notifications : []))
     if (path === '/notifications/unread-count/') return json({ count: busy ? 2 : 0 })
+    if (path === '/notifications/devices/') return json({ registered: true }, 201)
+    if (path === '/notifications/devices/unregister/') return route.fulfill({ status: 204 })
+    if (path === '/notifications/push-settings/') {
+      return json({ class_changes: true, needs_you: true, daily_digest: false })
+    }
 
     if (path === '/sources/') return failing ? fail() : json(busy ? sources : [])
     // A group UniFlow joined whose WhatsApp name differs from what the student typed.

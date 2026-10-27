@@ -2,16 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   getNotifications,
+  getPushSettings,
   getUnreadCount,
   markAllNotificationsRead,
   markNotificationRead,
+  updatePushSettings,
 } from '@/api/notifications'
+import type { PushSettings } from '@/types/notifications'
 
 // Every notifications query starts with 'notifications', so one invalidation refreshes all.
 export const notificationKeys = {
   all: ['notifications'] as const,
   list: ['notifications', 'list'] as const,
   unread: ['notifications', 'unread'] as const,
+  pushSettings: ['notifications', 'push-settings'] as const,
 }
 
 const MINUTE = 60_000
@@ -41,3 +45,16 @@ function useNotificationsChange<Input>(change: (input: Input) => Promise<void>) 
 
 export const useMarkNotificationRead = () => useNotificationsChange((id: number) => markNotificationRead(id))
 export const useMarkAllNotificationsRead = () => useNotificationsChange(() => markAllNotificationsRead())
+
+/** Which alerts reach my phone (shown on Profile inside the app). */
+export function usePushSettings() {
+  return useQuery({ queryKey: notificationKeys.pushSettings, queryFn: getPushSettings })
+}
+
+export function useUpdatePushSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (change: Partial<PushSettings>) => updatePushSettings(change),
+    onSuccess: (settings) => queryClient.setQueryData(notificationKeys.pushSettings, settings),
+  })
+}

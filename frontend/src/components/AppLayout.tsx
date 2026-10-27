@@ -1,8 +1,10 @@
 import { LayoutDashboard } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { useAuth } from '@/context/AuthContext'
 import { useUnreadCount } from '@/hooks/useNotifications'
+import { tellApp } from '@/lib/app'
 import { canUseStaffArea } from '@/lib/capabilities'
 import { studentNavItems } from '@/lib/navigation'
 import { cn } from '@/lib/utils'
@@ -39,6 +41,7 @@ const bottomIconClass = ({ isActive }: { isActive: boolean }) =>
 
 /** Student-area frame: sidebar on md+ screens; top bar + bottom navigation on phones. */
 export default function AppLayout() {
+  useTellAppUnread()
   return (
     <div className="min-h-screen md:flex">
       <SkipLink />
@@ -108,6 +111,14 @@ export default function AppLayout() {
       </nav>
     </div>
   )
+}
+
+/** Inside the phone app: the unread count, so the app icon shows the same number as the bell. */
+function useTellAppUnread() {
+  const count = useUnreadCount().data
+  useEffect(() => {
+    if (count !== undefined) tellApp({ type: 'unread', count })
+  }, [count])
 }
 
 /** The number of unread alerts (checked every minute while the tab is visible). */
