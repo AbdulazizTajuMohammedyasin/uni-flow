@@ -329,7 +329,21 @@ There is no job table: jobs are kept by **Inngest** ([02](02-system-architecture
 
 Constraints: `unique(recipient, dedupe_key)`, and an index on `(recipient, read_at, created_at)`.
 
-*[Later]*: `Device(user, platform, token, last_seen_at)` for push notifications, and `NotificationPreference`.
+`Device` (M9.14): a phone with the UniFlow app that can get push notifications.
+
+| Field | Type |
+|---|---|
+| user | FK → User (always the logged-in user who registered it) |
+| expo_token | varchar(200), unique: the phone's Expo push address. Not a secret, but personal: never logged in full and not shown in the admin. Registered again by another student, it moves to them. |
+| platform | `android`, `ios` |
+| app_version | varchar(20) |
+| is_active | bool |
+| last_seen_at | datetime: the last registration, i.e. the app was used |
+| deactivated_reason | `logout`, `not_registered`, `stale`, or blank |
+
+Index on `(user, is_active)`.
+
+`PushSettings` (M9.14): one row per student (user is the primary key), only once they change something: `class_changes`, `needs_you`, `daily_digest` (bool, default true). They control the phone only; the bell always shows everything, and `system` alerts always go out.
 
 ## Tables deliberately not created
 

@@ -39,13 +39,25 @@ web client polls GET /notifications/unread-count/ every 60 s (tab visible) → b
 
 | Feature | Needs |
 |---|---|
-| Push notifications (React Native app): the main way to reach students outside UniFlow | A `Device` model, `POST /notifications/devices/`, and a push channel using the Expo Push API, run as Inngest jobs with retries |
+| Push notifications (React Native app): the main way to reach students outside UniFlow | Phones and push settings are built (M9.14, below). Still to come: sending each new `Notification` to the recipient's phones through the Expo Push API (Inngest jobs with retries), and the website registering the phone inside the app |
 | Email digest | A per-user choice (email sending itself works through Brevo since M9.8) |
 | Per-tier preferences and quiet hours | A `NotificationPreference` model |
 | Deadline reminders ("internship closes tomorrow") | A reminder job for action-required insights with `deadline_at` |
 | Retention | A monthly job that prunes read notifications older than 180 days |
 
 `notify_deliveries(insight)` stays the one entry point, so none of these additions change the code that calls it.
+
+## Built (M9.14): phones and push settings
+
+The first part of push notifications for the mobile app. Nothing is sent to phones yet.
+
+- **Registering a phone.** The website runs inside the app, which hands it the phone's Expo push address (not a credential). The website sends it with its normal login: `POST notifications/devices/`. The user always comes from the login, never from the request.
+- **One phone, one owner.** A push address is unique. When another student logs in on the same phone, it moves to them, so they never get the previous student's alerts. A student can have several phones.
+- **Logging out** calls `POST notifications/devices/unregister/` first, which switches the phone off (reason `logout`). It answers 204 even for an address that isn't the caller's, so nothing is revealed.
+- **Only students** register phones and have push settings; staff get 403. Suspended or deactivated accounts are already refused at login.
+- **Push settings** (`notifications/push-settings/`): three switches for the phone (class changes; when something needs you; the daily digest). All on until the student changes one. They don't affect the bell.
+- Registration is throttled at 30 calls an hour per user (scope `devices`), since the website registers on every page load in the app.
+- The Django admin lists phones and settings (read-only), without the push address.
 
 ## Built (M8.2)
 

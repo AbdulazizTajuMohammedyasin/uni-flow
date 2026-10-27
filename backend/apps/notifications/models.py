@@ -1,8 +1,11 @@
-"""Alerts inside UniFlow (docs/07-notifications.md). Phone push comes with the mobile app.
+"""Alerts inside UniFlow (docs/07-notifications.md), and the phones they can be pushed to.
 
 A Notification tells one user that something needs their attention ("Dr Lee named you
 in CDE2313 Section A") and points at what to open (target_type + target_id, e.g.
 ("insight", 42)); each client turns that into its own page.
+
+A Device is a phone with the UniFlow app; PushSettings say which alerts reach the phone
+(the bell always shows everything).
 """
 
 from django.conf import settings
@@ -48,3 +51,56 @@ class Notification(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.get_kind_display()} for {self.recipient}: {self.title}"
+
+
+class Device(TimeStampedModel):
+    """A phone with the UniFlow app that may get push notifications for its user. The
+    website inside the app registers it with the user's own login (docs/07-notifications.md)."""
+
+    class Platform(models.TextChoices):
+        ANDROID = "android", "Android"
+        IOS = "ios", "iOS"
+
+    class Reason(models.TextChoices):
+        LOGOUT = "logout", "Logged out"
+        NOT_REGISTERED = "not_registered", "Removed from the phone"
+        STALE = "stale", "Not used for a long time"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="devices"
+    )
+    # "ExponentPushToken[…]": an address, not a secret, but personal: never logged in full.
+    # Unique: a phone has one owner, the last student who logged in on it.
+    expo_token = models.CharField(max_length=200, unique=True)
+    platform = models.CharField(max_length=10, choices=Platform)
+    app_version = models.CharField(max_length=20, blank=True)
+    is_active = models.BooleanField(default=True)
+    last_seen_at = models.DateTimeField()  # the last registration: the app was used
+    deactivated_reason = models.CharField(max_length=30, choices=Reason, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "is_active"])]
+
+    def __str__(self) -> str:
+        return f"{self.get_platform_display()} phone of {self.user}"
+
+
+class PushSettings(TimeStampedModel):
+    """Which alerts reach the student's phones. No row yet means everything does.
+    Alerts from UniFlow itself (`system`) always go out."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="push_settings",
+    )
+    class_changes = models.BooleanField(default=True)  # timetable_change_proposed / _retracted
+    needs_you = models.BooleanField(default=True)  # direct_attention, action_required, important
+    daily_digest = models.BooleanField(default=True)  # digest
+
+    class Meta:
+        verbose_name_plural = "push settings"
+
+    def __str__(self) -> str:
+        return f"Push settings of {self.user}"

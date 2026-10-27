@@ -177,6 +177,8 @@ REST_FRAMEWORK = {
         "user": "300/min",
         # Login, registration and password reset (M1) opt in with throttle_scope = "auth".
         "auth": "10/min",
+        # The website in the phone app registers the phone on every page load.
+        "devices": "30/hour",
     },
 }
 
