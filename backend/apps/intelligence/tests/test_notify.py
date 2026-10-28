@@ -136,7 +136,7 @@ def test_being_named_later_alerts(uni, django_capture_on_commit_callbacks):
     notice = found(uni, django_capture_on_commit_callbacks, importance=30)  # Ali's digest
     assert alerts() == {}
     with django_capture_on_commit_callbacks(execute=True):
-        record_mentions(notice, ["Ali"], uni["group"])
+        record_mentions(notice, ["Ali Hassan"], uni["group"])
     assert alerts() == {"ali": "direct_attention"}
 
 

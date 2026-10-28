@@ -143,7 +143,7 @@ def test_a_staff_post_for_everyone_reaches_every_student_but_no_staff(uni):
 def test_a_request_reaches_only_the_named_student(uni):
     request = found(uni, kind="direct_request", audience={"schools": [uni["sci"]]}, importance=60)
     assert delivered(request) == {}  # published before the names are matched: nobody yet
-    record_mentions(request, ["Ali"], uni["group"])
+    record_mentions(request, ["Ali Hassan"], uni["group"])
     assert delivered(request) == {"ali": ("direct", 100, "You were named in this message")}
 
 

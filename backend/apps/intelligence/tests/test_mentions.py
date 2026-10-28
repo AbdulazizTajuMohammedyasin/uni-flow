@@ -51,17 +51,31 @@ def test_names_and_nicknames(name, expected):
     assert is_match(name, ali) is expected
 
 
-def test_the_only_ali_in_the_group_is_found(group):
-    ali = person("Ali Hassan", group)
+def test_without_a_scope_a_first_name_alone_is_never_a_mention(group):
+    """ "Abdulaziz, see me" in a group with no scope: UniFlow only knows its few members,
+    and another Abdulaziz in the group may not use it. The full name is needed."""
+    ali = person("Ali Hassan", group, aliases="Ally")
     person("Ali Rahman")  # not in this group, and the group has no scope
-    assert find_student("Ali", group) == ali
+    assert find_student("Ali", group) is None
+    assert find_student("Ally", group) is None  # a one-word nickname neither
+    assert find_student("Ali Hassan", group) == ali
+    assert find_student("Bro Ali Hassan", group) == ali  # titles don't count as a word
 
 
 def test_a_name_shared_by_two_members_is_not_a_mention(group):
+    group.school = School.objects.create(code="SCI", name="Computing")
+    group.save()
     person("Ali Hassan", group)
     person("Ali Rahman", group)
     assert find_student("Ali", group) is None
     assert find_student("Ali Rahman", group) is not None  # the full name is clear
+
+
+def test_with_a_scope_the_only_ali_in_the_group_is_found(group):
+    group.school = School.objects.create(code="SCI", name="Computing")
+    group.save()
+    ali = person("Ali Hassan", group)
+    assert find_student("Ali", group) == ali
 
 
 def test_two_members_with_the_name_stops_the_search(group):
@@ -94,6 +108,8 @@ def test_staff_are_never_mentions(group):
 
 
 def test_a_found_request_records_its_mentions(group):
+    group.school = School.objects.create(code="SCI", name="Computing")  # first names count
+    group.save()
     ali = person("Ali Hassan", group)
     sara = person("Sara Lim", group, aliases="Sasa")
     person("Zaid Omar", group)

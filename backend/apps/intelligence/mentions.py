@@ -6,6 +6,7 @@ please see me"). Plain code then looks for each name:
 2. then among the students the group is for (its school, programme, intake, course…).
 A name matches a student's full name, part of it ("Ali" for "Ali Hassan"), or a nickname
 from their profile. A name that fits two students is NOT a mention: UniFlow never guesses.
+In a group with no scope, a one-word name is never a mention (M9.20).
 Phone numbers are never used.
 """
 
@@ -53,6 +54,18 @@ def _candidates(name: str, students) -> list[User]:
     return [user for user in possible.distinct() if is_match(name, user)]
 
 
+def _has_scope(source: Source) -> bool:
+    return any(
+        (
+            source.school_id,
+            source.programme_id,
+            source.intake_id,
+            source.course_id,
+            source.section_id,
+        )
+    )
+
+
 def _scope_students(source: Source, students):
     """The students the group is for (its school, programme, intake, course or section),
     or nobody if it has no scope: a name is never looked up among all students."""
@@ -68,8 +81,13 @@ def _scope_students(source: Source, students):
 
 
 def find_student(name: str, source: Source) -> User | None:
-    """The one student this name means, or None (nobody, or more than one)."""
-    if not _name_words(name):
+    """The one student this name means, or None (nobody, or more than one).
+
+    In a group with no scope, UniFlow only knows the few members who use it, so a first
+    name alone ("Abdulaziz") could be another student in the group: there the name needs at
+    least two words ("Abdulaziz Taju")."""
+    words = _name_words(name)
+    if not words or (len(words) < 2 and not _has_scope(source)):
         return None
     students = User.objects.filter(role=UserRole.STUDENT, is_active=True, is_suspended=False)
     members = students.filter(source_memberships__source=source)
