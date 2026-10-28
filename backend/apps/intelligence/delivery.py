@@ -3,6 +3,8 @@ to each of them, which level of their feed it goes in, and why. Plain code, no A
 
 1. Who can get it at all:
    - the students named in it (mentions);
+   - a request to named students: those students only. It is about them, so nobody else
+     sees it, not even in the digest (and nobody at all if no name could be matched);
    - a timetable change: the students of the affected sections or course;
    - anything else: the students it is for (its audience) and the members of the groups
      it came from. An AI insight for "nobody in particular" goes to those members only,
@@ -110,7 +112,9 @@ def is_timetable(insight: Insight) -> bool:
 def candidates(insight: Insight, facts: Facts):
     """The students who can get this insight at all."""
     students = User.objects.filter(role=UserRole.STUDENT, is_active=True, is_suspended=False)
-    if is_timetable(insight):
+    if insight.kind == Insight.Kind.DIRECT_REQUEST:
+        ids = set()  # only the named students (added below)
+    elif is_timetable(insight):
         ids = set(facts.in_section) | set(facts.takes_course) | facts.in_audience
     elif facts.for_everyone and insight.origin == Insight.Origin.AI:
         ids = set(facts.group_member)  # "nobody in particular": only the group's members

@@ -140,12 +140,19 @@ def test_a_staff_post_for_everyone_reaches_every_student_but_no_staff(uni):
     assert result["ali"] == ("digest", 50, "Matches your interest: Artificial Intelligence")
 
 
-def test_a_named_student_gets_direct_attention(uni):
+def test_a_request_reaches_only_the_named_student(uni):
     request = found(uni, kind="direct_request", audience={"schools": [uni["sci"]]}, importance=60)
+    assert delivered(request) == {}  # published before the names are matched: nobody yet
     record_mentions(request, ["Ali"], uni["group"])
-    result = delivered(request)
-    assert result["ali"] == ("direct", 100, "You were named in this message")
-    assert result["omar"] == ("digest", 55, "For School of Computing students")
+    assert delivered(request) == {"ali": ("direct", 100, "You were named in this message")}
+
+
+def test_a_request_for_someone_else_never_reaches_the_group(uni):
+    """ "Dr Basheer requests Amir Wuhab", in a group Amir didn't add: the members don't get
+    it, not even in the digest."""
+    request = found(uni, kind="direct_request", importance=80, action_required=True)
+    record_mentions(request, ["Amir Wuhab"], uni["group"])  # nobody matches
+    assert delivered(request) == {}  # no delivery, so no alert or digest line either
 
 
 def test_action_required(uni):
