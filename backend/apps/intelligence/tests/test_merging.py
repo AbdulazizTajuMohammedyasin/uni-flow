@@ -6,6 +6,7 @@ from itertools import count
 import pytest
 from django.utils import timezone
 
+from apps.academics.models import Course, School
 from apps.intelligence.extraction import extract_source
 from apps.intelligence.merging import similar_titles
 from apps.intelligence.models import Insight, Message, Source
@@ -106,6 +107,36 @@ def test_different_information_stays_separate():
     # The first item takes link A from its copy; link B is then different information.
     assert Insight.objects.count() == 4
     assert Insight.objects.filter(link="https://a.example/x").count() == 1
+
+
+def test_requests_naming_different_students_stay_separate():
+    """Two different "Request from Dr Basheer" messages: Ali must never get Sara's."""
+    first, second = group("Exams info"), group("SCI Year 2")
+    request = {"kind": "direct_request", "title": "Request from Dr Basheer", "deadline": ""}
+    found(first, item(post(first, "Sara Lim, see Dr Basheer"), **request, names=["Sara Lim"]))
+    found(second, item(post(second, "Ali, see Dr Basheer"), **request, names=["Ali"]))
+    found(second, item(post(second, "Fwd: Ali, see Dr Basheer"), **request, names=["ali"]))
+
+    assert Insight.objects.count() == 2  # the forwarded copy for Ali still merges
+    assert sorted(i.data["names"] for i in Insight.objects.all()) == [["Ali"], ["Sara Lim"]]
+
+
+def test_items_for_different_courses_stay_separate():
+    """ "Assignment 1 submission" for two courses, due the same day."""
+    sci = School.objects.create(code="SCI", name="Computing")
+    Course.objects.create(school=sci, code="CDE2313", name="Data Structures")
+    Course.objects.create(school=sci, code="CCS3133", name="Information Visualization")
+    first, second = group("CDE2313 class"), group("CCS3133 class")
+    due = {"kind": "deadline", "title": "Assignment 1 submission"}
+    found(
+        first, item(post(first, "CDE2313 Assignment 1 due Friday"), **due, course_codes=["CDE2313"])
+    )
+    found(
+        second,
+        item(post(second, "CCS3133 Assignment 1 due Friday"), **due, course_codes=["CCS3133"]),
+    )
+
+    assert Insight.objects.count() == 2
 
 
 def test_a_conflicting_timetable_change_is_never_hidden():

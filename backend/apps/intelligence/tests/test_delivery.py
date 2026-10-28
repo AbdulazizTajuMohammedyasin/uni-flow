@@ -169,6 +169,14 @@ def test_a_course_notice_skips_group_members_whose_timetable_lacks_it(uni):
     assert delivered(notice)["sara"][2] == "You take CDE2233"
 
 
+def test_a_programme_notice_skips_group_members_of_another_programme(uni):
+    """ "BCS students: submit your form" in a mixed group: Zara (Business) is a member but
+    doesn't get it; Ali (BCS, also a member) does."""
+    SourceMember.objects.create(source=uni["group"], user=uni["zara"])
+    notice = found(uni, audience={"programmes": [uni["bcs"]]}, importance=60, action_required=True)
+    assert set(delivered(notice)) == {"ali", "sara"}
+
+
 def test_action_required(uni):
     deadline = found(
         uni, kind="deadline", audience={"programmes": [uni["bcs"]]}, importance=50,

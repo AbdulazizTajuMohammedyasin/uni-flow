@@ -42,6 +42,14 @@ def timetable_key(kind: str, data: dict) -> str:
     return "|".join(parts)[:200]
 
 
+def is_held(data: dict) -> bool:
+    """A timetable change that waits for an admin: its course is unknown, or the message
+    names a section the course doesn't have this term."""
+    return data.get("course_id") is None or bool(
+        data.get("section") and not data.get("section_ids")
+    )
+
+
 def link_key(kind: str, link: str) -> str:
     """The same link means the same opportunity or notice (blank without a link)."""
     if not link:
@@ -67,21 +75,52 @@ def _day(insight: Insight) -> date | None:
     return timezone.localtime(moment).date() if moment else None
 
 
-def find_duplicate(*, kind: str, merge_key: str, title: str, day: date | None) -> Insight | None:
-    """The recent insight this one repeats, or None."""
+def _plain_names(names) -> set[str]:
+    return {" ".join(re.sub(r"[^\w\s]", " ", str(n).casefold()).split()) for n in names} - {""}
+
+
+def _same_who(candidate: Insight, names: list[str], course_ids: set[int]) -> bool:
+    """Two requests are the same only when they name the same students, and items for
+    different courses are never the same (Assignment 1 of two courses, due the same day)."""
+    if candidate.kind == Insight.Kind.DIRECT_REQUEST:
+        if _plain_names(candidate.data.get("names") or []) != _plain_names(names):
+            return False
+    theirs = set(candidate.audience.courses.values_list("id", flat=True))
+    return not (theirs and course_ids and not theirs & course_ids)
+
+
+def find_duplicate(
+    *,
+    kind: str,
+    merge_key: str,
+    title: str,
+    day: date | None,
+    names: list[str] = (),
+    course_ids: set[int] = frozenset(),
+) -> Insight | None:
+    """The recent insight this one repeats, or None. `names` (a request's students) and
+    `course_ids` (the courses it is for) must not differ from the insight's."""
     recent = Insight.objects.filter(
         origin=Insight.Origin.AI,
         kind=kind,
         created_at__gte=timezone.now() - timedelta(days=RECENT_DAYS),
     ).exclude(status=Status.ARCHIVED)  # a retracted insight isn't brought back this way
+    if kind in ClassChange.Kind.values:  # timetable changes only ever merge on the exact key
+        return (
+            recent.filter(merge_key=merge_key).order_by("created_at").first() if merge_key else None
+        )
     if merge_key:
-        found = recent.filter(merge_key=merge_key).order_by("created_at").first()
-        if found or kind in ClassChange.Kind.values:
-            return found  # timetable changes only ever merge on the exact key
+        for candidate in recent.filter(merge_key=merge_key).order_by("created_at"):
+            if _same_who(candidate, names, course_ids):
+                return candidate
         recent = recent.filter(merge_key="")  # a different link is different information
     needed = SIMILAR if day else SIMILAR_UNDATED
     for candidate in recent.order_by("created_at"):
-        if _day(candidate) == day and similar_titles(candidate.title, title, needed):
+        if (
+            _day(candidate) == day
+            and similar_titles(candidate.title, title, needed)
+            and _same_who(candidate, names, course_ids)
+        ):
             return candidate
     return None
 
@@ -107,7 +146,7 @@ def add_evidence(
     insight.save(update_fields=["confidence", "merge_key", "link", "updated_at"])
     # A draft that was only too unsure is published once another group confirms it. A
     # timetable change whose course is unknown keeps waiting for an admin.
-    held = "course_id" in insight.data and insight.data["course_id"] is None
+    held = insight.kind in ClassChange.Kind.values and is_held(insight.data)
     if insight.status == Status.DRAFT and insight.confidence >= UNSURE and not held:
         publish_insight(insight, None)
     else:

@@ -93,6 +93,7 @@ def test_a_moved_class_is_found_and_published_to_its_section(group, cde):
     assert insight.data | {"section_ids": None} == {
         "course_id": cde["A"].course_id,
         "course_code": "CDE2313",
+        "section": "A",
         "section_ids": None,
         "meeting_id": meeting.id,
         "date": "2026-10-06",
@@ -170,6 +171,21 @@ def test_unknown_course_is_kept_as_a_draft_for_review(group, cde):
     assert insight.status == Status.DRAFT
     assert insight.data["course_id"] is None
     assert insight.data["course_code"] == "PHY1001"
+
+
+def test_a_section_the_course_doesnt_have_is_kept_for_review_not_sent_to_the_course(group, cde):
+    """ "Section C9" (a typo, or "1" for "C1"): never the whole course instead."""
+    student = create_user("ali@student.aiu.edu.my", "Str0ng-pass-99", full_name="Ali")
+    SectionEnrollment.objects.create(user=student, section=cde["A"])
+    cancelled = add(group, "CDE2313 Section C9: no class tomorrow.")
+    fake_provider().answers.append({"changes": [change(cancelled, section="C9")]})
+
+    extract_source(group)
+
+    insight = Insight.objects.get()
+    assert insight.status == Status.DRAFT
+    assert (insight.data["section"], insight.data["section_ids"]) == ("C9", [])
+    assert not insight.deliveries.exists()
 
 
 def test_invalid_answers_are_rejected(group, cde):

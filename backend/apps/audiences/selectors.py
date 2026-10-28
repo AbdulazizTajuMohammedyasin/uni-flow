@@ -127,11 +127,13 @@ def _students_in_semesters(low: int | None, high: int | None) -> Q:
     return by_intake | by_override
 
 
-def students_matching(audience: Audience) -> QuerySet[User]:
-    """The active students that `audience` covers."""
+def students_matching(audience: Audience, *, profile_only: bool = False) -> QuerySet[User]:
+    """The active students that `audience` covers. profile_only: only its school, programme,
+    intake and semester range count (not its courses or sections)."""
     students = User.objects.filter(role=UserRole.STUDENT, is_active=True, is_suspended=False)
+    fields = PROFILE_FIELDS if profile_only else LINK_COLUMNS
     chosen = {
-        field: list(getattr(audience, field).values_list("id", flat=True)) for field in LINK_COLUMNS
+        field: list(getattr(audience, field).values_list("id", flat=True)) for field in fields
     }
     has_semesters = audience.semester_min is not None or audience.semester_max is not None
     if not any(chosen.values()) and not has_semesters:

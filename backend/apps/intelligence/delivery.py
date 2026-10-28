@@ -7,10 +7,12 @@ to each of them, which level of their feed it goes in, and why. Plain code, no A
      sees it, not even in the digest (and nobody at all if no name could be matched);
    - a timetable change: the students of the affected sections or course;
    - anything else: the students it is for (its audience) and the members of the groups
-     it came from. If it is for certain courses, a student who saved this term's timetable
-     without any of them doesn't get it (without a timetable UniFlow can't tell, so they
-     do). An AI insight for "nobody in particular" goes to those members only, never to
-     every student; a staff post for "all students" does reach everyone.
+     it came from. Being in the group never beats what the message says: a member of
+     another school, programme, intake or semester doesn't get it, nor does one who saved
+     this term's timetable without any of its courses (without a timetable or a complete
+     profile UniFlow can't tell, so they do). An AI insight for "nobody in particular"
+     goes to those members only, never to every student; a staff post for "all students"
+     does reach everyone.
 2. Relevance 0-100 for each of them, from the strongest reason (named 100, your section
    90, your course 85, your group 80, your programme 65, intake 60, school 55, …), then
    +10 for a matching interest, +10 for a kind of information they asked for, and -40
@@ -62,7 +64,9 @@ class Facts:
     intakes: set[int]
     has_semesters: bool
     for_everyone: bool
-    not_my_course: set[int]  # saved this term's timetable without any of its courses
+    # Group members it isn't for: another school, programme, intake or semester than the
+    # message says, or this term's timetable saved without any of its courses.
+    not_for_them: set[int]
 
 
 def _current_term_ids() -> list[int]:
@@ -93,13 +97,27 @@ def _facts(insight: Insight) -> Facts:
     groups = {e.message.source for e in insight.evidence.select_related("message__source")}
     if insight.publisher_source_id:
         groups.add(insight.publisher_source)
-    members = SourceMember.objects.filter(source__in=groups).select_related("source")
+    members = list(SourceMember.objects.filter(source__in=groups).select_related("source"))
     lists = {
         name: set(getattr(audience, name).values_list("id", flat=True))
         for name in ("schools", "programmes", "intakes", "courses", "sections")
     }
     has_semesters = audience.semester_min is not None or audience.semester_max is not None
     for_everyone = not any(lists.values()) and not has_semesters
+    member_ids = {m.user_id for m in members}
+    other_profile = set()
+    if lists["schools"] or lists["programmes"] or lists["intakes"] or has_semesters:
+        # Only members whose profile is complete can be told apart (fits is a part of them).
+        complete = User.objects.filter(
+            id__in=member_ids,
+            student_profile__school__isnull=False,
+            student_profile__programme__isnull=False,
+            student_profile__intake__isnull=False,
+        )
+        fits = students_matching(audience, profile_only=True).filter(id__in=member_ids)
+        other_profile = set(complete.values_list("id", flat=True)) - set(
+            fits.values_list("id", flat=True)
+        )
     return Facts(
         mentioned=set(insight.mentions.values_list("user_id", flat=True)),
         in_section={
@@ -116,7 +134,7 @@ def _facts(insight: Insight) -> Facts:
         intakes=lists["intakes"],
         has_semesters=has_semesters,
         for_everyone=for_everyone,
-        not_my_course=with_timetable - set(takes_course),
+        not_for_them=other_profile | (with_timetable - set(takes_course)),
     )
 
 
@@ -136,8 +154,8 @@ def candidates(insight: Insight, facts: Facts):
     elif facts.for_everyone:
         return students.select_related("student_profile")  # a staff post for everyone
     else:
-        # For certain courses: not for a student whose timetable has none of them.
-        ids = (facts.in_audience | set(facts.group_member)) - facts.not_my_course
+        # Being in the group never beats what the message says about who it is for.
+        ids = (facts.in_audience | set(facts.group_member)) - facts.not_for_them
     return students.filter(pk__in=ids | facts.mentioned).select_related(
         "student_profile__school", "student_profile__programme", "student_profile__intake"
     )

@@ -350,6 +350,7 @@ def resolve(change: Change, source: Source) -> dict:
         "data": {
             "course_id": course.id if course else None,
             "course_code": course.code if course else change.course_code,
+            "section": change.section,  # as the message gave it ("" if not said)
             "section_ids": [s.id for s in sections],
             "meeting_id": meeting.id if meeting else None,
             "date": change.day.isoformat(),
@@ -386,7 +387,9 @@ def save(change: Change, source: Source, model: str) -> Insight:
         confidence=change.confidence,
         evidence=change.evidence,
         audience=audience,
-        hold=found["course"] is None,  # unknown course: an admin checks it first
+        # Unknown course, or a section that course doesn't have: an admin checks it first
+        # (never the whole course instead).
+        hold=merging.is_held(found["data"]),
         importance=TIMETABLE_IMPORTANCE,
         info_type="academic_notice",
         starts_at=_aware(change.new_date or change.day, start) if start else None,
@@ -539,11 +542,14 @@ def item_audience(item: Item, source: Source) -> dict:
 def save_item(item: Item, source: Source, model: str) -> Insight:
     key = merging.link_key(item.kind, item.link)
     when = item.deadline_at or item.starts_at
+    audience = item_audience(item, source)
     duplicate = merging.find_duplicate(
         kind=item.kind,
         merge_key=key,
         title=item.title,
         day=timezone.localtime(when).date() if when else None,
+        names=item.names,
+        course_ids={course.id for course in audience.get("courses", [])},
     )
     if duplicate:  # the same announcement, forwarded from another group
         merging.add_evidence(
@@ -558,7 +564,7 @@ def save_item(item: Item, source: Source, model: str) -> Insight:
         summary=item.summary,
         confidence=item.confidence,
         evidence=item.evidence,
-        audience=item_audience(item, source),
+        audience=audience,
         importance=item.importance,
         action_required=item.action_required,
         action_text=item.action_text,
