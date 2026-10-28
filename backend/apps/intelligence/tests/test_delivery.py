@@ -155,6 +155,20 @@ def test_a_request_for_someone_else_never_reaches_the_group(uni):
     assert delivered(request) == {}  # no delivery, so no alert or digest line either
 
 
+def test_a_course_notice_skips_group_members_whose_timetable_lacks_it(uni):
+    """ "Join the Cloud Computing group": Ali is in the group, but his timetable this term
+    has no Cloud Computing. Omar saved no timetable, so UniFlow can't tell: he still gets it."""
+    cloud = Course.objects.create(school=uni["sci"], code="CDE2233", name="Cloud Computing")
+    SectionEnrollment.objects.create(
+        user=uni["sara"],
+        section=CourseSection.objects.create(course=cloud, term=uni["a"].term, code="1"),
+    )
+    SourceMember.objects.create(source=uni["group"], user=uni["omar"])
+    notice = found(uni, audience={"courses": [cloud]}, importance=60, action_required=True)
+    assert set(delivered(notice)) == {"sara", "omar"}
+    assert delivered(notice)["sara"][2] == "You take CDE2233"
+
+
 def test_action_required(uni):
     deadline = found(
         uni, kind="deadline", audience={"programmes": [uni["bcs"]]}, importance=50,

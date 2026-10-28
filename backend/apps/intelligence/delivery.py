@@ -7,8 +7,10 @@ to each of them, which level of their feed it goes in, and why. Plain code, no A
      sees it, not even in the digest (and nobody at all if no name could be matched);
    - a timetable change: the students of the affected sections or course;
    - anything else: the students it is for (its audience) and the members of the groups
-     it came from. An AI insight for "nobody in particular" goes to those members only,
-     never to every student; a staff post for "all students" does reach everyone.
+     it came from. If it is for certain courses, a student who saved this term's timetable
+     without any of them doesn't get it (without a timetable UniFlow can't tell, so they
+     do). An AI insight for "nobody in particular" goes to those members only, never to
+     every student; a staff post for "all students" does reach everyone.
 2. Relevance 0-100 for each of them, from the strongest reason (named 100, your section
    90, your course 85, your group 80, your programme 65, intake 60, school 55, …), then
    +10 for a matching interest, +10 for a kind of information they asked for, and -40
@@ -60,6 +62,7 @@ class Facts:
     intakes: set[int]
     has_semesters: bool
     for_everyone: bool
+    not_my_course: set[int]  # saved this term's timetable without any of its courses
 
 
 def _current_term_ids() -> list[int]:
@@ -70,9 +73,22 @@ def _current_term_ids() -> list[int]:
 
 def _facts(insight: Insight) -> Facts:
     audience = insight.audience
+    terms = _current_term_ids()
     sections = SectionEnrollment.objects.filter(section__in=audience.sections.all())
     courses = SectionEnrollment.objects.filter(
-        section__course__in=audience.courses.all(), section__term_id__in=_current_term_ids()
+        section__course__in=audience.courses.all(), section__term_id__in=terms
+    )
+    takes_course = {
+        e.user_id: e.section.course.code for e in courses.select_related("section__course")
+    }
+    with_timetable = (
+        set(
+            SectionEnrollment.objects.filter(section__term_id__in=terms).values_list(
+                "user_id", flat=True
+            )
+        )
+        if audience.courses.exists()
+        else set()
     )
     groups = {e.message.source for e in insight.evidence.select_related("message__source")}
     if insight.publisher_source_id:
@@ -90,9 +106,7 @@ def _facts(insight: Insight) -> Facts:
             e.user_id: f"{e.section.course.code} Section {e.section.code}"
             for e in sections.select_related("section__course")
         },
-        takes_course={
-            e.user_id: e.section.course.code for e in courses.select_related("section__course")
-        },
+        takes_course=takes_course,
         group_member={m.user_id: m.source.title for m in members},
         in_audience=set()
         if for_everyone
@@ -102,6 +116,7 @@ def _facts(insight: Insight) -> Facts:
         intakes=lists["intakes"],
         has_semesters=has_semesters,
         for_everyone=for_everyone,
+        not_my_course=with_timetable - set(takes_course),
     )
 
 
@@ -121,7 +136,8 @@ def candidates(insight: Insight, facts: Facts):
     elif facts.for_everyone:
         return students.select_related("student_profile")  # a staff post for everyone
     else:
-        ids = facts.in_audience | set(facts.group_member)
+        # For certain courses: not for a student whose timetable has none of them.
+        ids = (facts.in_audience | set(facts.group_member)) - facts.not_my_course
     return students.filter(pk__in=ids | facts.mentioned).select_related(
         "student_profile__school", "student_profile__programme", "student_profile__intake"
     )

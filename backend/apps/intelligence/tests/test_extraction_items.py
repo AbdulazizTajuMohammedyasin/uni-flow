@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from apps.academics.models import Programme, School
+from apps.academics.models import Course, Programme, School
 from apps.intelligence.extraction import INFO_KINDS, INFO_TYPE, extract_source
 from apps.intelligence.models import Insight, Message, Source
 from apps.intelligence.providers import fake_provider
@@ -118,6 +118,24 @@ def test_without_an_audience_the_groups_own_scope_is_used(group):
     found = Insight.objects.get()
     assert list(found.audience.schools.all()) == [school]
     assert found.starts_at == datetime(2026, 10, 9, 2, 0, tzinfo=UTC)
+
+
+def test_a_course_named_without_its_code_is_found_in_the_course_list(group):
+    """ "C1 students, join the Cloud Computing group": two courses share that name, so it is
+    for both; an unknown name adds nothing."""
+    sci = School.objects.create(code="SCI", name="Computing")
+    first = Course.objects.create(school=sci, code="CDE2233", name="Cloud Computing")
+    second = Course.objects.create(school=sci, code="CDE2333", name="Cloud Computing")
+    Course.objects.create(school=sci, code="CDE2243", name="Internet of Things")
+    posted = add(group, "C1 students, join the Cloud Computing course group.")
+    names = ["cloud-computing", "Underwater Basket Weaving"]
+    fake_provider().answers.append(answer(item(posted, kind="academic_notice", course_names=names)))
+
+    extract_source(group)
+
+    found = Insight.objects.get()
+    assert set(found.audience.courses.all()) == {first, second}
+    assert found.data["course_names"] == names
 
 
 def test_unknown_codes_mean_no_audience_from_the_message(group):

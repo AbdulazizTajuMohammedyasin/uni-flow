@@ -35,7 +35,7 @@ WINDOW_HOURS = 24  # earlier messages shown for context
 WINDOW_MESSAGES = 30
 MAX_TEXT = 1500
 MAX_COURSES = 40  # courses listed in the prompt
-PROMPT_VERSION = "extract-v3"  # v3: the members' courses are listed
+PROMPT_VERSION = "extract-v4"  # v4: course names without a code (course_names)
 TIMETABLE_KINDS = ["class_moved", "class_cancelled", "room_changed", "extra_session"]
 TIMETABLE_IMPORTANCE = 80  # a change to your own class is an important update
 OPPORTUNITY_KINDS = ["internship", "bootcamp", "industry_visit", "competition", "scholarship"]
@@ -83,7 +83,8 @@ importance from 0 to 100 (100 = urgent for the students concerned, 20 = nice to 
 whether students must act and the action in a few words, the deadline and the event's date
 and time (YYYY-MM-DD or YYYY-MM-DD HH:MM, worked out from the message's date; else ""),
 the place, a link copied exactly from the message (else ""), topics from the list given,
-who it is for (course codes, from the group's courses when named there, school codes such
+who it is for (course codes, from the group's courses when named there; a course named
+without a code that isn't among them: its name as written, in course_names; school codes such
 as SCI, programme codes such as BCS, and a semester range when the message says e.g.
 "Year 2" = semesters 4 to 6; leave empty when not said), the names of the students asked
 (direct_request only), how sure you are from 0 to 1, and the ids of the messages that
@@ -138,6 +139,7 @@ ITEM = {
         "link": {"type": "string"},
         "topics": {"type": "array", "items": {"type": "string", "enum": Interest.values}},
         "course_codes": CODES,
+        "course_names": CODES,
         "school_codes": CODES,
         "programme_codes": CODES,
         "semester_min": {"type": "integer"},
@@ -415,6 +417,7 @@ class Item:
     confidence: float
     evidence: list[tuple[Message, str]]
     course_codes: list[str] = field(default_factory=list)
+    course_names: list[str] = field(default_factory=list)
     school_codes: list[str] = field(default_factory=list)
     programme_codes: list[str] = field(default_factory=list)
     semester_min: int | None = None
@@ -437,6 +440,13 @@ def _codes(item: dict, name: str) -> list[str]:
     if not isinstance(values, list):
         return []
     return [str(value).strip().upper().replace(" ", "")[:20] for value in values if value][:10]
+
+
+def _names(item: dict, name: str) -> list[str]:
+    values = item.get(name) or []
+    if not isinstance(values, list):
+        return []
+    return [str(value).strip()[:100] for value in values if str(value).strip()][:10]
 
 
 def _semester(value) -> int | None:
@@ -476,6 +486,7 @@ def check_item(item: dict, window: list[Message]) -> Item | None:
         confidence=confidence,
         evidence=evidence,
         course_codes=_codes(item, "course_codes"),
+        course_names=_names(item, "course_names"),
         school_codes=_codes(item, "school_codes"),
         programme_codes=_codes(item, "programme_codes"),
         semester_min=low,
@@ -484,12 +495,29 @@ def check_item(item: dict, window: list[Message]) -> Item | None:
     )
 
 
+def _plain(text: str) -> str:
+    """ "Cloud-Computing " -> "cloud computing": words only, any case."""
+    return " ".join("".join(c if c.isalnum() else " " for c in text.casefold()).split())
+
+
+def courses_named(names: list[str]) -> list[int]:
+    """The courses with exactly these names in AIU's course list. A name shared by two
+    courses (Cloud Computing is CDE2233 and CDE2333) means both."""
+    wanted = {_plain(name) for name in names} - {""}
+    if not wanted:
+        return []
+    return [pk for pk, name in Course.objects.values_list("id", "name") if _plain(name) in wanted]
+
+
 def item_audience(item: Item, source: Source) -> dict:
     """Who it's for, in plain code: what the message says (codes UniFlow knows, a semester
     range); if it says nothing, the group's own scope; if the group has none, everyone
     (the per-student relevance in M7.4 narrows it down further)."""
     said = {
-        "courses": list(Course.objects.filter(code__in=item.course_codes)),
+        "courses": list(
+            Course.objects.filter(code__in=item.course_codes)
+            | Course.objects.filter(id__in=courses_named(item.course_names))
+        ),
         "schools": list(School.objects.filter(code__in=item.school_codes)),
         "programmes": list(Programme.objects.filter(code__in=item.programme_codes)),
     }
@@ -543,6 +571,7 @@ def save_item(item: Item, source: Source, model: str) -> Insight:
         data={
             "names": item.names,
             "course_codes": item.course_codes,
+            "course_names": item.course_names,
             "school_codes": item.school_codes,
             "programme_codes": item.programme_codes,
         },
