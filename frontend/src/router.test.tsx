@@ -120,6 +120,28 @@ describe('login protection', () => {
     expect(router.state.location.pathname).toBe('/login')
     expect(router.state.location.search).toBe('?next=%2Fsources')
   })
+
+  it('shows the public home page to visitors at /', async () => {
+    vi.mocked(authApi.restoreSession).mockResolvedValue(false)
+
+    const router = renderAt('/')
+
+    const name = 'All your AIU announcements, sorted for you'
+    expect(await screen.findByRole('heading', { level: 1, name }, { timeout: 5000 })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/') // not sent to /login
+    expect(screen.getAllByRole('link', { name: 'Sign up' })[0].getAttribute('href')).toBe('/register')
+    expect(screen.getAllByRole('link', { name: 'Log in' })[0].getAttribute('href')).toBe('/login')
+    expect(screen.queryByRole('navigation', { name: 'Sidebar' })).toBeNull()
+  })
+
+  it('shows the loading state, not the home page, while the session is restoring', async () => {
+    vi.mocked(authApi.restoreSession).mockReturnValue(new Promise(() => {})) // never answers
+
+    renderAt('/')
+
+    expect(await screen.findByRole('status')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'All your AIU announcements, sorted for you' })).toBeNull()
+  })
 })
 
 describe('onboarding', () => {

@@ -61,3 +61,39 @@ for (const shot of shots) {
     })
   })
 }
+
+/**
+ * The screenshots on the public home page, with the same made-up data.
+ * Saved to src/assets/home/ (committed, bundled by Vite):  npm run screens:readme
+ */
+const homeRoot = path.resolve(import.meta.dirname, '../src/assets/home')
+
+const homeShots: Shot[] = [
+  { name: 'for-you', path: '/', ready: 'Project meeting with Dr Farah', device: 'desktop' },
+  { name: 'announcement', path: '/insights/103', ready: 'Where it came from', device: 'desktop' },
+  { name: 'timetable-week', path: '/timetable?view=week', ready: '19 Oct – 25 Oct', device: 'desktop' },
+  { name: 'search', path: '/search?q=internship', ready: /internship at a Kuala Lumpur/, device: 'desktop' },
+  { name: 'notifications', path: '/notifications', ready: 'Mark all as read', device: 'desktop', theme: 'dark' },
+  { name: 'phone-for-you', path: '/', ready: 'Project meeting with Dr Farah', device: 'phone' },
+  { name: 'phone-announcement', path: '/insights/103', ready: 'Where it came from', device: 'phone' },
+  { name: 'phone-timetable', path: '/timetable', ready: 'My sections', device: 'phone' },
+  { name: 'phone-search', path: '/search?q=internship', ready: /internship at a Kuala Lumpur/, device: 'phone' },
+  { name: 'phone-notifications', path: '/notifications', ready: 'Mark all as read', device: 'phone', theme: 'dark' },
+]
+
+for (const shot of homeShots) {
+  test.describe(`home ${shot.name}`, () => {
+    test.use({ ...devices[shot.device], colorScheme: shot.theme ?? 'light' })
+
+    test(`home ${shot.name}`, async ({ page }) => {
+      await page.clock.setFixedTime(NOW)
+      await mockApi(page, 'busy')
+      await page.goto(shot.path)
+      await expect(page.getByText(shot.ready).first()).toBeVisible()
+      await page.evaluate(() => document.fonts.ready)
+      // The "API: ok" badge only exists in development: leave it out of the public page.
+      await page.getByText(/^API: /).evaluateAll((badges) => badges.forEach((badge) => badge.remove()))
+      await page.screenshot({ path: path.join(homeRoot, `${shot.name}.png`), animations: 'disabled' })
+    })
+  })
+}

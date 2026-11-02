@@ -37,6 +37,7 @@ Producing these needs synthetic test data; see the redesign plan's screenshot wo
 
 | Route | Page file | User goal | Data | Key interactions | Verified issues | Risk |
 |---|---|---|---|---|---|---|
+| `/` (logged out) | `pages/Home/Home.tsx` | Understand what UniFlow is and how to use it, then sign up or log in | static; screenshots in `src/assets/home/` (synthetic data, `npm run screens:readme`) | `RequireAuth` shows it to visitors at `/` only; in-page links to "How it works" and "Features"; Sign up / Log in | Added 2026-11-02 ([home-page-design.md](home-page-design.md)) | Low |
 | `/login` | `pages/Login/Login.tsx` | Get into UniFlow | `POST auth/jwt/create/` via `AuthContext` | Zod validation; `?next=` (only internal paths, `safeNext`); a 401 shows a hint about activation | Plain card with no product context. Buttons are 36 px (`size="lg"` = `h-9`). | **High** (auth) |
 | `/register` | `pages/Register/Register.tsx` | Create an account with an `@student.aiu.edu.my` email | `POST auth/users/` | Client domain check; backend field errors mapped under fields; "Check your email" success state | The success state was not captured. Same plain card. | **High** (eligibility rules) |
 | `/forgot-password` | `pages/ForgotPassword/` | Get a reset link | Djoser reset | Same reply for unknown emails (backend setting) | — | Medium |

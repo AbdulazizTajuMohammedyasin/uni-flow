@@ -11,6 +11,15 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## Public home page (2026-11-02)
+
+- **Scope:** `/` for logged-out visitors ([home-page-design.md](home-page-design.md), [home-page-plan.md](home-page-plan.md)); a static mockup was approved before coding.
+- **Iteration 01** (`artifacts/ui/home-iteration-01/`: light and dark at phone, laptop and desktop, plus scrolled captures):
+  - P1 (capture only): full-page captures showed empty feature frames, because images below the fold load lazily. A capture that scrolls first confirmed every image loads.
+  - P3: in the dark theme the phone frame around screenshots is light, not ink. Left as is.
+  - No P0 or P1 issues in the page itself; no further iterations needed.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302 (including the new `home` route: console errors, 44 px taps, no sideways scrolling at 360–1440 px, one h1, keyboard focus, contrast).
+
 ## V2-7: regression pass (2026-10-24)
 
 **Full run** (`artifacts/ui/v2-final/`): 186 screenshots, light and dark × phone, laptop, desktop × 31 states.

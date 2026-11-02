@@ -13,6 +13,7 @@ export type Screen = {
 
 export const screens: Screen[] = [
   // Not logged in
+  { name: 'home', path: '/', scenario: 'visitor', ready: 'All your AIU announcements, sorted for you' },
   { name: 'login', path: '/login', scenario: 'visitor', ready: 'Log in' },
   { name: 'register', path: '/register', scenario: 'visitor', ready: 'Create your account' },
   { name: 'forgot-password', path: '/forgot-password', scenario: 'visitor', ready: /password/i },

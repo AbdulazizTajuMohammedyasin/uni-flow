@@ -10,6 +10,7 @@ This is the **simple overview** of where UniFlow is. It is updated after every t
 **Also done:** M9.6b, **ready for Render + Vercel** (PostgreSQL online, the Vercel forwarding, whitenoise).
 **Also done:** M9.6h, **uploaded files online go to Supabase Storage** (a private bucket, also used for the database since M9.6n).
 **Also done (M9.6j–m): Inngest** runs every background job, and **Celery and Redis are gone**: no worker, no Beat, no Redis, on your laptop or online.
+**Also done (2026-11-02):** a **public home page** at `/` for visitors who are not logged in: what UniFlow does, how to use it in four steps, and screenshots of the app (made-up data).
 **Now:** deploy following [deployment.md](deployment.md), then work through the M9.7 [pilot checklist](pilot-checklist.md), the **pilot checklist**. Also: connect UniFlow's new WhatsApp number (after using it normally for a day).
 
 ---
