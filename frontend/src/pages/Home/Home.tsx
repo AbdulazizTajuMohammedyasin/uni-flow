@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 
 // Screenshots of the real app with made-up data (e2e/mock-api.ts), made by `npm run screens:readme`.
 import announcement from '@/assets/home/announcement.png'
-import forYou from '@/assets/home/for-you.png'
 import notifications from '@/assets/home/notifications.png'
 import phoneAnnouncement from '@/assets/home/phone-announcement.png'
 import phoneForYou from '@/assets/home/phone-for-you.png'
@@ -88,7 +87,7 @@ const TRUST: { icon: LucideIcon; title: string; text: string }[] = [
 ]
 
 /** A screenshot: the desktop image from 768 px up, the phone image (in a phone frame) below. */
-function Screenshot({ desktop, phone, alt, eager = false }: { desktop: string; phone: string; alt: string; eager?: boolean }) {
+function Screenshot({ desktop, phone, alt }: { desktop: string; phone: string; alt: string }) {
   return (
     <picture className="mx-auto block w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card ring-[5px] ring-foreground md:w-full md:max-w-none md:rounded-2xl md:shadow-[0_24px_60px_-28px_rgb(20_20_15/0.35)] md:ring-1 md:ring-border">
       <source media="(min-width: 768px)" srcSet={desktop} width={1440} height={900} />
@@ -97,7 +96,7 @@ function Screenshot({ desktop, phone, alt, eager = false }: { desktop: string; p
         alt={alt}
         width={780}
         height={1688}
-        loading={eager ? 'eager' : 'lazy'}
+        loading="lazy"
         className="block h-auto w-full"
       />
     </picture>
@@ -140,32 +139,44 @@ export function HomePage() {
       </header>
 
       <main>
-        {/* Opening: the lime band, with the screenshot hanging over its bottom edge. */}
-        <div className="rounded-b-[1.75rem] bg-primary pt-7 text-primary-foreground md:rounded-b-[2.5rem] md:pt-14">
-          <div className="mx-auto max-w-6xl px-5 md:px-8">
-            <p className="text-[0.9375rem]">For Albukhary International University students</p>
-            <h1 className="mt-3 max-w-[13ch] text-[2.625rem] leading-[0.98] font-medium tracking-[-0.035em] md:mt-4 md:text-[4.5rem]">
-              All your AIU announcements, sorted for you
-            </h1>
-            <p className="mt-5 max-w-[56ch] text-[1.0625rem] leading-relaxed md:text-[1.1875rem]">
-              UniFlow reads the academic WhatsApp and Telegram groups you add and puts what matters first: messages
-              that name you, deadlines, and class changes.
-            </p>
-            <div className="mt-7 flex gap-3">
-              <Button asChild size="lg" className={cn('flex-1 px-6 md:flex-none', inkButton)}>
-                <Link to="/register">Sign up</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className={cn('flex-1 px-6 md:flex-none', inkOutline)}>
-                <Link to="/login">Log in</Link>
-              </Button>
+        {/* Opening: the lime band. Computers: text left, the phone screenshot beside it.
+            Smaller screens: the screenshot below the text, hanging over the band's bottom edge. */}
+        <div className="rounded-b-[1.75rem] bg-primary pt-7 text-primary-foreground md:rounded-b-[2.5rem] md:pt-14 lg:pt-12 lg:pb-14">
+          <div className="mx-auto max-w-6xl px-5 md:px-8 lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-16">
+            <div>
+              <p className="text-[0.9375rem]">For Albukhary International University students</p>
+              <h1 className="mt-3 max-w-[13ch] text-[2.625rem] leading-[0.98] font-medium tracking-[-0.035em] md:mt-4 md:text-[4.5rem]">
+                All your AIU announcements, sorted for you
+              </h1>
+              <p className="mt-5 max-w-[56ch] text-[1.0625rem] leading-relaxed md:text-[1.1875rem]">
+                UniFlow reads the academic WhatsApp and Telegram groups you add and puts what matters first: messages
+                that name you, deadlines, and class changes.
+              </p>
+              <div className="mt-7 flex gap-3">
+                <Button asChild size="lg" className={cn('flex-1 px-6 md:flex-none', inkButton)}>
+                  <Link to="/register">Sign up</Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className={cn('flex-1 px-6 md:flex-none', inkOutline)}>
+                  <Link to="/login">Log in</Link>
+                </Button>
+              </div>
             </div>
-            <div className="relative -mb-36 pt-10 md:-mb-30 md:pt-14">
-              <Screenshot desktop={forYou} phone={phoneForYou} alt="The For you page: what needs you, today's classes and important updates" eager />
+            <div className="relative -mb-36 pt-10 md:pt-14 lg:mb-0 lg:pt-0">
+              {/* The top of the phone screen: Today and the first "Needs you" items. */}
+              <div className="mx-auto aspect-[390/700] w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card ring-[5px] ring-primary-foreground lg:w-full lg:max-w-none">
+                <img
+                  src={phoneForYou}
+                  alt="The For you page on a phone: today's classes and what needs you"
+                  width={780}
+                  height={1688}
+                  className="block h-full w-full object-cover object-top"
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <section aria-labelledby="problem" className="pt-52 pb-16 md:pt-50 md:pb-24">
+        <section aria-labelledby="problem" className="pt-52 pb-16 md:pt-50 md:pb-24 lg:pt-24">
           <div className="mx-auto grid max-w-6xl gap-8 px-5 md:grid-cols-2 md:gap-16 md:px-8">
             <div>
               <Kicker>The problem</Kicker>

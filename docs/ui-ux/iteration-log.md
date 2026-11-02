@@ -18,6 +18,7 @@ There are at most 3 iterations per milestone before the results are reported bac
   - P1 (capture only): full-page captures showed empty feature frames, because images below the fold load lazily. A capture that scrolls first confirmed every image loads.
   - P3: in the dark theme the phone frame around screenshots is light, not ink. Left as is.
   - No P0 or P1 issues in the page itself; no further iterations needed.
+- **Iteration 02** (`artifacts/ui/home-iteration-02/`, first screen at 390, 768, 1024, 1440 and 1872 px), on the developer's request: from 1024 px the screenshot sits beside the opening text (a phone frame showing the top of "For you"), so the lime band ends at about 720 px instead of below a full-width screenshot. Below 1024 px it stays under the text. The unused desktop "For you" screenshot was removed.
 - **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302 (including the new `home` route: console errors, 44 px taps, no sideways scrolling at 360–1440 px, one h1, keyboard focus, contrast).
 
 ## V2-7: regression pass (2026-10-24)
