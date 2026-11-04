@@ -4,6 +4,8 @@ UniFlow is an **AI-powered student information assistant**. It processes the uni
 
 > "No fluff. No information overload. Just the information that matters to you."
 
+**Live:** [uni-flow-inky.vercel.app](https://uni-flow-inky.vercel.app/)
+
 Students keep talking in WhatsApp and Telegram. UniFlow removes the need to monitor dozens of groups every day. See [docs/01-product.md](docs/01-product.md).
 
 ## Screenshots
@@ -49,7 +51,7 @@ Students keep talking in WhatsApp and Telegram. UniFlow removes the need to moni
 
 ## Status
 
-Milestones M0–M8 are built: accounts and roles, courses and timetables, message intake from WhatsApp, Telegram, pasted text and chat exports, the AI pipeline, the personal "For you" feed and in-app notifications. M9, the pilot release, is in progress: search, the privacy notice, the public home page, push notifications through Expo and the production setup are built; deployment and the pilot with real students are next. Staff pages (M10) come after the pilot; until then the Django admin is the operator's tool. See [docs/PROGRESS.md](docs/PROGRESS.md).
+Milestones M0–M8 are built: accounts and roles, courses and timetables, message intake from WhatsApp, Telegram, pasted text and chat exports, the AI pipeline, the personal "For you" feed and in-app notifications. M9, the pilot release, is in progress: search, the privacy notice, the public home page, push notifications through Expo and the production setup are built, and UniFlow is live at [uni-flow-inky.vercel.app](https://uni-flow-inky.vercel.app/). The pilot with real students is next. Staff pages (M10) come after the pilot; until then the Django admin is the operator's tool. See [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Repository layout
 

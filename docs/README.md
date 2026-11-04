@@ -1,6 +1,6 @@
 # UniFlow Documentation
 
-Status: **M0–M8 are built and M9 (the pilot release) is in progress.** After M2.8 the product was **redefined as an AI-powered student information assistant** ([01](01-product.md)), and the architecture and roadmap were re-planned around it. Next: deploy ([deployment.md](deployment.md)) and work through the [pilot checklist](pilot-checklist.md).
+Status: **M0–M8 are built and M9 (the pilot release) is in progress.** After M2.8 the product was **redefined as an AI-powered student information assistant** ([01](01-product.md)), and the architecture and roadmap were re-planned around it. UniFlow is deployed at [uni-flow-inky.vercel.app](https://uni-flow-inky.vercel.app/) (set-up in [deployment.md](deployment.md)). Next: work through the [pilot checklist](pilot-checklist.md).
 
 Throughout these docs, **[MVP]** means the item is built in milestones M0–M10. **[Later]** means it is designed and documented but not built yet.
 
