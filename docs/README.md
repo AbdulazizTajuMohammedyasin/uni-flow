@@ -1,6 +1,6 @@
 # UniFlow Documentation
 
-Status: **M0–M2 are built.** After M2.8 the product was **redefined as an AI-powered student information assistant** ([01](01-product.md)), and the architecture and roadmap were re-planned around it. The next task is M3.1.
+Status: **M0–M8 are built and M9 (the pilot release) is in progress.** After M2.8 the product was **redefined as an AI-powered student information assistant** ([01](01-product.md)), and the architecture and roadmap were re-planned around it. Next: deploy ([deployment.md](deployment.md)) and work through the [pilot checklist](pilot-checklist.md).
 
 Throughout these docs, **[MVP]** means the item is built in milestones M0–M10. **[Later]** means it is designed and documented but not built yet.
 
@@ -35,6 +35,7 @@ UniFlow/
 ├── docs/
 ├── backend/              # Django API — owns its own .gitignore, .env.example, Pipfile, Pipfile.lock, pyproject.toml
 ├── connectors/whatsapp/  # the WhatsApp connector process (added in M6)
+├── deploy/               # docker-compose.yml to run the production images locally (M9.6)
 └── frontend/             # React app — owns its own .gitignore, .env.example, package.json, oxlint/tsconfig/vite config
 ```
 
@@ -52,13 +53,13 @@ UniFlow/
 | D5 | Official staff posts are **insights with `origin = staff`**: one table and one lifecycle for everything students receive. There is no separate announcements table. Publishers are `university_admin` (any school, any audience) and `school_staff` (only their own school). Lecturers are read-only. |
 | D6 | A single `Audience` model per insight or post is the **hard filter** of who can receive it: schools, programmes, intakes, and (from M3) courses and sections. Relevance is then scored per student. |
 | D7 | Background work (AI calls, notifications, digest, retention) ran in **Celery with Redis** as the broker, with Celery Beat for daily jobs, until M9.6m. **Replaced by Inngest (D24).** |
-| D8 | **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`) handle accounts and login, and SimpleJWT handles tokens. There are no custom login views. Tokens are returned as `{access, refresh}` for web and mobile alike. `is_active` means the email is verified. |
+| D8 | **Djoser's own URLs** (`djoser.urls` and `djoser.urls.jwt`) handle accounts and login, and SimpleJWT handles tokens. Login and refresh are SimpleJWT's own views with one change: the access token is returned in the body and the refresh token is set as a secure httpOnly cookie (`apps/accounts/cookie_jwt.py`). `is_active` means the email is verified. |
 | D9 | Documents, events, applications and communities as browsable lists are **[Later]**. Their information reaches students as insights. |
 | D10 | The timetable is the **student's current reality**. The normal timetable is **read by the AI** from timetables shared in groups or uploaded by students (images, PDFs, spreadsheets, Google Drive links), and changes are detected in messages. **Nothing is saved until the student confirms.** Students can also add a class by hand. |
 | D11 | Messaging platforms are **primary sources**. Telegram uses the official bot. **WhatsApp uses an unofficial connector, chosen knowingly** with the risks and safeguards in [08](08-messaging-integrations.md). Manual paste and chat export always work as a fallback. |
-| D12 | Native MySQL 8.4 for development; **PostgreSQL in production** (Render, D23). Local-day logic (such as "today in Kuala Lumpur") is computed in Python, so MySQL's time zone tables are never needed. |
+| D12 | Native MySQL 8.4 for development; **PostgreSQL in production** (Supabase, D25). Local-day logic (such as "today in Kuala Lumpur") is computed in Python, so MySQL's time zone tables are never needed. |
 | D13 | Libraries are added only in the task that needs them, and only once approved. |
-| D14 | **shadcn/ui** (Radix-based, preset "nova") provides the UI components, themed with UniFlow indigo as the primary colour. Components live in `src/components/ui/` and UniFlow's own small components live in `src/shared/ui/`. |
+| D14 | **shadcn/ui** (Radix-based, preset "nova") provides the UI components, themed with UniFlow's own tokens (indigo at first; paper, ink and lime since the visual refresh, D26). Components live in `src/components/ui/` and UniFlow's own small components live in `src/shared/ui/`. |
 | D15 | **The AI reads and proposes; code decides and acts.** All model calls go through `intelligence/providers.py`; output is schema-validated; relevance and tiers are computed by code per student. |
 | D16 | **Relevance and importance are separate.** Importance per insight (AI), relevance per student (code); four tiers: direct attention, action required, important update, digest. |
 | D17 | **Every insight links to its source** (evidence messages with sender, group and time). |
@@ -71,11 +72,10 @@ UniFlow/
 ## Remaining decisions
 
 1. **Gemini free tier vs paid tier** (privacy: on the free tier Google may use what is sent). The developer chose the free tier for now; decide before real students' messages are processed (**M9.7**).
-2. **WhatsApp connector library** (Baileys or neonize/whatsmeow) and a **dedicated WhatsApp number**. Needed before **M6.3**.
+2. A **dedicated WhatsApp number** for the connector, needed for M6.3's real-world test. (The library is decided: Baileys.)
 3. **University approval** for reading academic groups. Needed before the pilot (**M9.7**).
 4. The university's own timetable export (for an extra import adapter). Not blocking: the AI reads shared timetables.
-5. Hosting. Needed before **M9.6**. It must keep the WhatsApp connector online.
-6. Libraries decided when their task arrives: `filetype` (M4.4), `openpyxl` (M5.4, only for spreadsheets), `factory_boy`, `openapi-typescript`, `whitenoise`.
+5. Libraries decided when their task arrives: `factory_boy`, `openapi-typescript`.
 
 ### Resolved
 

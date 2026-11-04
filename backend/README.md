@@ -43,6 +43,8 @@ pipenv run ruff format .           # format (use --check to verify without chang
 
 Tests run against **MySQL**, not SQLite. The MySQL account in `.env` must be able to create and drop `test_uniflow`. Tool configuration is in `pyproject.toml`.
 
+CI (`.github/workflows/backend.yml`) runs the same tests against MySQL 8.4 and against PostgreSQL 16, because production uses PostgreSQL.
+
 ### Adding a dependency
 
 Only add a dependency in the roadmap task that needs it, and only once it is approved:
@@ -61,6 +63,14 @@ Commit `Pipfile` and `Pipfile.lock` together.
 | Settings modules | `config/settings/base.py` (shared), `dev.py` (the default for `manage.py`), `test.py` (pytest), `prod.py` (the default for `wsgi.py`/`asgi.py`) |
 | Environment variables | `backend/.env`, loaded by `config/env.py`. Copy it from `.env.example`. Real environment variables win. `.env` is never committed. |
 | Django admin | `/django-admin/`. A back-office for developers and super admins only. |
+| Database | MySQL 8.4 locally; PostgreSQL (Supabase) in production, chosen by setting `DATABASE_URL` (otherwise the `DB_*` variables point to MySQL) |
+| Uploaded files | The local `media/` folder, or a private Supabase Storage bucket (S3 API) when `S3_BUCKET` is set |
+| AI provider | Google Gemini (`AI_PROVIDER`, `GEMINI_API_KEY`, `AI_FAST_MODELS`, `AI_SMART_MODELS`). Tests use a fake provider. |
+| Production | `config.settings.prod` with the Docker image in `Dockerfile` (gunicorn + whitenoise). See [docs/deployment.md](../docs/deployment.md). |
+
+## Apps
+
+`accounts` (users, roles, login), `academics` (schools, programmes, intakes, courses, terms), `audiences` (who receives what), `timetable` (sections and weekly classes), `intelligence` (groups, messages, the AI pipeline, the feed, Telegram and WhatsApp intake), `notifications` (in-app alerts, Expo push to phones and the daily digest) and `publishing` (shared base models and permission rules for posts).
 
 ## API
 
@@ -85,7 +95,7 @@ Accounts use **Djoser's own URLs**. Login and refresh use SimpleJWT with one cha
 
 ## Emails in development
 
-Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Real sending is set up at deployment (M10).
+Emails (for example the activation email after registering) are **printed in the `runserver` terminal** instead of being sent. Copy the link from there. Online, emails are sent through Brevo's API (django-anymail) by setting `EMAIL_BACKEND=anymail.backends.brevo.EmailBackend` and `BREVO_API_KEY`.
 
 ## Background jobs (Inngest)
 

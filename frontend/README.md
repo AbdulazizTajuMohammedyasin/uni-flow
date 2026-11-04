@@ -1,8 +1,10 @@
 # UniFlow Frontend
 
-The React web app for UniFlow: the student area, plus the staff dashboard later. See [docs/05-frontend.md](../docs/05-frontend.md) for the architecture.
+The React web app for UniFlow: a public home page, the account pages, and the student area (For you, Search, Notifications, Digest, item pages, Timetable, Groups, Profile, Onboarding). The staff dashboard at `/staff` has its frame, navigation and permission checks; its pages are placeholders until after the pilot (M10). See [docs/05-frontend.md](../docs/05-frontend.md) for the architecture.
 
-Stack: React + TypeScript + Vite + Tailwind CSS v4. More libraries are added only by the roadmap task that needs them.
+Stack: React 19, TypeScript, Vite, React Router, TanStack Query, Axios, Tailwind CSS v4, shadcn/ui (Radix), React Hook Form, Zod, lucide icons and the Inter typeface. Tests use Vitest, React Testing Library and Playwright. More libraries are added only by the roadmap task that needs them.
+
+Online, Vercel builds this folder and forwards `/api/` to the backend on Render (`vercel.json`), so the browser sees a single site.
 
 ## Setup (Windows, PowerShell)
 
@@ -36,7 +38,7 @@ npm run dev                      # opens on http://localhost:5173
 - TypeScript runs in `strict` mode.
 - **UI components come from shadcn/ui** and live in `src/components/ui/`, for example `import { Button } from '@/components/ui/button'`. Add a new one only when a screen needs it: `npx shadcn@latest add dialog`. UniFlow's own small components live in `src/shared/ui/`.
 - **Colours come from the theme tokens only** (`bg-card`, `text-muted-foreground`, `bg-attention`, `text-success`, …, defined in `src/index.css` for light and dark). Never use raw palette classes such as `text-slate-600`: they don't switch with dark mode. Light / Dark / System is chosen on the Profile page (`components/ThemeToggle.tsx`).
-- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/index.css`, which holds the Tailwind import, UniFlow's light and dark theme tokens (deep blue `primary`, amber `attention` for "needs you", `success`, …) and the base body styles. Add a theme token only when a real screen needs it.
+- **Styling uses Tailwind utility classes** in the components. The global stylesheet is `src/index.css`, which holds the Tailwind import, UniFlow's light and dark theme tokens (warm paper and ink, a lime `primary` used as a fill only and never as text, `attention` for "needs you", `success`, …) and the base body styles. Add a theme token only when a real screen needs it.
 - **Tests** sit next to the code they test, as `*.test.ts(x)`, for example `src/App.test.tsx`. Use React Testing Library queries such as `getByRole` and `getByText`, and test what a user sees, not implementation details.
 - **Talking to the backend:** use the shared client `api` from `@/api/client` (never call `fetch` directly), add a small typed function to `src/api/<area>.ts` (see `api/health.ts`), and wrap it in a hook in `src/hooks/useX.ts` (see `hooks/useHealth.ts`). Errors become an `ApiError` via `toApiError`.
 - **Login:** `context/AuthContext.tsx` provides `useAuth()` (`user`, `login`, `logout`). The access token stays **in memory**, and the refresh token is a secure **httpOnly cookie** set by the backend, so no login data is saved in `localStorage` (only the light/dark choice, `uniflow-theme`). Wrap login-only routes in `components/RequireAuth.tsx`.

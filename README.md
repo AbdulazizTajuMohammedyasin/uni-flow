@@ -47,25 +47,36 @@ Students keep talking in WhatsApp and Telegram. UniFlow removes the need to moni
 
 <sub>The screenshots use made-up sample data: no real students, staff or messages. Regenerate them with <code>npm run screens:readme</code> in <code>frontend/</code>.</sub>
 
+## Status
+
+Milestones M0–M8 are built: accounts and roles, courses and timetables, message intake from WhatsApp, Telegram, pasted text and chat exports, the AI pipeline, the personal "For you" feed and in-app notifications. M9, the pilot release, is in progress: search, the privacy notice, the public home page, push notifications through Expo and the production setup are built; deployment and the pilot with real students are next. Staff pages (M10) come after the pilot; until then the Django admin is the operator's tool. See [docs/PROGRESS.md](docs/PROGRESS.md).
+
 ## Repository layout
 
 ```
 UniFlow/
-├── frontend/   React + TypeScript + Vite: student area and staff dashboard
-├── backend/    Django + Django REST Framework API on MySQL
-├── docs/       Architecture, API design and roadmap
+├── frontend/             React + TypeScript + Vite: public home page, student area, staff dashboard frame
+├── backend/              Django + Django REST Framework API (modular monolith)
+├── connectors/whatsapp/  Node.js process that runs UniFlow's WhatsApp number (Baileys)
+├── deploy/               Docker Compose file to run the production images locally
+├── docs/                 Product, architecture, API, deployment and roadmap
+├── .github/workflows/    CI for the backend, frontend and connector
 └── README.md
 ```
 
 ## Stack
 
-- **Backend:** Python, Django 5.2 LTS, Django REST Framework, MySQL 8.4 (native install), Djoser for accounts, SimpleJWT for tokens
-- **Web:** React, TypeScript, Vite, React Router, TanStack Query, Axios, Tailwind CSS, React Hook Form, Zod
-- **Mobile (later):** React Native with Expo, using the same `/api/v1/` API
+- **Backend:** Python 3.13, Django 5.2 LTS, Django REST Framework, Djoser for accounts, SimpleJWT for tokens (refresh token in an httpOnly cookie), drf-spectacular for the OpenAPI schema
+- **Database:** MySQL 8.4 for local development; PostgreSQL in production (Supabase). CI runs the backend tests on both.
+- **Background jobs:** [Inngest](https://www.inngest.com/), which calls Django at `/api/inngest`. No worker process and no Redis.
+- **AI:** Google Gemini through the `google-genai` SDK, behind a single provider module (`backend/apps/intelligence/providers.py`) with model fallback
+- **Sources:** an official Telegram bot (webhook), a WhatsApp connector built on Baileys, and manual paste or chat export as a fallback
+- **Web:** React 19, TypeScript, Vite, React Router, TanStack Query, Axios, Tailwind CSS v4, shadcn/ui (Radix), React Hook Form, Zod
+- **Testing:** pytest and pytest-django; Vitest and React Testing Library; Playwright smoke, accessibility and screenshot tests; Ruff and oxlint
+- **Hosting:** the website on Vercel, the API on Render from a Docker image, files in Supabase Storage, email through Brevo. Docker is used only for deployment, not for local development. See [docs/deployment.md](docs/deployment.md).
+- **Mobile:** a React Native (Expo) app, kept outside this repository, runs the website and receives push notifications that the backend sends through Expo's push service. A fully native app on the same `/api/v1/` API comes later.
 
 ## Getting started
-
-> The backend and frontend are not scaffolded yet. This section grows as each foundation task (M0) lands.
 
 ### Prerequisites
 
@@ -82,8 +93,9 @@ UniFlow/
 
 1. Clone the repository.
 2. Create a local MySQL database named `uniflow` (see [docs/development-setup.md](docs/development-setup.md#1-local-database)).
-3. Backend setup: see [backend/README.md](backend/README.md).
-4. Frontend setup: added in M0.9–M0.11.
+3. Backend: see [backend/README.md](backend/README.md), including the Inngest dev server that runs background jobs locally.
+4. Frontend: see [frontend/README.md](frontend/README.md).
+5. WhatsApp connector (optional): see [connectors/whatsapp/README.md](connectors/whatsapp/README.md).
 
 ### Repository conventions
 
