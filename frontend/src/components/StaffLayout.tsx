@@ -10,7 +10,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   [
     'block shrink-0 rounded-full px-4 py-2 text-sm whitespace-nowrap',
     isActive
-      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground'
+      ? 'bg-card font-semibold text-sidebar-foreground shadow-card dark:bg-sidebar-accent dark:shadow-none'
       : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent',
   ].join(' ')
 

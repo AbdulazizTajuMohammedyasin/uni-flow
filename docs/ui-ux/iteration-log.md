@@ -11,6 +11,12 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-2: app shell (2026-11-07)
+
+- **Scope:** `AppLayout` (sidebar active item, phone bottom bar), `StaffLayout` (active item), `PageHeader` (title weight 600), `Wordmark` (weight 600). `HealthBadge` needed no change: its pairs pass on the new tokens.
+- **Iteration 01** (`artifacts/ui/v3-2-iteration-01/`, all states, both themes, phone, laptop and desktop): the active sidebar item reads as a raised white pill with a blue icon in light and a `--sidebar-accent` pill in dark; the bottom-bar pill uses `--island`/`--island-accent`. No P0 or P1 issues in the shell. The full-page phone captures show the fixed bottom bar mid-page, as in earlier rounds (a capture artefact). Remaining items are unchanged from V3-1 and belong to V3-3 and V3-4.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
+
 ## V3-1: tokens, primitives and contrast tests (2026-11-07)
 
 - **Scope:** [visual-refresh-v3-plan.md](visual-refresh-v3-plan.md), milestone V3-1: `index.css` (both themes, new `--link`, `--primary-hover`, `--island-accent`, `--island-border`, `--tag`, `--hero-*`, `--card-shadow`), the `Button` default variant (cobalt hover, `--ring` focus), a new `official` `Badge` variant, and the contrast pairs in `e2e/a11y.spec.ts`.

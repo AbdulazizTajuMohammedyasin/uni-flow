@@ -14,14 +14,15 @@ import { HealthBadge } from './HealthBadge'
 import { Wordmark } from './Wordmark'
 import { SkipLink } from '@/components/SkipLink'
 
-/** Desktop sidebar link: the active page is a lime pill with medium-weight text (not colour
- * alone), plus aria-current="page" from NavLink. */
+/** Desktop sidebar link: the active page is a raised pill (white with a light shadow; a soft
+ * fill in the dark theme) with a blue icon and semibold text, so it is not shown by colour
+ * alone, plus aria-current="page" from NavLink. */
 const sidebarLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     'flex min-h-11 items-center gap-3 rounded-full px-4 text-[0.9375rem] outline-none',
     'focus-visible:ring-3 focus-visible:ring-ring/50',
     isActive
-      ? 'bg-sidebar-primary font-medium text-sidebar-primary-foreground focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar'
+      ? 'bg-card font-semibold text-sidebar-foreground shadow-card dark:bg-sidebar-accent dark:shadow-none [&>svg]:text-link'
       : 'font-normal text-sidebar-foreground hover:bg-sidebar-accent',
   )
 
@@ -29,14 +30,14 @@ const bottomLinkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     'group/tab flex min-h-16 flex-col items-center justify-center gap-1 px-1 text-xs outline-none',
     'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
-    isActive ? 'font-medium text-foreground' : 'font-normal text-muted-foreground',
+    isActive ? 'font-semibold text-foreground' : 'font-normal text-muted-foreground',
   )
 
-/** Behind the bottom-bar icon: a lime pill on the active page. */
+/** Behind the bottom-bar icon: a light-blue pill with a blue icon on the active page. */
 const bottomIconClass = ({ isActive }: { isActive: boolean }) =>
   cn(
     'relative flex h-8 w-14 items-center justify-center rounded-full',
-    isActive && 'bg-primary text-primary-foreground',
+    isActive && 'bg-island text-island-accent',
   )
 
 /** Student-area frame: sidebar on md+ screens; top bar + bottom navigation on phones. */

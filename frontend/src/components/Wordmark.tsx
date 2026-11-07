@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
  * `inverted` is for lime backgrounds (an ink square with lime lines, in both themes). The mark is decorative. */
 export function Wordmark({ className, inverted = false }: { className?: string; inverted?: boolean }) {
   return (
-    <span className={cn('inline-flex items-center gap-2 font-medium tracking-tight', className)}>
+    <span className={cn('inline-flex items-center gap-2 font-semibold tracking-tight', className)}>
       <span
         aria-hidden
         className={cn(
