@@ -103,10 +103,14 @@ const PAIRS: { text: string; on: string; over?: string; alpha?: number; min: num
   { text: '--muted-foreground', on: '--card', min: 4.5 },
   { text: '--muted-foreground', on: '--muted', min: 4.5 },
   { text: '--muted-foreground', on: '--accent', over: '--card', alpha: 0.5, min: 4.5 }, // unread alert rows
-  // Lime (--primary) is a fill only, never text: links and labels are ink, underlined.
   { text: '--foreground', on: '--accent', over: '--card', alpha: 0.5, min: 4.5 }, // "New" on unread rows
-  { text: '--foreground', on: '--primary', over: '--card', alpha: 0.25, min: 4.5 }, // icons in a lime circle
+  { text: '--foreground', on: '--primary', over: '--card', alpha: 0.25, min: 4.5 }, // icons in a tinted circle
   { text: '--primary-foreground', on: '--primary', min: 4.5 }, // button labels
+  { text: '--primary-foreground', on: '--primary-hover', min: 4.5 }, // button labels on hover
+  // Cobalt is too dark for text in the dark theme, so links and blue labels use --link.
+  { text: '--link', on: '--card', min: 4.5 },
+  { text: '--link', on: '--background', min: 4.5 },
+  { text: '--tag-foreground', on: '--tag', min: 4.5 }, // "Official" tag
   { text: '--accent-foreground', on: '--accent', min: 4.5 },
   { text: '--secondary-foreground', on: '--secondary', min: 4.5 },
   { text: '--destructive', on: '--card', min: 4.5 },
@@ -114,9 +118,10 @@ const PAIRS: { text: string; on: string; over?: string; alpha?: number; min: num
   { text: '--destructive', on: '--destructive', over: '--card', alpha: 0.1, min: 4.5 }, // "Disconnected" badge
   { text: '--destructive-foreground', on: '--destructive', min: 4.5 },
   { text: '--attention-foreground', on: '--attention', min: 4.5 },
-  { text: '--island-foreground', on: '--island', min: 4.5 }, // the "needs you" block
+  { text: '--island-foreground', on: '--island', min: 4.5 }, // the "needs you" panel
   { text: '--island-muted', on: '--island', min: 4.5 },
-  { text: '--primary', on: '--island', min: 4.5 }, // lime labels inside it
+  { text: '--island-accent', on: '--island', min: 4.5 }, // blue labels inside it
+  { text: '--ring', on: '--island', min: 3 }, // focus inside it
   { text: '--success', on: '--card', min: 4.5 },
   { text: '--success', on: '--background', min: 4.5 },
   { text: '--success', on: '--success', over: '--card', alpha: 0.1, min: 4.5 }, // "Connected" badge
@@ -125,8 +130,8 @@ const PAIRS: { text: string; on: string; over?: string; alpha?: number; min: num
   { text: '--input', on: '--background', min: 3 },
   { text: '--ring', on: '--card', min: 3 },
   { text: '--ring', on: '--background', min: 3 },
-  // Not measured: a lime button's edge on paper (1.8:1). WCAG 1.4.11 does not ask for one when the
-  // label names the control; its focus ring (--ring, above) is what has to stand out.
+  { text: '--primary', on: '--background', min: 3 }, // a filled button's edge on the page
+  { text: '--primary', on: '--card', min: 3 },
 ]
 
 for (const theme of ['light', 'dark'] as const) {

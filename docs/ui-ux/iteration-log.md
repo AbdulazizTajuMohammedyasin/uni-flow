@@ -11,6 +11,17 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-1: tokens, primitives and contrast tests (2026-11-07)
+
+- **Scope:** [visual-refresh-v3-plan.md](visual-refresh-v3-plan.md), milestone V3-1: `index.css` (both themes, new `--link`, `--primary-hover`, `--island-accent`, `--island-border`, `--tag`, `--hero-*`, `--card-shadow`), the `Button` default variant (cobalt hover, `--ring` focus), a new `official` `Badge` variant, and the contrast pairs in `e2e/a11y.spec.ts`.
+- **Contrast:** the planned dark hover `#1f7bff` measured 3.94:1 with white and was replaced with `#005ee6` (5.6:1) before the run.
+- **Iteration 01** (`artifacts/ui/v3-1-iteration-01/`: light and dark at phone, laptop and desktop, all 33 states). The tokens apply everywhere. Expected leftovers, scheduled for later milestones:
+  - P1 (V3-3): section labels inside "Needs you" still use `text-primary`; in the dark theme cobalt on the panel is about 3:1. They move to `--island-accent`.
+  - P2 (V3-2): the active nav item is a solid cobalt pill; the plan specifies a white pill with a blue icon.
+  - P2 (V3-4): the log-in panel and the home bands are solid cobalt; the plan specifies cream with the hero wash.
+  - P3 (V3-3): the "Official" tag still uses the neutral badge; unread dots keep the ink ring added for lime.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302, including the updated contrast pairs in both themes.
+
 ## Public home page (2026-11-02)
 
 - **Scope:** `/` for logged-out visitors ([home-page-design.md](home-page-design.md), [home-page-plan.md](home-page-plan.md)); a static mockup was approved before coding.

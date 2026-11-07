@@ -8,13 +8,13 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * UniFlow design tokens (docs/ui-ux/visual-refresh-plan.md, section 4).
- * Components use the semantic names only (bg-card, text-muted-foreground, bg-attention, ...),
+ * UniFlow design tokens (docs/ui-ux/visual-refresh-v3-plan.md, section 3).
+ * Components use the semantic names only (bg-card, text-muted-foreground, text-link, ...),
  * never raw palette colours, so every screen follows the light and dark theme automatically.
- * Every text pair below was checked: at least 4.5:1, control edges at least 3:1.
+ * Every text pair below was checked: at least 4.5:1, control edges and focus at least 3:1.
  */
 
-/* Maps shadcn's semantic variables to Tailwind utilities (bg-primary, text-muted-foreground, ...) */
+/* Maps the semantic variables to Tailwind utilities (bg-primary, text-muted-foreground, ...) */
 @theme inline {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
@@ -27,6 +27,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-link: var(--link);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -42,6 +44,12 @@
   --color-island: var(--island);
   --color-island-foreground: var(--island-foreground);
   --color-island-muted: var(--island-muted);
+  --color-island-accent: var(--island-accent);
+  --color-island-border: var(--island-border);
+  --color-tag: var(--tag);
+  --color-tag-foreground: var(--tag-foreground);
+  --color-hero-from: var(--hero-from);
+  --color-hero-to: var(--hero-to);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -59,6 +67,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --shadow-card: var(--card-shadow);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -68,99 +78,117 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Light theme: ink on warm paper; lime marks what is live (buttons, "now", unread, the active page). */
+/* Light theme: ink on warm cream, white cards with a feather-light shadow; cobalt is the one action colour. */
 :root {
   color-scheme: light;
   --radius: 0.75rem;
 
-  --background: #f5f5eb; /* paper: the page */
-  --foreground: #14140f; /* ink: text and links, 16.8:1 on paper */
-  --card: #ffffff; /* surface: lists, panels, forms */
-  --card-foreground: #14140f;
+  --background: #faf9f7; /* cream: the page */
+  --foreground: #121722; /* ink: 17.0:1 on cream, 17.9:1 on white */
+  --card: #ffffff;
+  --card-foreground: #121722;
   --popover: #ffffff;
-  --popover-foreground: #14140f;
-  --primary: #8fcc2e; /* lime: fills only, never text (1.8:1 on paper) */
-  --primary-foreground: #14140f; /* ink on lime: 9.5:1 */
-  --secondary: #ebebdf;
-  --secondary-foreground: #14140f;
-  --muted: #ebebdf;
-  --muted-foreground: #5c5c52; /* secondary text: 6.2:1 on paper */
-  --accent: #ebebdf; /* hovered and selected items */
-  --accent-foreground: #14140f;
+  --popover-foreground: #121722;
+  --card-shadow: 0 1px 1px 0 rgb(0 0 0 / 0.07), inset 0 0 0 0.5px rgb(0 0 0 / 0.14);
+  --primary: #0068f9; /* cobalt: buttons, now, unread; white on it 4.8:1, edge on cream 4.6:1 */
+  --primary-foreground: #ffffff;
+  --primary-hover: #024bb1;
+  --link: #0068f9; /* links and blue labels: 4.8:1 on white, 4.6:1 on cream */
+  --secondary: #f2f1ee;
+  --secondary-foreground: #121722;
+  --muted: #f2f1ee;
+  --muted-foreground: #5f6571; /* secondary text: 5.6:1 on cream, 5.9:1 on white, 5.2:1 on muted */
+  --accent: #f2f1ee; /* hovered and selected items */
+  --accent-foreground: #121722;
   --destructive: #b42318; /* errors, unread count: 6.6:1 with white */
   --destructive-foreground: #ffffff;
-  --attention: #eef5dd; /* lime tint, until the dark "needs you" block replaces it */
-  --attention-foreground: #3d5c0e; /* 6.9:1 on attention */
-  --attention-border: #8fcc2e;
-  --island: #2a2a24; /* the dark "needs you" block */
-  --island-foreground: #f5f5eb; /* 13.2:1 on island */
-  --island-muted: #b8b8ac; /* 7.2:1 on island */
-  --success: #3a6b10; /* "Saved", "Added": 5.8:1 on paper */
-  --border: #d2d2c8; /* dividers (decorative) */
-  --input: #84847a; /* field and checkbox edges: 3.8:1 on white, 3.4:1 on paper */
-  --ring: #14140f; /* focus: ink, because lime would vanish on paper */
+  --attention: #eef4ff; /* pending changes */
+  --attention-foreground: #024bb1; /* 7.2:1 on attention */
+  --attention-border: #0068f9;
+  --island: #eef4ff; /* the soft blue "needs you" panel */
+  --island-foreground: #121722; /* 16.2:1 */
+  --island-muted: #5f6571; /* 5.3:1 */
+  --island-accent: #024bb1; /* labels and icons in the panel: 7.2:1 (cobalt would be 4.4:1) */
+  --island-border: #d6e4f1;
+  --tag: #f4f0ff; /* violet, decoration only: the "Official" tag */
+  --tag-foreground: #6736eb; /* 5.7:1 */
+  --hero-from: #e3efff; /* the wash at the foot of the home and log-in hero */
+  --hero-to: #efe9ff;
+  --success: #046645; /* "Saved", "Connected": 7.0:1 on white */
+  --border: #ebe9e4; /* dividers (decorative) */
+  --input: #8a8f99; /* field and checkbox edges: 3.3:1 on white, 3.1:1 on cream */
+  --ring: #0068f9; /* focus: 4.8:1 on white, 4.6:1 on cream, 4.4:1 on the panel */
 
-  --chart-1: #8fcc2e;
-  --chart-2: #5c5c52;
-  --chart-3: #3d5c0e;
-  --chart-4: #3a6b10;
+  --chart-1: #0068f9;
+  --chart-2: #6736eb;
+  --chart-3: #5f6571;
+  --chart-4: #046645;
   --chart-5: #b42318;
 
-  --sidebar: #f5f5eb;
-  --sidebar-foreground: #14140f;
-  --sidebar-primary: #8fcc2e;
-  --sidebar-primary-foreground: #14140f;
-  --sidebar-accent: #ebebdf;
-  --sidebar-accent-foreground: #14140f;
-  --sidebar-border: #d2d2c8;
-  --sidebar-ring: #14140f;
+  --sidebar: #faf9f7;
+  --sidebar-foreground: #121722;
+  --sidebar-primary: #0068f9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f1ee;
+  --sidebar-accent-foreground: #121722;
+  --sidebar-border: #ebe9e4;
+  --sidebar-ring: #0068f9;
 }
 
-/* Dark theme: warm near-black, hairline borders, the same lime (every pair re-checked for contrast). */
+/* Dark theme, "warm stone": the night version of the cream, with the same cobalt button. */
 .dark {
   color-scheme: dark;
 
-  --background: #121210;
-  --foreground: #f2f2ea; /* 16.7:1 on background */
-  --card: #1c1c19;
-  --card-foreground: #f2f2ea;
-  --popover: #1c1c19;
-  --popover-foreground: #f2f2ea;
-  --primary: #8fcc2e; /* 9.7:1 on background */
-  --primary-foreground: #14140f; /* 9.5:1 on primary */
-  --secondary: #24241f;
-  --secondary-foreground: #f2f2ea;
-  --muted: #24241f;
-  --muted-foreground: #a3a398; /* 6.7:1 on card */
-  --accent: #2a2a25;
-  --accent-foreground: #f2f2ea; /* 12.8:1 on accent */
+  --background: #1c1917;
+  --foreground: #f5f3ef; /* 15.8:1 on background, 14.1:1 on card */
+  --card: #262320;
+  --card-foreground: #f5f3ef;
+  --popover: #262320;
+  --popover-foreground: #f5f3ef;
+  --card-shadow: 0 0 0 1px #35302c;
+  --primary: #0068f9; /* white on it 4.8:1; edge on the page 3.6:1 */
+  --primary-foreground: #ffffff;
+  --primary-hover: #005ee6; /* white on it 5.6:1 */
+  --link: #78adff; /* cobalt is only 3.2:1 as text here: 6.9:1 on card */
+  --secondary: #2f2b27;
+  --secondary-foreground: #f5f3ef;
+  --muted: #2f2b27;
+  --muted-foreground: #a8a29e; /* 6.9:1 on background, 6.2:1 on card, 5.6:1 on muted */
+  --accent: #2f2b27;
+  --accent-foreground: #f5f3ef;
   --destructive: #f2877d;
   --destructive-foreground: #2a0b08; /* 7.4:1 on destructive */
-  --attention: #1e2614;
-  --attention-foreground: #a8dc5c; /* 9.7:1 on attention */
-  --attention-border: #4d6b1c;
-  --island: #262622;
-  --island-foreground: #f2f2ea; /* 13.5:1 on island */
-  --island-muted: #a9a99e; /* 6.4:1 on island */
-  --success: #9fdc5a; /* 10.5:1 on card */
-  --border: #2e2e2a;
-  --input: #6b6b62; /* 3.2:1 on card */
-  --ring: #8fcc2e;
+  --attention: #212d3e;
+  --attention-foreground: #8fbcff; /* 7.2:1 on attention */
+  --attention-border: #78adff;
+  --island: #212d3e;
+  --island-foreground: #f5f3ef; /* 12.6:1 */
+  --island-muted: #a8a29e; /* 5.5:1 */
+  --island-accent: #8fbcff; /* 7.2:1 */
+  --island-border: #193b6c;
+  --tag: #2c2540;
+  --tag-foreground: #b9a3ff; /* 6.7:1 */
+  --hero-from: #1e2738;
+  --hero-to: #262236;
+  --success: #5fcf8f; /* 8.0:1 on card */
+  --border: #35302c;
+  --input: #78716c; /* 3.3:1 on card, 3.7:1 on background */
+  --ring: #78adff; /* 6.9:1 on card, 7.7:1 on background */
 
-  --chart-1: #8fcc2e;
-  --chart-2: #a3a398;
-  --chart-3: #a8dc5c;
-  --chart-4: #9fdc5a;
+  --chart-1: #78adff;
+  --chart-2: #b9a3ff;
+  --chart-3: #a8a29e;
+  --chart-4: #5fcf8f;
   --chart-5: #f2877d;
 
-  --sidebar: #121210;
-  --sidebar-foreground: #f2f2ea;
-  --sidebar-primary: #8fcc2e;
-  --sidebar-primary-foreground: #14140f;
-  --sidebar-accent: #2a2a25;
-  --sidebar-accent-foreground: #f2f2ea;
-  --sidebar-border: #2e2e2a;
-  --sidebar-ring: #8fcc2e;
+  --sidebar: #1c1917;
+  --sidebar-foreground: #f5f3ef;
+  --sidebar-primary: #0068f9;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2f2b27;
+  --sidebar-accent-foreground: #f5f3ef;
+  --sidebar-border: #35302c;
+  --sidebar-ring: #78adff;
 }
 
 @layer base {
@@ -176,16 +204,12 @@
   }
 }
 
-/* The dark "needs you" block (visual-refresh-plan.md, section 3): inverted on the light page; in the
-   dark theme a raised surface with a hairline and a lime edge, so it still stands out. */
+/* The soft blue "needs you" panel (visual-refresh-v3-plan.md, section 2): what the student must act on,
+   such as messages that name them, deadlines and class changes to confirm. */
 @utility island {
   background-color: var(--island);
   color: var(--island-foreground);
-  .dark & {
-    box-shadow:
-      inset 3px 0 0 var(--primary),
-      0 0 0 1px var(--border);
-  }
+  box-shadow: inset 0 0 0 1px var(--island-border);
 }
 
 /* Less motion when the device asks for it: menus, fades and pulses finish at once. */
