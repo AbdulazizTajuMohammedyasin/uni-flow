@@ -39,9 +39,9 @@ export function TodayBox({ className }: { className?: string }) {
   const when = moments(classes, nowInMalaysia())
 
   return (
-    <section aria-label="Today" className={cn('rounded-2xl bg-card p-4 md:p-6 dark:ring-1 dark:ring-border', className)}>
+    <section aria-label="Today" className={cn('rounded-2xl bg-card p-4 shadow-card md:p-6', className)}>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-lg leading-tight font-medium tracking-[-0.02em] md:text-[1.375rem]">
+        <h2 className="flex items-center gap-2 text-lg leading-tight font-semibold tracking-[-0.02em] md:text-[1.375rem]">
           <CalendarClock aria-hidden className="size-[1.125rem] text-foreground" />
           Today
         </h2>

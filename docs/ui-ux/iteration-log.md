@@ -11,6 +11,18 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-3: For you, item page and timetable (2026-11-07)
+
+- **Scope:** `ItemRow`, `ForYou`, `TodayBox`, `ClassChanges`, `WeekGrid`, `Insight`, `Timetable`.
+  - Labels, icons and the in-panel link inside `island` use `--island-accent` (fixes the V3-1 P1: cobalt on the dark panel was about 3:1).
+  - Panel dividers use `--island-border`; "Official" uses the `official` badge variant in both places.
+  - The unread dot is `bg-link` without the ink ring added for lime (on the dark panel cobalt would be under 3:1; `--link` is clear).
+  - Cards use `shadow-card` instead of `dark:ring-1`; the now line in the week grid is `bg-primary` in both themes.
+  - The Today / This week switch shows the active view as a raised pill (`viewOn`), matching `Tabs`, instead of a filled button; `aria-pressed` is unchanged.
+  - Section headings move to weight 600.
+- **Iteration 01** (`artifacts/ui/v3-3-iteration-01/`, all states, both themes, three viewports): no P0 or P1 issues. Text links outside the panel ("Timetable", "Open the daily digest") are still ink and underlined; the plan's link sweep is in V3-5. The panel radius stays at the existing `rounded-2xl` rather than the plan's 16 px (P3; a global radius change would touch every page and is not worth the churn).
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean. The first `npm run e2e` run had 4 failures: three `page.goto` timeouts (the dev server was slow under load) and one "focused but not visible" on a timetable **Remove** button. `a11y.spec.ts` alone then passed 71/71, and a full re-run passed 302/302 (`artifacts/ui/v3-3-e2e-rerun.txt`).
+
 ## V3-2: app shell (2026-11-07)
 
 - **Scope:** `AppLayout` (sidebar active item, phone bottom bar), `StaffLayout` (active item), `PageHeader` (title weight 600), `Wordmark` (weight 600). `HealthBadge` needed no change: its pairs pass on the new tokens.

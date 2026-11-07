@@ -52,7 +52,7 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
   const now = minutes(nowInMalaysia())
 
   return (
-    <div className="overflow-x-auto rounded-2xl bg-card dark:ring-1 dark:ring-border">
+    <div className="overflow-x-auto rounded-2xl bg-card shadow-card">
       <table className="w-full min-w-[46rem] table-fixed border-collapse text-sm">
         <caption className="sr-only">Classes this week, by day and time</caption>
         <colgroup>
@@ -111,7 +111,7 @@ export function WeekGrid({ days, today }: { days: Day[]; today: string }) {
                     ))}
                   </div>
                   {isToday && now >= start && now <= end && (
-                    <span aria-hidden className="absolute inset-y-0 z-0 w-0.5 bg-foreground dark:bg-primary" style={{ left: at(now) }} />
+                    <span aria-hidden className="absolute inset-y-0 z-0 w-0.5 bg-primary" style={{ left: at(now) }} />
                   )}
                   {day.classes.length === 0 && <span className="sr-only">No classes</span>}
                   <ul>

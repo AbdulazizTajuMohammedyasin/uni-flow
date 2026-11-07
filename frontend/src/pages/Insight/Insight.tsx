@@ -88,10 +88,10 @@ function Header({ item }: { item: FeedDetail }) {
     <header className="space-y-3">
       <div className="flex flex-wrap gap-2">
         <Badge variant="secondary">{kindLabel(item.kind)}</Badge>
-        {item.official && <Badge>Official</Badge>}
+        {item.official && <Badge variant="official">Official</Badge>}
         {item.not_confirmed && <Badge variant="outline">Not confirmed</Badge>}
       </div>
-      <h1 className="text-[1.625rem] leading-tight font-medium tracking-[-0.025em] text-balance md:text-[2.5rem] md:leading-[1.05] md:tracking-[-0.03em]">
+      <h1 className="text-[1.625rem] leading-tight font-semibold tracking-[-0.025em] text-balance md:text-[2.5rem] md:leading-[1.05] md:tracking-[-0.03em]">
         {item.title}
       </h1>
       <p className="max-w-[65ch] text-base md:text-lg">{item.summary}</p>
@@ -115,14 +115,14 @@ function Details({ item }: { item: FeedDetail }) {
     <div className="space-y-4">
       {item.action_required && (
         <p role="note" className="flex gap-2.5 island rounded-2xl p-4 text-[0.9375rem] md:p-5">
-          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0 text-island-accent" />
           <span>
-            <span className="font-medium">What to do:</span> {item.action_text || 'Action needed.'}
+            <span className="font-semibold">What to do:</span> {item.action_text || 'Action needed.'}
           </span>
         </p>
       )}
       {rows.length > 0 && (
-        <dl className="grid gap-x-6 gap-y-3 rounded-2xl bg-card p-4 sm:grid-cols-2 md:p-5 dark:ring-1 dark:ring-border">
+        <dl className="grid gap-x-6 gap-y-3 rounded-2xl bg-card p-4 shadow-card sm:grid-cols-2 md:p-5">
           {rows.map(({ label, value, Icon }) => (
             <div key={label} className="flex gap-3">
               <Icon aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -147,7 +147,7 @@ function Details({ item }: { item: FeedDetail }) {
           This changes one of your classes.{' '}
           <Link
             to="/timetable"
-            className="rounded-sm font-medium text-primary underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-primary"
+            className="rounded-sm font-medium text-island-accent underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring"
           >
             Confirm or reject it on your timetable
           </Link>

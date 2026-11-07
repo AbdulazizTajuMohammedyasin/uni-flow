@@ -72,7 +72,7 @@ function Feed({ items }: { items: FeedItem[] }) {
     <>
       {urgent > 0 && (
         <div className="space-y-1 overflow-hidden island rounded-[1.25rem] pt-4 pb-1 md:pt-5">
-          <h2 className="px-5 text-xl leading-tight font-medium tracking-[-0.02em] md:text-[1.375rem]">
+          <h2 className="px-5 text-xl leading-tight font-semibold tracking-[-0.02em] md:text-[1.375rem]">
             Needs you <span className="font-normal text-island-muted tabular-nums">({urgent})</span>
           </h2>
           <TierSection tier="direct" items={of('direct')} />
@@ -95,14 +95,14 @@ function TierSection({ tier, items }: { tier: Tier; items: FeedItem[] }) {
   const Heading = urgent ? 'h3' : 'h2'
 
   return (
-    <section aria-label={title} className={urgent ? 'pt-3 [&+&]:mt-1 [&+&]:border-t [&+&]:border-island-muted/25 [&+&]:pt-4' : 'space-y-3'}>
+    <section aria-label={title} className={urgent ? 'pt-3 [&+&]:mt-1 [&+&]:border-t [&+&]:border-island-border [&+&]:pt-4' : 'space-y-3'}>
       <div className={cn('flex flex-wrap items-end justify-between gap-x-3', urgent && 'px-5')}>
         <div>
           <Heading
             className={
               urgent
-                ? 'flex items-center gap-2 text-sm font-medium text-primary'
-                : 'flex items-center gap-2 text-[1.375rem] leading-tight font-medium tracking-[-0.02em]'
+                ? 'flex items-center gap-2 text-sm font-semibold text-island-accent'
+                : 'flex items-center gap-2 text-[1.375rem] leading-tight font-semibold tracking-[-0.02em]'
             }
           >
             <Icon aria-hidden className={urgent ? 'size-4' : 'size-5 text-muted-foreground'} />

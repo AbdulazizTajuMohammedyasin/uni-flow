@@ -6,7 +6,7 @@ import { formatWhen } from '@/lib/feed'
 import { cn } from '@/lib/utils'
 import type { FeedItem } from '@/types/feed'
 
-/** "default": a white panel. "island": rows inside the dark "needs you" block (no panel of their own). */
+/** "default": a white panel. "island": rows inside the soft blue "needs you" panel (no panel of their own). */
 type Tone = 'default' | 'island'
 
 /** Rows of items in one list, separated by lines (not a stack of separate cards). */
@@ -15,7 +15,7 @@ export function ItemList({ children, tone = 'default' }: { children: ReactNode; 
     <ul
       className={cn(
         'divide-y overflow-hidden',
-        tone === 'island' ? 'divide-island-muted/25' : 'divide-border rounded-2xl bg-card dark:ring-1 dark:ring-border',
+        tone === 'island' ? 'divide-island-border' : 'divide-border rounded-2xl bg-card shadow-card',
       )}
     >
       {children}
@@ -40,17 +40,17 @@ export function ItemRow({ item, compact = false, tone = 'default' }: { item: Fee
         className={cn(
           'flex gap-3.5 px-5 py-4 outline-none focus-visible:ring-3 focus-visible:ring-inset',
           island
-            ? 'hover:bg-island-foreground/5 focus-visible:ring-primary'
+            ? 'hover:bg-island-foreground/5 focus-visible:ring-ring'
             : 'hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-ring/50',
         )}
       >
-        {/* Unread: a lime dot plus a heavier title; the dot is named for screen readers. On white it
-            gets an ink ring, because lime alone is faint there. */}
+        {/* Unread: a blue dot plus a heavier title (not colour alone); the dot is named for screen readers.
+            It uses the link blue, which stays clear on the dark theme's panel. */}
         <span className="flex w-2 shrink-0 justify-center pt-2">
           {!item.read && (
             <span
               aria-label="Unread"
-              className={cn('size-2 rounded-full bg-primary', !island && 'ring-[1.5px] ring-foreground dark:ring-0')}
+              className="size-2 rounded-full bg-link"
             />
           )}
         </span>
@@ -66,7 +66,7 @@ export function ItemRow({ item, compact = false, tone = 'default' }: { item: Fee
               {item.title}
             </span>
             {item.official && (
-              <Badge variant="secondary" className={island ? 'bg-island-foreground/10 text-island-foreground' : undefined}>
+              <Badge variant="official">
                 Official
               </Badge>
             )}

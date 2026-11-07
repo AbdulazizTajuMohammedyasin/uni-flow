@@ -26,15 +26,15 @@ function WaitingChanges({ waiting }: { waiting: ClassChange[] }) {
   return (
     <section aria-label="Changes to confirm" className="island space-y-4 rounded-2xl p-4 md:p-5">
       <div>
-        <h2 className="flex items-center gap-2 text-lg font-medium">
-          <CircleAlert aria-hidden className="size-[1.125rem] text-primary" />
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <CircleAlert aria-hidden className="size-[1.125rem] text-island-accent" />
           {waiting.length === 1 ? 'A class may have changed' : `${waiting.length} classes may have changed`}
         </h2>
         <p className="mt-0.5 text-sm text-island-muted">
           UniFlow found this in a group message. Only your own timetable changes, and only if you confirm.
         </p>
       </div>
-      <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card text-card-foreground">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card text-card-foreground shadow-card">
         {waiting.map((change) => (
           <ChangeCard key={change.id} change={change} />
         ))}
@@ -47,8 +47,8 @@ function WaitingChanges({ waiting }: { waiting: ClassChange[] }) {
 function EveryWeekChanges({ changes }: { changes: ClassChange[] }) {
   const answer = useAnswerChange()
   return (
-    <section aria-labelledby="every-week-title" className="space-y-2 rounded-2xl bg-card p-4 text-card-foreground md:p-5">
-      <h2 id="every-week-title" className="text-base font-medium">
+    <section aria-labelledby="every-week-title" className="space-y-2 rounded-2xl bg-card p-4 text-card-foreground shadow-card md:p-5">
+      <h2 id="every-week-title" className="text-base font-semibold">
         Changed every week
       </h2>
       <ul className="divide-y divide-border">

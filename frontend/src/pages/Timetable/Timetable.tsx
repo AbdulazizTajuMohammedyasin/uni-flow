@@ -29,6 +29,11 @@ import type { ClassSlot, Section, Semester, SemesterChoice, TimetableDays } from
 
 type Panel = 'none' | 'import' | 'pick' | 'add'
 
+/** The chosen view in the Today / This week switch: a raised pill with semibold text (not colour alone),
+ * like the tabs elsewhere. */
+const viewOn =
+  'bg-card font-semibold text-foreground shadow-card hover:bg-card dark:bg-foreground dark:text-background dark:shadow-none dark:hover:bg-foreground dark:hover:text-background'
+
 const PANELS: { value: Exclude<Panel, 'none'>; label: string; hint: string; Icon: LucideIcon }[] = [
   { value: 'import', label: 'Add my timetable', hint: 'UniFlow reads a photo, PDF, Excel file or link', Icon: FilePlus2 },
   { value: 'pick', label: 'Choose sections', hint: "Search this term's sections", Icon: ListChecks },
@@ -56,11 +61,11 @@ export function TimetablePage() {
       <PageHeader
         title="Timetable"
         actions={
-          <div role="group" aria-label="View" className="flex gap-1 rounded-lg bg-muted p-1">
-            <Button size="sm" variant={view === 'today' ? 'default' : 'ghost'} aria-pressed={view === 'today'} onClick={() => show('today')}>
+          <div role="group" aria-label="View" className="flex gap-1 rounded-full bg-muted p-1">
+            <Button size="sm" variant="ghost" className={cn(view === 'today' && viewOn)} aria-pressed={view === 'today'} onClick={() => show('today')}>
               Today
             </Button>
-            <Button size="sm" variant={view === 'week' ? 'default' : 'ghost'} aria-pressed={view === 'week'} onClick={() => show('week')}>
+            <Button size="sm" variant="ghost" className={cn(view === 'week' && viewOn)} aria-pressed={view === 'week'} onClick={() => show('week')}>
               This week
             </Button>
           </div>
@@ -222,7 +227,7 @@ function ChangesNotice() {
   if (waiting === 0) return null
   return (
     <div className="island flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl py-2.5 pr-2.5 pl-4 text-sm">
-      <CircleAlert aria-hidden className="size-4 shrink-0 text-primary" />
+      <CircleAlert aria-hidden className="size-4 shrink-0 text-island-accent" />
       <p className="flex-1">{waiting === 1 ? '1 class change to confirm.' : `${waiting} class changes to confirm.`}</p>
       <Button asChild size="sm">
         <a href="#changes">Review</a>
