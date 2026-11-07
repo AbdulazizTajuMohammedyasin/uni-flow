@@ -16,11 +16,7 @@ import phoneTimetable from '@/assets/home/phone-timetable.png'
 import search from '@/assets/home/search.png'
 import timetableWeek from '@/assets/home/timetable-week.png'
 
-/** Focus on the lime bands: an ink ring in both themes (a lime ring would vanish). */
-const onLimeFocus = 'outline-none focus-visible:ring-3 focus-visible:ring-primary-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-primary'
-/** Buttons on the lime bands: ink with lime text, and an ink outline. */
-const inkButton = cn('bg-primary-foreground text-primary hover:bg-primary-foreground/85', onLimeFocus)
-const inkOutline = cn('border-primary-foreground bg-transparent text-primary-foreground hover:bg-primary-foreground/10', onLimeFocus)
+const focusRing = 'outline-none focus-visible:ring-3 focus-visible:ring-ring'
 
 const PROBLEMS = [
   { title: 'Class changes scroll away', text: 'A room change is posted once, then lost under the replies.' },
@@ -89,7 +85,7 @@ const TRUST: { icon: LucideIcon; title: string; text: string }[] = [
 /** A screenshot: the desktop image from 768 px up, the phone image (in a phone frame) below. */
 function Screenshot({ desktop, phone, alt }: { desktop: string; phone: string; alt: string }) {
   return (
-    <picture className="mx-auto block w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card ring-[5px] ring-foreground md:w-full md:max-w-none md:rounded-2xl md:shadow-[0_24px_60px_-28px_rgb(20_20_15/0.35)] md:ring-1 md:ring-border">
+    <picture className="mx-auto block w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card ring-[5px] ring-foreground md:w-full md:max-w-none md:rounded-2xl md:shadow-shot md:ring-1 md:ring-border">
       <source media="(min-width: 768px)" srcSet={desktop} width={1440} height={900} />
       <img
         src={phone}
@@ -107,31 +103,31 @@ function Kicker({ children }: { children: string }) {
   return <p className="text-sm font-medium tracking-[0.08em] text-muted-foreground uppercase">{children}</p>
 }
 
-const h2 = 'mt-3 max-w-[18ch] text-[2rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance md:text-[2.75rem]'
+const h2 = 'mt-3 max-w-[18ch] text-[2rem] leading-[1.05] font-semibold tracking-[-0.03em] text-balance md:text-[2.75rem]'
 const sub = 'mt-4 max-w-[60ch] text-[1.0625rem] leading-relaxed text-muted-foreground md:text-lg'
 
 /** The public home page: what UniFlow is and how to use it (shown at / to visitors who are not logged in). */
 export function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="bg-primary text-primary-foreground">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5 md:h-18 md:gap-8 md:px-8">
-          <Link to="/" className={cn('rounded-sm text-xl', onLimeFocus)}>
-            <Wordmark inverted />
+          <Link to="/" className={cn('rounded-sm text-xl', focusRing)}>
+            <Wordmark />
           </Link>
-          <nav aria-label="Home page" className="ml-4 hidden gap-7 text-[0.9375rem] sm:flex">
-            <a href="#how-it-works" className={cn('rounded-sm hover:underline hover:underline-offset-4', onLimeFocus)}>
+          <nav aria-label="Home page" className="ml-4 hidden gap-7 text-[0.9375rem] font-medium sm:flex">
+            <a href="#how-it-works" className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
               How it works
             </a>
-            <a href="#features" className={cn('rounded-sm hover:underline hover:underline-offset-4', onLimeFocus)}>
+            <a href="#features" className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
               Features
             </a>
           </nav>
           <div className="ml-auto flex gap-2.5">
-            <Button asChild variant="outline" size="sm" className={inkOutline}>
+            <Button asChild variant="outline" size="sm">
               <Link to="/login">Log in</Link>
             </Button>
-            <Button asChild size="sm" className={inkButton}>
+            <Button asChild size="sm">
               <Link to="/register">Sign up</Link>
             </Button>
           </div>
@@ -139,13 +135,15 @@ export function HomePage() {
       </header>
 
       <main>
-        {/* Opening: the lime band. Computers: text left, the phone screenshot beside it.
-            Smaller screens: the screenshot below the text, hanging over the band's bottom edge. */}
-        <div className="rounded-b-[1.75rem] bg-primary pt-7 text-primary-foreground md:rounded-b-[2.5rem] md:pt-14 lg:pt-12 lg:pb-14">
+        {/* Opening: the page colour fading into a soft blue wash. Computers: text left, the phone screenshot
+            beside it. Smaller screens: the screenshot below the text, hanging over the band's bottom edge. */}
+        <div className="hero-wash rounded-b-[1.75rem] pt-7 md:rounded-b-[2.5rem] md:pt-14 lg:pt-12 lg:pb-14">
           <div className="mx-auto max-w-6xl px-5 md:px-8 lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-center lg:gap-16">
             <div>
-              <p className="text-[0.9375rem]">For Albukhary International University students</p>
-              <h1 className="mt-3 max-w-[13ch] text-[2.625rem] leading-[0.98] font-medium tracking-[-0.035em] md:mt-4 md:text-[4.5rem]">
+              <p className="w-fit rounded-full bg-tag px-3 py-1 text-[0.9375rem] font-medium text-tag-foreground">
+                For Albukhary International University students
+              </p>
+              <h1 className="mt-3 max-w-[13ch] text-[2.625rem] leading-[0.98] font-semibold tracking-[-0.035em] md:mt-4 md:text-[4.5rem]">
                 All your AIU announcements, sorted for you
               </h1>
               <p className="mt-5 max-w-[56ch] text-[1.0625rem] leading-relaxed md:text-[1.1875rem]">
@@ -153,17 +151,17 @@ export function HomePage() {
                 that name you, deadlines, and class changes.
               </p>
               <div className="mt-7 flex gap-3">
-                <Button asChild size="lg" className={cn('flex-1 px-6 md:flex-none', inkButton)}>
+                <Button asChild size="lg" className="flex-1 px-6 md:flex-none">
                   <Link to="/register">Sign up</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className={cn('flex-1 px-6 md:flex-none', inkOutline)}>
+                <Button asChild size="lg" variant="outline" className="flex-1 bg-card px-6 md:flex-none">
                   <Link to="/login">Log in</Link>
                 </Button>
               </div>
             </div>
             <div className="relative -mb-36 pt-10 md:pt-14 lg:mb-0 lg:pt-0">
               {/* The top of the phone screen: Today and the first "Needs you" items. */}
-              <div className="mx-auto aspect-[390/700] w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card ring-[5px] ring-primary-foreground lg:w-full lg:max-w-none">
+              <div className="mx-auto aspect-[390/700] w-[72%] max-w-xs overflow-hidden rounded-[1.75rem] bg-card shadow-shot ring-[5px] ring-foreground lg:w-full lg:max-w-none">
                 <img
                   src={phoneForYou}
                   alt="The For you page on a phone: today's classes and what needs you"
@@ -211,12 +209,12 @@ export function HomePage() {
               {STEPS.map((step, index) => (
                 <li
                   key={step.title}
-                  className="grid grid-cols-[2.75rem_1fr] gap-x-4 rounded-2xl bg-card p-5 ring-1 ring-border lg:block lg:p-7"
+                  className="grid grid-cols-[2.75rem_1fr] gap-x-4 rounded-2xl bg-card p-5 shadow-card lg:block lg:p-7"
                 >
                   <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
                     {index + 1}
                   </span>
-                  <h3 className="self-center text-lg leading-snug font-medium lg:mt-7">{step.title}</h3>
+                  <h3 className="self-center text-lg leading-snug font-semibold lg:mt-7">{step.title}</h3>
                   <p className="col-start-2 mt-1 text-[0.9375rem] leading-relaxed text-muted-foreground lg:mt-2.5">{step.text}</p>
                 </li>
               ))}
@@ -225,7 +223,7 @@ export function HomePage() {
         </section>
 
         <div className="mx-auto max-w-6xl px-5 md:px-8">
-          <section id="features" aria-labelledby="features-title" className="scroll-mt-6 rounded-[1.75rem] bg-card px-5 py-14 md:rounded-[2.5rem] md:px-16 md:py-24">
+          <section id="features" aria-labelledby="features-title" className="scroll-mt-6 rounded-[1.75rem] bg-card px-5 py-14 shadow-card md:rounded-[2.5rem] md:px-16 md:py-24">
             <Kicker>Features</Kicker>
             <h2 id="features-title" className={h2}>What UniFlow does for you</h2>
             {FEATURES.map((feature, index) => (
@@ -238,10 +236,10 @@ export function HomePage() {
               >
                 <div className={cn(index % 2 && 'md:order-2')}>
                   <p className="flex items-center gap-2 text-sm font-medium">
-                    <span aria-hidden className="size-2.5 rounded-full bg-primary ring-[1.5px] ring-foreground" />
+                    <span aria-hidden className="size-2.5 rounded-full bg-primary" />
                     {feature.tag}
                   </p>
-                  <h3 className="mt-2.5 text-2xl leading-tight font-medium tracking-[-0.02em] md:text-[1.875rem]">{feature.title}</h3>
+                  <h3 className="mt-2.5 text-2xl leading-tight font-semibold tracking-[-0.02em] md:text-[1.875rem]">{feature.title}</h3>
                   <p className="mt-3.5 leading-relaxed text-muted-foreground md:text-[1.0625rem]">{feature.text}</p>
                 </div>
                 <Screenshot desktop={feature.desktop} phone={feature.phone} alt={feature.alt} />
@@ -253,14 +251,14 @@ export function HomePage() {
         <section aria-labelledby="trust" className="py-16 md:py-24">
           <div className="mx-auto max-w-6xl px-5 md:px-8">
             <div className="island rounded-[1.75rem] px-6 py-9 md:rounded-[2rem] md:p-16">
-              <h2 id="trust" className="text-[2rem] leading-[1.05] font-medium tracking-[-0.03em] md:text-[2.75rem]">
+              <h2 id="trust" className="text-[2rem] leading-[1.05] font-semibold tracking-[-0.03em] md:text-[2.75rem]">
                 Built to be trusted
               </h2>
               <p className="mt-4 text-island-muted md:text-lg">
                 Read how UniFlow uses information in the{' '}
                 <Link
                   to="/privacy"
-                  className="rounded-sm text-primary underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-primary"
+                  className="rounded-sm font-medium text-island-accent underline underline-offset-4 outline-none hover:decoration-2 focus-visible:ring-3 focus-visible:ring-ring"
                 >
                   privacy notice
                 </Link>
@@ -269,10 +267,10 @@ export function HomePage() {
               <ul className="mt-9 grid gap-7 md:mt-12 md:grid-cols-3 md:gap-8">
                 {TRUST.map(({ icon: Icon, title, text }) => (
                   <li key={title}>
-                    <span aria-hidden className="flex size-10 items-center justify-center rounded-full border-[1.5px] border-primary text-primary">
+                    <span aria-hidden className="flex size-10 items-center justify-center rounded-full bg-card text-island-accent shadow-card">
                       <Icon className="size-4.5" />
                     </span>
-                    <p className="mt-4 text-lg font-medium">{title}</p>
+                    <p className="mt-4 text-lg font-semibold">{title}</p>
                     <p className="mt-1.5 leading-relaxed text-island-muted">{text}</p>
                   </li>
                 ))}
@@ -283,18 +281,18 @@ export function HomePage() {
 
         <section aria-labelledby="start" className="pb-12 md:pb-16">
           <div className="mx-auto max-w-6xl px-5 md:px-8">
-            <div className="rounded-[1.75rem] bg-primary px-6 py-12 text-center text-primary-foreground md:rounded-[2.5rem] md:px-16 md:py-20">
-              <h2 id="start" className="text-[2rem] leading-[1.05] font-medium tracking-[-0.03em] md:text-[2.75rem]">
+            <div className="cta-wash rounded-[1.75rem] px-6 py-12 text-center shadow-card md:rounded-[2.5rem] md:px-16 md:py-20">
+              <h2 id="start" className="text-[2rem] leading-[1.05] font-semibold tracking-[-0.03em] md:text-[2.75rem]">
                 Ready to start?
               </h2>
-              <p className="mt-3.5 md:text-lg">
-                Sign-up needs an AIU student email (<span className="font-semibold">@student.aiu.edu.my</span>).
+              <p className="mt-3.5 text-muted-foreground md:text-lg">
+                Sign-up needs an AIU student email (<span className="font-semibold text-foreground">@student.aiu.edu.my</span>).
               </p>
               <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-                <Button asChild size="lg" className={cn('px-6', inkButton)}>
+                <Button asChild size="lg" className="px-6">
                   <Link to="/register">Sign up</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className={cn('px-6', inkOutline)}>
+                <Button asChild size="lg" variant="outline" className="bg-card px-6">
                   <Link to="/login">Log in</Link>
                 </Button>
               </div>

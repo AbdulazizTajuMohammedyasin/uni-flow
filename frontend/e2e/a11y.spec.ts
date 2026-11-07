@@ -111,6 +111,11 @@ const PAIRS: { text: string; on: string; over?: string; alpha?: number; min: num
   { text: '--link', on: '--card', min: 4.5 },
   { text: '--link', on: '--background', min: 4.5 },
   { text: '--tag-foreground', on: '--tag', min: 4.5 }, // "Official" tag
+  // The wash behind the home and log-in openings, at both ends of the gradient.
+  { text: '--muted-foreground', on: '--hero-from', min: 4.5 },
+  { text: '--muted-foreground', on: '--hero-to', min: 4.5 },
+  { text: '--island-accent', on: '--hero-to', min: 4.5 }, // the privacy link at the foot of the log-in panel
+  { text: '--primary', on: '--hero-from', min: 3 }, // a filled button's edge on the wash
   { text: '--accent-foreground', on: '--accent', min: 4.5 },
   { text: '--secondary-foreground', on: '--secondary', min: 4.5 },
   { text: '--destructive', on: '--card', min: 4.5 },

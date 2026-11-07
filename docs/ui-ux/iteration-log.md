@@ -11,6 +11,17 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-4: auth and home page (2026-11-07)
+
+- **Scope:** `AuthLayout`, `Home`, `Wordmark` (the `inverted` variant is removed: no lime backgrounds remain), `index.css` (new `hero-wash` and `cta-wash` utilities, `--shot-shadow` replacing the hard-coded screenshot shadow in `Home.tsx`), `a11y.spec.ts`.
+  - The lime-only button styles (`inkButton`, `inkOutline`, `onLimeFocus`) are replaced by the standard `Button` variants and the shared focus ring.
+  - Links on the wash use `--island-accent`: cobalt measures 4.1:1 on `--hero-from`/`--hero-to` in light.
+- **Contrast pairs added:** `--muted-foreground` on both wash ends, `--island-accent` on `--hero-to`, `--primary` edge on `--hero-from`.
+- **Iteration 01** (`artifacts/ui/v3-4-iteration-01/`, all states, both themes, three viewports): no P0 or P1 issues.
+  - The full-page `home` capture shows empty feature frames; these images load lazily (the known capture artefact from the home page iteration 01).
+  - The hero phone image and the feature screenshots still show the round-2 lime UI; they are recaptured in V3-5.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
+
 ## V3-3: For you, item page and timetable (2026-11-07)
 
 - **Scope:** `ItemRow`, `ForYou`, `TodayBox`, `ClassChanges`, `WeekGrid`, `Insight`, `Timetable`.
