@@ -74,10 +74,11 @@ const homeShots: Shot[] = [
   { name: 'phone-announcement', path: '/insights/103', ready: 'Where it came from', device: 'phone' },
   { name: 'phone-timetable', path: '/timetable', ready: 'My sections', device: 'phone' },
   { name: 'phone-search', path: '/search?q=internship', ready: /internship at a Kuala Lumpur/, device: 'phone' },
-  { name: 'phone-notifications', path: '/notifications', ready: 'Mark all as read', device: 'phone', theme: 'dark' },
+  { name: 'phone-notifications', path: '/notifications', ready: 'Mark all as read', device: 'phone' },
 ]
 
-for (const shot of homeShots) {
+// Each home screenshot in both themes: the page shows the one that matches the visitor's theme.
+for (const shot of homeShots.flatMap((light): Shot[] => [light, { ...light, name: `${light.name}-dark`, theme: 'dark' }])) {
   test.describe(`home ${shot.name}`, () => {
     test.use({ ...devices[shot.device], colorScheme: shot.theme ?? 'light' })
 

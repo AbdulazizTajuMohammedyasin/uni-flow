@@ -20,7 +20,11 @@ There are at most 3 iterations per milestone before the results are reported bac
   - The new check-list lines describe existing behaviour only (Now/Next labels in the timetable, the "This week only" choice for class changes, the Needs you tab and the daily digest).
 - **Iteration 01** (`artifacts/ui/v3-5-iteration-01/`, home, both themes, 390 and 1440 px, lazy images forced to load):
   - P1 (fixed): in the flipped feature cards the phone was painted under the blended wash, because `order` also changes paint order. The text and phone columns now sit above the wash (`z-10`).
-  - P3 (open): in the dark theme the feature screenshots are light captures, except Notifications. Theme-matched captures would double the bundled images; left for review.
+  - P3: in the dark theme the feature screenshots were light captures, except Notifications.
+- **Iteration 02** (`artifacts/ui/v3-5-iteration-02/`, same set): the product owner chose theme-matched screenshots.
+  - `npm run screens:readme` now captures every home screenshot in both themes (`<name>.png` and `<name>-dark.png`; Notifications gains a light version).
+  - `Home.tsx` renders both images with `dark:hidden` / `hidden dark:block`; both are lazy, so the browser loads only the one shown.
+  - The screenshots match the theme in both captures; no new issues.
 - **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
 
 ## V3-4: auth and home page (2026-11-07)

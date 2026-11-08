@@ -6,12 +6,22 @@ import { Wordmark } from '@/components/Wordmark'
 import { cn } from '@/lib/utils'
 
 // Screenshots of the real app with made-up data (e2e/mock-api.ts), made by `npm run screens:readme`.
+// Each comes in both themes; the page shows the one that matches the visitor's theme.
+import forYouDark from '@/assets/home/for-you-dark.png'
 import forYou from '@/assets/home/for-you.png'
+import phoneAnnouncementDark from '@/assets/home/phone-announcement-dark.png'
 import phoneAnnouncement from '@/assets/home/phone-announcement.png'
+import phoneForYouDark from '@/assets/home/phone-for-you-dark.png'
 import phoneForYou from '@/assets/home/phone-for-you.png'
+import phoneNotificationsDark from '@/assets/home/phone-notifications-dark.png'
 import phoneNotifications from '@/assets/home/phone-notifications.png'
+import phoneSearchDark from '@/assets/home/phone-search-dark.png'
 import phoneSearch from '@/assets/home/phone-search.png'
+import phoneTimetableDark from '@/assets/home/phone-timetable-dark.png'
 import phoneTimetable from '@/assets/home/phone-timetable.png'
+
+/** A screenshot in the light and dark themes. */
+type Shot = { light: string; dark: string }
 
 const focusRing = 'outline-none focus-visible:ring-3 focus-visible:ring-ring'
 
@@ -36,7 +46,7 @@ const STEPS = [
   { title: 'Read what matters', text: 'Check "For you", get alerts, and confirm class changes on your timetable.' },
 ]
 
-type Feature = { tag: string; title: string; text: string; points: string[]; phone: string; alt: string }
+type Feature = { tag: string; title: string; text: string; points: string[]; phone: Shot; alt: string }
 
 const FEATURES: Feature[] = [
   {
@@ -44,7 +54,7 @@ const FEATURES: Feature[] = [
     title: 'What needs you comes first',
     text: "Messages that name you and things you have to do sit at the top, then important updates. Every item says why you're seeing it and links to the original message.",
     points: ['Named in a message, or something to do: always on top', 'The original message, its group and its time'],
-    phone: phoneAnnouncement,
+    phone: { light: phoneAnnouncement, dark: phoneAnnouncementDark },
     alt: 'An announcement about a moved class, with the group message it came from',
   },
   {
@@ -52,7 +62,7 @@ const FEATURES: Feature[] = [
     title: 'Class changes, confirmed by you',
     text: 'Your week in one place. When a group announces a moved or cancelled class, the change waits for you to confirm before your timetable updates.',
     points: ['Now and Next at a glance', 'This week only, or every week from now on'],
-    phone: phoneTimetable,
+    phone: { light: phoneTimetable, dark: phoneTimetableDark },
     alt: 'The timetable, with a class change waiting to be confirmed',
   },
   {
@@ -60,7 +70,7 @@ const FEATURES: Feature[] = [
     title: 'Find anything from your groups',
     text: 'Search every announcement by word, like "internship" or "quiz", instead of scrolling back through each chat.',
     points: ['Every group you added, in one search'],
-    phone: phoneSearch,
+    phone: { light: phoneSearch, dark: phoneSearchDark },
     alt: 'Search results for "internship"',
   },
   {
@@ -68,8 +78,8 @@ const FEATURES: Feature[] = [
     title: 'Alerts when it counts',
     text: 'Get an alert when something needs you, and a short daily digest of everything else.',
     points: ['A "Needs you" tab for what must not be missed', 'One short digest a day for the rest'],
-    phone: phoneNotifications,
-    alt: 'The notifications page in the dark theme',
+    phone: { light: phoneNotifications, dark: phoneNotificationsDark },
+    alt: 'The notifications page, with alerts for what needs you',
   },
 ]
 
@@ -79,18 +89,27 @@ const TRUST: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: Check, title: 'You stay in control', text: 'A class change only applies to your timetable when you confirm it.' },
 ]
 
+/** Both themes of a screenshot; only the one for the current theme is shown (and, being lazy, loaded). */
+function ThemedImage({ shot, alt, width, height, className }: { shot: Shot; alt: string; width: number; height: number; className: string }) {
+  return (
+    <>
+      <img src={shot.light} alt={alt} width={width} height={height} loading="lazy" className={cn(className, 'dark:hidden')} />
+      <img src={shot.dark} alt={alt} width={width} height={height} loading="lazy" className={cn(className, 'hidden dark:block')} />
+    </>
+  )
+}
+
 /** A phone screenshot in a drawn phone: dark bezel, camera pill and side button. */
-function Phone({ src, alt, className, lazy = true }: { src: string; alt: string; className?: string; lazy?: boolean }) {
+function Phone({ shot, alt, className }: { shot: Shot; alt: string; className?: string }) {
   return (
     <div className={cn('relative rounded-[3rem] bg-phone-frame p-2.5 shadow-shot', className)}>
       <span aria-hidden className="absolute top-5 left-1/2 z-10 h-5.5 w-19 -translate-x-1/2 rounded-full bg-phone-frame" />
       <span aria-hidden className="absolute top-30 -right-0.75 h-16 w-0.75 rounded-r-sm bg-phone-frame" />
-      <img
-        src={src}
+      <ThemedImage
+        shot={shot}
         alt={alt}
         width={780}
         height={1688}
-        loading={lazy ? 'lazy' : undefined}
         className="block aspect-[390/844] h-auto w-full rounded-[2.375rem] object-cover object-top"
       />
     </div>
@@ -172,8 +191,8 @@ export function HomePage() {
                 </span>
               </div>
               <div className="aspect-[1440/800] overflow-hidden">
-                <img
-                  src={forYou}
+                <ThemedImage
+                  shot={{ light: forYou, dark: forYouDark }}
                   alt="The For you page: what needs you, important updates and today's classes"
                   width={1440}
                   height={900}
@@ -182,9 +201,8 @@ export function HomePage() {
               </div>
             </div>
             <Phone
-              src={phoneForYou}
+              shot={{ light: phoneForYou, dark: phoneForYouDark }}
               alt="The For you page on a phone: today's classes and what needs you"
-              lazy={false}
               className="mt-10 w-[16.25rem] md:hidden"
             />
           </div>
@@ -281,7 +299,7 @@ export function HomePage() {
                     <div className={cn('relative z-10 flex items-center justify-center px-5 pt-10 pb-12 md:p-14', flip && 'md:order-first')}>
                       <span aria-hidden className="absolute top-1/2 left-1/2 size-85 -translate-1/2 rounded-full border-[1.5px] border-dashed border-island-border md:size-115" />
                       <span aria-hidden className="phone-glow absolute top-1/2 left-1/2 size-75 -translate-1/2 rounded-full md:size-95" />
-                      <Phone src={feature.phone} alt={feature.alt} className="w-55 md:w-67.5" />
+                      <Phone shot={feature.phone} alt={feature.alt} className="w-55 md:w-67.5" />
                       {/* The feature's first point again, as a small card resting on the phone. */}
                       <p
                         aria-hidden
