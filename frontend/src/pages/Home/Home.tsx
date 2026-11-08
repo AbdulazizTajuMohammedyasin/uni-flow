@@ -147,7 +147,8 @@ function glideTo(event: MouseEvent<HTMLAnchorElement>) {
 export function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card">
+      {/* Stays at the top while the page scrolls (index.css keeps focused controls and section jumps clear of it). */}
+      <header className="sticky top-0 z-50 border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-5 md:h-18 md:gap-8 md:px-8">
           <Link to="/" className={cn('rounded-sm text-xl', focusRing)}>
             <Wordmark />

@@ -248,6 +248,12 @@
   background-image: radial-gradient(circle, color-mix(in srgb, var(--primary) 24%, transparent), transparent 68%);
 }
 
+/* The home page's top bar stays at the top (sticky, 72 px at most). Scrolling to a section or to a control
+   that gets keyboard focus stops below it, so nothing ends up hidden under the bar. */
+html:has(#how-it-works) {
+  scroll-padding-top: 5.5rem;
+}
+
 /* Less motion when the device asks for it: menus, fades and pulses finish at once. */
 @media (prefers-reduced-motion: reduce) {
   *,
