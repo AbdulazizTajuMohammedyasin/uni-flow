@@ -10,6 +10,10 @@ Students keep talking in WhatsApp and Telegram. UniFlow removes the need to moni
 
 ## Screenshots
 
+**Home page**: what UniFlow does, for visitors who are not logged in.
+
+![The UniFlow home page: the headline "All your AIU announcements, sorted for you", Log in and Sign up buttons, and the For you page in a browser window](docs/screenshots/home.png)
+
 **For you**: what needs the student's attention, today's classes, and the updates that affect them.
 
 ![The For you page: items that need attention, today's classes and important updates](docs/screenshots/for-you.png)

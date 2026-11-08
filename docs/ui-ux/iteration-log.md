@@ -20,6 +20,7 @@ There are at most 3 iterations per milestone before the results are reported bac
   - Reviewed: Log in (dark), For you busy and empty, Register (phone), Profile (dark phone). No P0–P2 issues.
 - **Acceptance checks (plan section 8):** no round-2 hex values or raw colour classes in `src/` outside `components/ui/` and `index.css`; no changes under `backend/`, `src/api/`, `src/context/`, `src/hooks/` or to routes since the plan (bfa2019).
 - **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
+- **README:** the home page was missing from the README screenshots. `readme.spec.ts` now captures `docs/screenshots/home.png` (logged-out visitor, 1440 × 1460 so the whole opening section shows). The README shows it first under "Screenshots". `Shot` gains optional `scenario` and `height` fields for this.
 - **Open (P3, unchanged):** panel radius kept at `rounded-2xl`; the favicon is still the Vite default.
 
 ## V3-5: home page layout (2026-11-08)

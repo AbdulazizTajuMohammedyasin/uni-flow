@@ -2,7 +2,7 @@ import path from 'node:path'
 
 import { expect, test, type Page } from '@playwright/test'
 
-import { mockApi, NOW } from './mock-api'
+import { mockApi, NOW, type Scenario } from './mock-api'
 
 /**
  * The screenshots shown in the README, with the made-up data of e2e/mock-api.ts.
@@ -16,10 +16,14 @@ type Shot = {
   ready: string | RegExp
   device: 'desktop' | 'phone'
   theme?: 'light' | 'dark'
+  scenario?: Scenario // default: 'busy', a logged-in student
+  height?: number // a taller window than the device's, to show a whole section
   before?: (page: Page) => Promise<void>
 }
 
 const shots: Shot[] = [
+  // The public home page, down to the rounded foot of its opening section.
+  { name: 'home', path: '/', ready: 'All your AIU announcements, sorted for you', device: 'desktop', scenario: 'visitor', height: 1460 },
   { name: 'for-you', path: '/', ready: 'Project meeting with Dr Farah', device: 'desktop' },
   { name: 'announcement', path: '/insights/103', ready: 'Where it came from', device: 'desktop' },
   { name: 'timetable-week', path: '/timetable?view=week', ready: '19 Oct – 25 Oct', device: 'desktop' },
@@ -48,11 +52,12 @@ const devices = {
 
 for (const shot of shots) {
   test.describe(shot.name, () => {
-    test.use({ ...devices[shot.device], colorScheme: shot.theme ?? 'light' })
+    const device = devices[shot.device]
+    test.use({ ...device, viewport: { ...device.viewport, height: shot.height ?? device.viewport.height }, colorScheme: shot.theme ?? 'light' })
 
     test(shot.name, async ({ page }) => {
       await page.clock.setFixedTime(NOW)
-      await mockApi(page, 'busy')
+      await mockApi(page, shot.scenario ?? 'busy')
       await page.goto(shot.path)
       await expect(page.getByText(shot.ready).first()).toBeVisible()
       await page.evaluate(() => document.fonts.ready)
