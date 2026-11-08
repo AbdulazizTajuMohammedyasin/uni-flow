@@ -73,7 +73,7 @@ export function LoginPage() {
           {...register('password')}
         />
         <div className="text-right text-sm">
-          <Link to="/forgot-password" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+          <Link to="/forgot-password" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
             Forgot password?
           </Link>
         </div>
@@ -91,7 +91,7 @@ export function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New to UniFlow?{' '}
-        <Link to="/register" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/register" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
           Create an account
         </Link>
       </p>

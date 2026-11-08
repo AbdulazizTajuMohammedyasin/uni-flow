@@ -11,6 +11,17 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-6: link colour sweep and final regression pass (2026-11-08)
+
+- **Scope:** inline text links move from `text-foreground` to `text-link` in `TodayBox`, `ForYou` (2), `Login` (2), `Register` (2), `ForgotPassword`, `Privacy` (2), `Profile` and `Sources`; the `link` variants of `Button` and `Badge` match.
+  - Unchanged on purpose: links on the blue panel and on the wash keep `--island-accent`; the "Request a new link" link inside the red error message on Reset password inherits the error colour; navigation and footer links stay ink with an underline on hover.
+  - `--link` on card and page is already in the contrast tests (light 4.8 and 4.6, dark 6.9).
+- **Screenshots:** `npm run screens:readme` rerun (README and home page images show the blue links); full set in `artifacts/ui/v3-final/`: 33 pages and states × 2 themes × 3 viewports (390, 1093, 1440 px), 198 captures.
+  - Reviewed: Log in (dark), For you busy and empty, Register (phone), Profile (dark phone). No P0–P2 issues.
+- **Acceptance checks (plan section 8):** no round-2 hex values or raw colour classes in `src/` outside `components/ui/` and `index.css`; no changes under `backend/`, `src/api/`, `src/context/`, `src/hooks/` or to routes since the plan (bfa2019).
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
+- **Open (P3, unchanged):** panel radius kept at `rounded-2xl`; the favicon is still the Vite default.
+
 ## V3-5: home page layout (2026-11-08)
 
 - **Decision:** the product owner asked for a new home page layout and approved it from three mockup rounds (centred opening; rounded hero corners; upright phones on a softly blended feature stage).

@@ -132,7 +132,7 @@ export function ProfilePage() {
             <p className="text-sm text-muted-foreground">
               What UniFlow reads, what it keeps (message text for 60 days), how it uses AI, and how someone can ask
               not to be read.{' '}
-              <Link to="/privacy" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+              <Link to="/privacy" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
                 Read the privacy notice
               </Link>
             </p>

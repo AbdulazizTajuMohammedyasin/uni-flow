@@ -74,11 +74,11 @@ export function PrivacyPage() {
       </Part>
 
       <p className="border-t border-border pt-5 text-sm text-muted-foreground">
-        <Link to="/register" className="text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/register" className="text-link underline underline-offset-4 hover:decoration-2">
           Create an account
         </Link>{' '}
         ·{' '}
-        <Link to="/" className="text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/" className="text-link underline underline-offset-4 hover:decoration-2">
           Back to UniFlow
         </Link>
       </p>

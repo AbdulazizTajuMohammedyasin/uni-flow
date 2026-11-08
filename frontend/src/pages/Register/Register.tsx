@@ -136,14 +136,14 @@ export function RegisterPage() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Before you register, read how UniFlow uses information:{' '}
-        <Link to="/privacy" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/privacy" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
           Privacy notice
         </Link>
       </p>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link to="/login" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/login" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
           Log in
         </Link>
       </p>

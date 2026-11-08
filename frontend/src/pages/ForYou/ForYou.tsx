@@ -50,7 +50,7 @@ export function ForYouPage() {
               title="Nothing for you yet"
               description="Add your academic groups on the Groups page, and UniFlow will show what matters to you here."
               action={
-                <Link to="/sources" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+                <Link to="/sources" className="text-sm font-medium text-link underline underline-offset-4 hover:decoration-2">
                   Go to Groups
                 </Link>
               }
@@ -111,7 +111,7 @@ function TierSection({ tier, items }: { tier: Tier; items: FeedItem[] }) {
           <p className={cn('text-[0.8125rem]', urgent ? 'text-island-muted' : 'text-muted-foreground')}>{hint}</p>
         </div>
         {tier === 'digest' && (
-          <Link to="/digest" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+          <Link to="/digest" className="text-sm font-medium text-link underline underline-offset-4 hover:decoration-2">
             Open the daily digest
           </Link>
         )}

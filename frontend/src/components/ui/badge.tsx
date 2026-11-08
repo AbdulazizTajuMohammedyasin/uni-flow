@@ -18,7 +18,7 @@ const badgeVariants = cva(
         official: "bg-tag text-tag-foreground",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-foreground underline underline-offset-4 hover:decoration-2",
+        link: "text-link underline underline-offset-4 hover:decoration-2",
       },
     },
     defaultVariants: {

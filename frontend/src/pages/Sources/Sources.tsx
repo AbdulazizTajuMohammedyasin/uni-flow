@@ -377,7 +377,7 @@ function AddNumberSteps({ source }: { source: Source }) {
         <li>In the WhatsApp group: tap its name → Add member → choose UniFlow. If only admins can add members, ask an admin.</li>
         <li>
           Let the group know UniFlow reads it (
-          <Link to="/privacy" className="text-foreground underline underline-offset-4 hover:decoration-2">
+          <Link to="/privacy" className="text-link underline underline-offset-4 hover:decoration-2">
             what UniFlow reads
           </Link>
           ).

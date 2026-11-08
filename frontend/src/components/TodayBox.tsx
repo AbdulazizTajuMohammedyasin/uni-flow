@@ -45,7 +45,7 @@ export function TodayBox({ className }: { className?: string }) {
           <CalendarClock aria-hidden className="size-[1.125rem] text-foreground" />
           Today
         </h2>
-        <Link to="/timetable" className="text-sm font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/timetable" className="text-sm font-medium text-link underline underline-offset-4 hover:decoration-2">
           Timetable
         </Link>
       </div>

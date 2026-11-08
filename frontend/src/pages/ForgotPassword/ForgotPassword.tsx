@@ -77,7 +77,7 @@ export function ForgotPasswordPage() {
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        <Link to="/login" className="font-medium text-foreground underline underline-offset-4 hover:decoration-2">
+        <Link to="/login" className="font-medium text-link underline underline-offset-4 hover:decoration-2">
           Back to log in
         </Link>
       </p>
