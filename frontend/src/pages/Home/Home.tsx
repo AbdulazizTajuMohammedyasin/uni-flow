@@ -1,4 +1,5 @@
 import { ArrowUpRight, AtSign, Check, CircleDot, Clock, MessagesSquare, type LucideIcon } from 'lucide-react'
+import type { MouseEvent } from 'react'
 import { Link } from 'react-router'
 
 import { Button } from '@/components/ui/button'
@@ -129,6 +130,19 @@ function SectionTitle({ id, kicker, title, children }: { id: string; kicker: str
   )
 }
 
+/** The top links glide to their section instead of jumping (straight there when the device asks for less motion).
+ * Focus moves to the section too, so the next Tab continues from there, as it would after a normal jump. */
+function glideTo(event: MouseEvent<HTMLAnchorElement>) {
+  const id = event.currentTarget.hash.slice(1)
+  const section = document.getElementById(id)
+  if (!section) return
+  event.preventDefault()
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  section.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
+  section.focus({ preventScroll: true })
+  window.history.pushState(window.history.state, '', `#${id}`)
+}
+
 /** The public home page: what UniFlow is and how to use it (shown at / to visitors who are not logged in). */
 export function HomePage() {
   return (
@@ -139,10 +153,10 @@ export function HomePage() {
             <Wordmark />
           </Link>
           <nav aria-label="Home page" className="ml-4 hidden gap-7 text-[0.9375rem] font-medium sm:flex">
-            <a href="#how-it-works" className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
+            <a href="#how-it-works" onClick={glideTo} className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
               How it works
             </a>
-            <a href="#features" className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
+            <a href="#features" onClick={glideTo} className={cn('rounded-sm hover:underline hover:underline-offset-4', focusRing)}>
               Features
             </a>
           </nav>
@@ -228,7 +242,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section id="how-it-works" aria-labelledby="how" className="scroll-mt-6 px-5 pb-16 md:px-8 md:pb-28">
+        <section id="how-it-works" tabIndex={-1} aria-labelledby="how" className="scroll-mt-6 outline-none px-5 pb-16 md:px-8 md:pb-28">
           <div className="mx-auto max-w-6xl">
             <SectionTitle id="how" kicker="How it works" title="How to use UniFlow">
               Four steps, a few minutes. After that, UniFlow keeps up with your groups for you.
@@ -260,7 +274,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <section id="features" aria-labelledby="features-title" className="scroll-mt-6 px-5 pb-16 md:px-8 md:pb-28">
+        <section id="features" tabIndex={-1} aria-labelledby="features-title" className="scroll-mt-6 outline-none px-5 pb-16 md:px-8 md:pb-28">
           <div className="mx-auto max-w-6xl">
             <SectionTitle id="features-title" kicker="Features" title="What UniFlow does for you" />
             <div className="mt-8 grid gap-4.5 md:mt-14 md:gap-7">

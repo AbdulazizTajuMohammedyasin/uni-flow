@@ -25,6 +25,9 @@ There are at most 3 iterations per milestone before the results are reported bac
   - `npm run screens:readme` now captures every home screenshot in both themes (`<name>.png` and `<name>-dark.png`; Notifications gains a light version).
   - `Home.tsx` renders both images with `dark:hidden` / `hidden dark:block`; both are lazy, so the browser loads only the one shown.
   - The screenshots match the theme in both captures; no new issues.
+  - The "How it works" and "Features" links now glide to their section (`glideTo` in `Home.tsx`: `scrollIntoView` with `behavior: 'smooth'`, instant when reduced motion is requested). Focus moves to the section and the URL hash is kept, as with a normal jump.
+  - A page-wide `scroll-behavior: smooth` was tried first and dropped: it also animated the scroll that follows keyboard focus, which failed the "focus is always visible" check on the home page.
+  - One later `npm run e2e` run had 2 failures of the type "expect(locator).toBeVisible() failed". The rerun passed 302/302. The run's report was deleted before the failing tests were noted, so they are not identified.
 - **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
 
 ## V3-4: auth and home page (2026-11-07)
