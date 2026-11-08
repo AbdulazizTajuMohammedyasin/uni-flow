@@ -50,6 +50,7 @@
   --color-tag-foreground: var(--tag-foreground);
   --color-hero-from: var(--hero-from);
   --color-hero-to: var(--hero-to);
+  --color-phone-frame: var(--phone-frame);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -116,6 +117,7 @@
   --tag-foreground: #6736eb; /* 5.7:1 */
   --hero-from: #e3efff; /* the wash at the foot of the home and log-in hero */
   --hero-to: #efe9ff;
+  --phone-frame: #121722; /* the bezel around phone screenshots on the home page */
   --success: #046645; /* "Saved", "Connected": 7.0:1 on white */
   --border: #ebe9e4; /* dividers (decorative) */
   --input: #8a8f99; /* field and checkbox edges: 3.3:1 on white, 3.1:1 on cream */
@@ -173,6 +175,7 @@
   --tag-foreground: #b9a3ff; /* 6.7:1 */
   --hero-from: #1e2738;
   --hero-to: #262236;
+  --phone-frame: #3a3531;
   --success: #5fcf8f; /* 8.0:1 on card */
   --border: #35302c;
   --input: #78716c; /* 3.3:1 on card, 3.7:1 on background */
@@ -221,9 +224,28 @@
   background-image: linear-gradient(180deg, var(--background) 0%, var(--background) 30%, var(--hero-from) 78%, var(--hero-to) 100%);
 }
 
-/* The closing "Ready to start?" block: a diagonal wash from the card colour into blue and lavender. */
-@utility cta-wash {
-  background-image: linear-gradient(135deg, var(--card) 0%, var(--card) 35%, var(--hero-from) 75%, var(--hero-to) 100%);
+/* The closing "Ready to start?" block: a card with cobalt glowing in from the lower-right corner.
+   The text sits in the middle, over the card and the pale end of the glow. */
+@utility cta-corner {
+  background-color: var(--card);
+  background-image: radial-gradient(
+    120% 120% at 100% 100%,
+    color-mix(in srgb, var(--primary) 90%, transparent) 0%,
+    color-mix(in srgb, var(--primary) 50%, var(--hero-from)) 18%,
+    var(--hero-from) 42%,
+    transparent 70%
+  );
+}
+
+/* The stage behind a phone screenshot in a home-page feature: the blue-lavender wash, faded out towards
+   the text beside it (or above it on phones) so the two halves blend instead of meeting at a hard edge. */
+@utility stage-wash {
+  background-image: linear-gradient(160deg, var(--hero-from), var(--hero-to));
+}
+
+/* A soft cobalt glow behind a phone screenshot. */
+@utility phone-glow {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--primary) 24%, transparent), transparent 68%);
 }
 
 /* Less motion when the device asks for it: menus, fades and pulses finish at once. */

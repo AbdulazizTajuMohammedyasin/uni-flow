@@ -119,7 +119,8 @@ Each milestone is one reviewable change. The product owner commits.
 | V3-2 | App shell | `AppLayout`, `StaffLayout`, `PageHeader`, `HealthBadge` |
 | V3-3 | For you, item page and timetable | `ForYou`, `ItemRow`, `TodayBox`, `Insight`, `Timetable`, `WeekGrid`, `ClassChanges` |
 | V3-4 | Auth and home page | `AuthLayout`, `Home` |
-| V3-5 | Remaining pages, screenshots and regression pass | Link colour sweep; recapture `docs/screenshots/` and `src/assets/home/`; full screenshot set in `artifacts/ui/v3-final/` (git-ignored) |
+| V3-5 | Home page layout (added 2026-11-08 at the product owner's request, from an approved mockup) | `Home`, `index.css` (`--phone-frame`, `cta-corner`, `stage-wash`, `phone-glow`), `e2e/readme.spec.ts`, `src/assets/home/` |
+| V3-6 | Remaining pages, screenshots and regression pass | Link colour sweep; recapture `docs/screenshots/` (done early in V3-5); full screenshot set in `artifacts/ui/v3-final/` (git-ignored) |
 
 Per milestone: at most 3 screenshot iterations (`artifacts/ui/v3-N-iteration-NN/`, both themes, 390 and 1440 px), then a summary of files changed, checks run and open issues.
 

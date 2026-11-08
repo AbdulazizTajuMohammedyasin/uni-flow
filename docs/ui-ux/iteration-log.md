@@ -11,6 +11,18 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
+## V3-5: home page layout (2026-11-08)
+
+- **Decision:** the product owner asked for a new home page layout and approved it from three mockup rounds (centred opening; rounded hero corners; upright phones on a softly blended feature stage).
+- **Scope:** `Home.tsx` (new layout, a `Phone` frame component and a `SectionTitle` helper), `index.css` (`--phone-frame` token; `cta-corner`, `stage-wash` and `phone-glow` utilities; `cta-wash` removed), `e2e/readme.spec.ts`.
+  - The home page now uses one desktop capture (`for-you.png`) and the five phone captures; the four desktop feature captures were removed from `src/assets/home/`.
+  - `docs/screenshots/` and `src/assets/home/` were recaptured with `npm run screens:readme` (new colours, no development badge).
+  - The new check-list lines describe existing behaviour only (Now/Next labels in the timetable, the "This week only" choice for class changes, the Needs you tab and the daily digest).
+- **Iteration 01** (`artifacts/ui/v3-5-iteration-01/`, home, both themes, 390 and 1440 px, lazy images forced to load):
+  - P1 (fixed): in the flipped feature cards the phone was painted under the blended wash, because `order` also changes paint order. The text and phone columns now sit above the wash (`z-10`).
+  - P3 (open): in the dark theme the feature screenshots are light captures, except Notifications. Theme-matched captures would double the bundled images; left for review.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302.
+
 ## V3-4: auth and home page (2026-11-07)
 
 - **Scope:** `AuthLayout`, `Home`, `Wordmark` (the `inverted` variant is removed: no lime backgrounds remain), `index.css` (new `hero-wash` and `cta-wash` utilities, `--shot-shadow` replacing the hard-coded screenshot shadow in `Home.tsx`), `a11y.spec.ts`.

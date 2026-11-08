@@ -69,10 +69,7 @@ for (const shot of shots) {
 const homeRoot = path.resolve(import.meta.dirname, '../src/assets/home')
 
 const homeShots: Shot[] = [
-  { name: 'announcement', path: '/insights/103', ready: 'Where it came from', device: 'desktop' },
-  { name: 'timetable-week', path: '/timetable?view=week', ready: '19 Oct – 25 Oct', device: 'desktop' },
-  { name: 'search', path: '/search?q=internship', ready: /internship at a Kuala Lumpur/, device: 'desktop' },
-  { name: 'notifications', path: '/notifications', ready: 'Mark all as read', device: 'desktop', theme: 'dark' },
+  { name: 'for-you', path: '/', ready: 'Project meeting with Dr Farah', device: 'desktop' },
   { name: 'phone-for-you', path: '/', ready: 'Project meeting with Dr Farah', device: 'phone' },
   { name: 'phone-announcement', path: '/insights/103', ready: 'Where it came from', device: 'phone' },
   { name: 'phone-timetable', path: '/timetable', ready: 'My sections', device: 'phone' },
