@@ -88,6 +88,16 @@ The token names are unchanged, so components keep using `bg-primary`, `text-mute
 | Active nav item | Lime fill | White pill with the micro-shadow, a blue icon and weight 600 (light); a `--muted` pill (dark). The active state is never conveyed by colour alone. |
 | Headings | Weight 400–500 | Weight 600, same sizes and tracking |
 
+**Update (2026-11-10, product owner's request): a softer blue.** The cobalt `#0068f9` read as too bright on large filled areas (full-width buttons, selected chips). It is replaced by `#0b6fd0`, between the original cobalt and a softer sky blue the product owner showed (`#128ede`, which fails white-text contrast at 3.5:1).
+
+| Token | Light | Dark |
+|---|---|---|
+| `--primary`, `--sidebar-primary` | `#0b6fd0` (white on it 5.0:1) | `#0c71d3` (white 4.9:1; a button edge on the dark wash 3.1:1, where `#0b6fd0` measured 2.99) |
+| `--primary-hover` | `#0958a6` (7.1:1) | `#0a64bc` (5.9:1) |
+| `--link`, `--ring`, `--attention-border`, `--chart-1`, `--sidebar-ring` | `#0b6fd0` (5.0 on card, 4.8 on page, 4.5 on the panel) | unchanged (`#78adff`) |
+
+The values in the tables above are the original ones.
+
 ## 4. Changes by area (presentation only)
 
 | Area | Change |

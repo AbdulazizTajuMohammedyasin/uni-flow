@@ -11,7 +11,15 @@ One entry per screenshot iteration once the redesign is underway (Phase 2). Each
 
 There are at most 3 iterations per milestone before the results are reported back.
 
-## V3-6: link colour sweep and final regression pass (2026-11-08)
+## V3-7: softer blue (2026-11-10)
+
+- **Request:** the product owner found the cobalt too bright on filled controls and showed a softer sky-blue example (`#128ede`, white text 3.5:1). Four options were rendered on the Profile page (`Desktop/images-uniflow/softer-blue/`); option 3, `#0b6fd0`, was chosen.
+- **Scope:** `index.css` only (tokens in section "Update" of the plan), plus `public/favicon.svg`.
+  - Dark `--primary` is `#0c71d3`: with `#0b6fd0` the a11y contrast test failed on a filled button edge over `--hero-from` (2.99:1, needs 3). `#0c71d3` gives 3.08 and keeps white text at 4.9:1.
+- **Screenshots:** `npm run screens:readme` rerun; full set in `artifacts/ui/v3-blue/` (198). Reviewed Profile (both themes), Timetable week, Log in (dark). No issues.
+- **Tests:** `npm test` 154/154; `typecheck` and `lint` clean; `npm run e2e` 302/302 (after the dark fix).
+
+ and final regression pass (2026-11-08)
 
 - **Scope:** inline text links move from `text-foreground` to `text-link` in `TodayBox`, `ForYou` (2), `Login` (2), `Register` (2), `ForgotPassword`, `Privacy` (2), `Profile` and `Sources`; the `link` variants of `Button` and `Badge` match.
   - Unchanged on purpose: links on the blue panel and on the wash keep `--island-accent`; the "Request a new link" link inside the red error message on Reset password inherits the error colour; navigation and footer links stay ink with an underline on hover.

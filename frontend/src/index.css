@@ -93,10 +93,10 @@
   --popover-foreground: #121722;
   --card-shadow: 0 1px 1px 0 rgb(0 0 0 / 0.07), inset 0 0 0 0.5px rgb(0 0 0 / 0.14);
   --shot-shadow: 0 24px 48px -24px rgb(18 23 34 / 0.3); /* screenshots on the home page */
-  --primary: #0068f9; /* cobalt: buttons, now, unread; white on it 4.8:1, edge on cream 4.6:1 */
+  --primary: #0b6fd0; /* blue: buttons, now, unread; white on it 5.0:1, edge on cream 4.8:1 */
   --primary-foreground: #ffffff;
-  --primary-hover: #024bb1;
-  --link: #0068f9; /* links and blue labels: 4.8:1 on white, 4.6:1 on cream */
+  --primary-hover: #0958a6; /* white on it 7.1:1 */
+  --link: #0b6fd0; /* links and blue labels: 5.0:1 on white, 4.8:1 on cream */
   --secondary: #f2f1ee;
   --secondary-foreground: #121722;
   --muted: #f2f1ee;
@@ -107,11 +107,11 @@
   --destructive-foreground: #ffffff;
   --attention: #eef4ff; /* pending changes */
   --attention-foreground: #024bb1; /* 7.2:1 on attention */
-  --attention-border: #0068f9;
+  --attention-border: #0b6fd0;
   --island: #eef4ff; /* the soft blue "needs you" panel */
   --island-foreground: #121722; /* 16.2:1 */
   --island-muted: #5f6571; /* 5.3:1 */
-  --island-accent: #024bb1; /* labels and icons in the panel: 7.2:1 (cobalt would be 4.4:1) */
+  --island-accent: #024bb1; /* labels and icons in the panel: 7.2:1 (the button blue would be 4.5:1) */
   --island-border: #d6e4f1;
   --tag: #f4f0ff; /* violet, decoration only: the "Official" tag */
   --tag-foreground: #6736eb; /* 5.7:1 */
@@ -121,9 +121,9 @@
   --success: #046645; /* "Saved", "Connected": 7.0:1 on white */
   --border: #ebe9e4; /* dividers (decorative) */
   --input: #8a8f99; /* field and checkbox edges: 3.3:1 on white, 3.1:1 on cream */
-  --ring: #0068f9; /* focus: 4.8:1 on white, 4.6:1 on cream, 4.4:1 on the panel */
+  --ring: #0b6fd0; /* focus: 5.0:1 on white, 4.8:1 on cream, 4.5:1 on the panel */
 
-  --chart-1: #0068f9;
+  --chart-1: #0b6fd0;
   --chart-2: #6736eb;
   --chart-3: #5f6571;
   --chart-4: #046645;
@@ -131,12 +131,12 @@
 
   --sidebar: #faf9f7;
   --sidebar-foreground: #121722;
-  --sidebar-primary: #0068f9;
+  --sidebar-primary: #0b6fd0;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f2f1ee;
   --sidebar-accent-foreground: #121722;
   --sidebar-border: #ebe9e4;
-  --sidebar-ring: #0068f9;
+  --sidebar-ring: #0b6fd0;
 }
 
 /* Dark theme, "warm stone": the night version of the cream, with the same cobalt button. */
@@ -151,9 +151,9 @@
   --popover-foreground: #f5f3ef;
   --card-shadow: 0 0 0 1px #35302c;
   --shot-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.6);
-  --primary: #0068f9; /* white on it 4.8:1; edge on the page 3.6:1 */
+  --primary: #0c71d3; /* a hair lighter than light mode, so a button edge on the dark wash reaches 3:1 (3.1); white on it 4.9:1 */
   --primary-foreground: #ffffff;
-  --primary-hover: #005ee6; /* white on it 5.6:1 */
+  --primary-hover: #0a64bc; /* white on it 5.9:1 */
   --link: #78adff; /* cobalt is only 3.2:1 as text here: 6.9:1 on card */
   --secondary: #2f2b27;
   --secondary-foreground: #f5f3ef;
@@ -189,7 +189,7 @@
 
   --sidebar: #1c1917;
   --sidebar-foreground: #f5f3ef;
-  --sidebar-primary: #0068f9;
+  --sidebar-primary: #0c71d3;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #2f2b27;
   --sidebar-accent-foreground: #f5f3ef;
