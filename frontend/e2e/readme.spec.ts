@@ -61,6 +61,8 @@ for (const shot of shots) {
       await page.goto(shot.path)
       await expect(page.getByText(shot.ready).first()).toBeVisible()
       await page.evaluate(() => document.fonts.ready)
+      // The "API: ok" badge only exists in development: leave it out of the README.
+      await page.getByText(/^API: /).evaluateAll((badges) => badges.forEach((badge) => badge.remove()))
       await shot.before?.(page)
       await page.screenshot({ path: path.join(root, `${shot.name}.png`), animations: 'disabled' })
     })
